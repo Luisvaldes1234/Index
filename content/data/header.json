@@ -83,7 +83,7 @@
         },
         {
             "label": "Iniciar Sesion",
-            "url": "/aqualink.netlify.app/Login.html",
+            "url": "/Login.html",
             "icon": "arrowRight",
             "iconPosition": "right",
             "style": "primary",
