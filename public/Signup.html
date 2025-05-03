@@ -48,8 +48,8 @@
 <body>
   <div class="container">
     <h2>Crear cuenta</h2>
-    <input type="email" id="email" placeholder="Correo electrónico" />
-    <input type="password" id="password" placeholder="Contraseña" />
+    <input type="email" id="email" placeholder="Correo electrónico">
+    <input type="password" id="password" placeholder="Contraseña">
     <button onclick="signup()">Registrarme</button>
     <div id="message"></div>
     <a href="login.html">¿Ya tienes cuenta? Inicia sesión</a>
@@ -64,21 +64,18 @@
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
-      const { error } = await supabase.auth.signUp({
-        email,
-        password
-      });
+      const { error } = await supabase.auth.signUp({ email, password });
 
       const msg = document.getElementById('message');
       if (error) {
         msg.textContent = 'Error: ' + error.message;
         msg.style.color = 'red';
       } else {
-        msg.textContent = 'Cuenta creada. Revisa tu correo para confirmar.';
+        msg.textContent = 'Cuenta creada exitosamente.';
         msg.style.color = 'green';
         setTimeout(() => {
-          window.location.href = '/login.html';
-        }, 2000);
+          window.location.href = '/dashboard.html';
+        }, 1500);
       }
     }
   </script>
