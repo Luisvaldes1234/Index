@@ -88,7 +88,7 @@ sections:
             self:
               borderRadius: x-large
       - title: 100% trazabilidad diaria
-        subtitle: The Job Stuff
+        subtitle: Reportes de ventas automáticos
         text: >-
           Sed ut perspiciatis unde omnis iste natus error sit voluptatem
           accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae.
