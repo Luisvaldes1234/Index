@@ -3,29 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Supabase</title>
+  <title>Dashboard de Ventas</title>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Supabase JS -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; background: #f5f5f5; }
+    h1 { text-align: center; }
+    #controls { display: flex; justify-content: flex-end; gap: 1rem; margin-bottom: 1rem; }
+    select, button { padding: 0.5rem 1rem; font-size: 1rem; }
+    #chart-container { background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    th, td { padding: 0.75rem; border-bottom: 1px solid #e0e0e0; }
+    th { background: #fafafa; text-align: left; }
+  </style>
 </head>
 <body>
   <h1>Dashboard de Ventas</h1>
-  <button id="logout">Cerrar Sesión</button>
-
-  <section>
-    <h2>Seleccione la Máquina</h2>
+  <div id="controls">
     <select id="machine-select">
       <option value="">Todas las máquinas</option>
     </select>
+    <button id="logout">Cerrar Sesión</button>
+  </div>
+
+  <div id="chart-container">
+    <canvas id="salesChart"></canvas>
+  </div>
+
+  <section id="summary">
+    <p>Total Hoy: <strong id="total-hoy">$0.00</strong></p>
+    <p>Total Mes: <strong id="total-mes">$0.00</strong></p>
+    <p>Total Año: <strong id="total-anio">$0.00</strong></p>
   </section>
 
   <section>
-    <h2>Resumen Financiero</h2>
-    <p>Total Hoy: <span id="total-hoy">$0.00</span></p>
-    <p>Total Mes: <span id="total-mes">$0.00</span></p>
-    <p>Total Año: <span id="total-anio">$0.00</span></p>
-  </section>
-
-  <section>
-    <h2>Detalle de Ventas</h2>
     <table>
       <thead>
         <tr>
@@ -34,105 +47,99 @@
           <th>Total (MXN)</th>
         </tr>
       </thead>
-      <tbody id="ventas-body">
-        <!-- Filas generadas dinámicamente -->
-      </tbody>
+      <tbody id="ventas-body"></tbody>
     </table>
   </section>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
     const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGx...';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    let salesChart;
     document.addEventListener('DOMContentLoaded', async () => {
-      const logoutBtn = document.getElementById('logout');
+      const logoutBtn     = document.getElementById('logout');
       const machineSelect = document.getElementById('machine-select');
-      const ventasBody   = document.getElementById('ventas-body');
-      const totalHoy     = document.getElementById('total-hoy');
-      const totalMes     = document.getElementById('total-mes');
-      const totalAnio    = document.getElementById('total-anio');
+      const ventasBody    = document.getElementById('ventas-body');
+      const totalHoyEl    = document.getElementById('total-hoy');
+      const totalMesEl    = document.getElementById('total-mes');
+      const totalAnioEl   = document.getElementById('total-anio');
+      const ctx           = document.getElementById('salesChart').getContext('2d');
 
-      // Verificar sesión activa
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
-        window.location.href = 'login.html';
-        return;
-      }
+      // Verificar sesión
+      const { data: { session }, error: sessErr } = await supabase.auth.getSession();
+      if (sessErr || !session) { window.location.href = 'login.html'; return; }
       const user = session.user;
-      console.log('Usuario autenticado:', user.id);
 
-      // Cargar máquinas del usuario
-      const { data: machines, error: machinesError } = await supabase
-        .from('machines')
-        .select('*')
-        .eq('owner_id', user.id);
-      if (machinesError) {
-        console.error('Error cargando máquinas:', machinesError.message);
-        return;
-      }
-      machines.forEach((machine) => {
-        const option = document.createElement('option');
-        option.value = machine.id;
-        option.textContent = machine.name || `Máquina ${machine.id}`;
-        machineSelect.appendChild(option);
+      // Cargar máquinas
+      const { data: machines, error: machErr } = await supabase
+        .from('machines').select('id,name').eq('owner_id', user.id);
+      if (machErr) console.error('Machines load error:', machErr.message);
+      machines.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id; opt.textContent = m.name || `Máquina ${m.id}`;
+        machineSelect.appendChild(opt);
+      });
+
+      // Inicializar gráfico
+      salesChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: [], datasets: [
+          { label: 'Litros', data: [], backgroundColor: 'rgba(0,123,255,0.5)' },
+          { label: 'Ingresos (MXN)', data: [], backgroundColor: 'rgba(40,167,69,0.5)' }
+        ] },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
       });
 
       machineSelect.addEventListener('change', () => loadSales(machineSelect.value));
+      logoutBtn.addEventListener('click', async () => { await supabase.auth.signOut(); window.location.href = 'login.html'; });
 
-      // Función para cargar y mostrar ventas
+      await loadSales();
+
       async function loadSales(machineId = '') {
         try {
-          let query = supabase
-            .from('sales')
-            .select('*')
+          let q = supabase
+            .from('sales').select('created_at,volume,total_price')
             .eq('machine_owner_id', user.id);
-          if (machineId) query = query.eq('machine_id', machineId);
+          if (machineId) q = q.eq('machine_id', machineId);
 
-          const { data: sales, error: salesError } = await query;
-          if (salesError) throw salesError;
+          const { data: sales, error: salesErr } = await q;
+          if (salesErr) throw salesErr;
 
-          const today        = new Date().toISOString().slice(0, 10);
-          const currentMonth = new Date().toISOString().slice(0, 7);
-          const currentYear  = new Date().toISOString().slice(0, 4);
-
-          let hoyTotal = 0, mesTotal = 0, anioTotal = 0;
           ventasBody.innerHTML = '';
+          const labels = [], dataVol = [], dataRev = [];
+          const today  = new Date().toISOString().slice(0, 10);
+          const month  = new Date().toISOString().slice(0, 7);
+          const year   = new Date().toISOString().slice(0, 4);
+          let sumToday = 0, sumMonth = 0, sumYear = 0;
 
-          sales.forEach((sale) => {
-            const isoDate = new Date(sale.created_at).toISOString();
-            const total   = Number(sale.total_price || 0);
-            const volumen = Number(sale.volume      || 0);
-
-            ventasBody.innerHTML += `
-              <tr>
-                <td>${isoDate.slice(0, 10)}</td>
-                <td>${volumen} L</td>
-                <td>$${total.toFixed(2)}</td>
-              </tr>`;
-
-            if (isoDate.startsWith(today))        hoyTotal += total;
-            if (isoDate.startsWith(currentMonth)) mesTotal += total;
-            if (isoDate.startsWith(currentYear))  anioTotal += total;
+          sales.forEach(s => {
+            const date = s.created_at.slice(0, 10);
+            const vol  = Number(s.volume)     || 0;
+            const rev  = Number(s.total_price) || 0;
+            labels.push(date);
+            dataVol.push(vol);
+            dataRev.push(rev);
+            ventasBody.innerHTML += `<tr><td>${date}</td><td>${vol} L</td><td>$${rev.toFixed(2)}</td></tr>`;
+            if (date === today)      sumToday += rev;
+            if (date.startsWith(month)) sumMonth += rev;
+            if (date.startsWith(year))  sumYear += rev;
           });
 
-          totalHoy.textContent  = `$${hoyTotal.toFixed(2)}`;
-          totalMes.textContent  = `$${mesTotal.toFixed(2)}`;
-          totalAnio.textContent = `$${anioTotal.toFixed(2)}`;
+          totalHoyEl.textContent  = `$${sumToday.toFixed(2)}`;
+          totalMesEl.textContent  = `$${sumMonth.toFixed(2)}`;
+          totalAnioEl.textContent = `$${sumYear.toFixed(2)}`;
+
+          salesChart.data.labels            = labels;
+          salesChart.data.datasets[0].data  = dataVol;
+          salesChart.data.datasets[1].data  = dataRev;
+          salesChart.update();
         } catch (err) {
           console.error('Error cargando ventas:', err.message);
           alert('Error cargando ventas: ' + err.message);
         }
       }
-
-      await loadSales();
-
-      // Cerrar sesión
-      logoutBtn.addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = 'login.html';
-      });
     });
   </script>
 </body>
