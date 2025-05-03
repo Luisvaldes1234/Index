@@ -75,7 +75,7 @@
         {
             "label": "Registrarse",
             "altText": "Registrarse",
-            "url": "https://app.netlify.com/signup",
+            "url": "/singup.html",
             "icon": "arrowRight",
             "iconPosition": "right",
             "style": "secondary",
