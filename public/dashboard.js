@@ -10,33 +10,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   const totalMes = document.getElementById('total-mes');
   const totalAnio = document.getElementById('total-anio');
 
-  const {
-    data: { user },
-    error: userError
-  } = await supabase.auth.getUser();
+  // Obtener usuario autenticado
+  const userResponse = await supabase.auth.getUser();
+  const user = userResponse.data.user;
 
-  if (userError || !user) {
+  if (!user) {
     window.location.href = 'login.html';
     return;
   }
 
-  console.log('Usuario activo:', user.id);
+  console.log("Usuario autenticado:", user.id);
 
-  // Cargar máquinas del usuario
-  const { data: machines, error: machineError } = await supabase
+  // Obtener máquinas del usuario
+  const { data: machines, error: machinesError } = await supabase
     .from('machines')
     .select('*')
     .eq('owner_id', user.id);
 
-  if (machineError) {
-    console.error('Error cargando máquinas:', machineError.message);
+  if (machinesError) {
+    console.error('Error cargando máquinas:', machinesError.message);
     return;
   }
 
   machines.forEach((machine) => {
     const option = document.createElement('option');
     option.value = machine.id;
-    option.textContent = machine.name;
+    option.textContent = machine.name || `Máquina ${machine.id}`;
     machineSelect.appendChild(option);
   });
 
@@ -44,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadSales(machineSelect.value);
   });
 
-  async function loadSales(machineId) {
+  async function loadSales(machineId = '') {
     let query = supabase
       .from('sales')
       .select('*')
@@ -61,6 +60,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    console.log('Ventas obtenidas:', sales);
+
     const today = new Date().toISOString().slice(0, 10);
     const currentMonth = new Date().toISOString().slice(0, 7);
     const currentYear = new Date().toISOString().slice(0, 4);
@@ -69,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ventasBody.innerHTML = '';
 
     sales.forEach((sale) => {
-      const iso = new Date(sale.timestamp).toISOString();
+      const iso = new Date(sale.created_at).toISOString();
       const total = Number(sale.total_price || 0);
       const volumen = Number(sale.volume || 0);
 
