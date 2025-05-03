@@ -49,19 +49,21 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const logoutBtn = document.getElementById('logout');
       const machineSelect = document.getElementById('machine-select');
-      const ventasBody = document.getElementById('ventas-body');
-      const totalHoy = document.getElementById('total-hoy');
-      const totalMes = document.getElementById('total-mes');
-      const totalAnio = document.getElementById('total-anio');
+      const ventasBody   = document.getElementById('ventas-body');
+      const totalHoy     = document.getElementById('total-hoy');
+      const totalMes     = document.getElementById('total-mes');
+      const totalAnio    = document.getElementById('total-anio');
 
-      const { data: userResponse } = await supabase.auth.getUser();
-      const user = userResponse.user;
-
-      if (!user) {
+      // Verificar sesión activa
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
         window.location.href = 'login.html';
         return;
       }
+      const user = session.user;
+      console.log('Usuario autenticado:', user.id);
 
+      // Cargar máquinas del usuario
       const { data: machines, error: machinesError } = await supabase
         .from('machines')
         .select('*')
@@ -77,54 +79,59 @@
         machineSelect.appendChild(option);
       });
 
-      machineSelect.addEventListener('change', () => {
-        loadSales(machineSelect.value);
-      });
+      machineSelect.addEventListener('change', () => loadSales(machineSelect.value));
 
+      // Función para cargar y mostrar ventas
       async function loadSales(machineId = '') {
-        let query = supabase
-          .from('sales')
-          .select('*')
-          .eq('machine_owner_id', user.id);
-        if (machineId) query = query.eq('machine_id', machineId);
+        try {
+          let query = supabase
+            .from('sales')
+            .select('*')
+            .eq('machine_owner_id', user.id);
+          if (machineId) query = query.eq('machine_id', machineId);
 
-        const { data: sales, error: salesError } = await query;
-        if (salesError) {
-          console.error('Error cargando ventas:', salesError.message);
-          return;
+          const { data: sales, error: salesError } = await query;
+          if (salesError) throw salesError;
+
+          const today        = new Date().toISOString().slice(0, 10);
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          const currentYear  = new Date().toISOString().slice(0, 4);
+
+          let hoyTotal = 0, mesTotal = 0, anioTotal = 0;
+          ventasBody.innerHTML = '';
+
+          sales.forEach((sale) => {
+            const isoDate = new Date(sale.created_at).toISOString();
+            const total   = Number(sale.total_price || 0);
+            const volumen = Number(sale.volume      || 0);
+
+            ventasBody.innerHTML += `
+              <tr>
+                <td>${isoDate.slice(0, 10)}</td>
+                <td>${volumen} L</td>
+                <td>$${total.toFixed(2)}</td>
+              </tr>`;
+
+            if (isoDate.startsWith(today))        hoyTotal += total;
+            if (isoDate.startsWith(currentMonth)) mesTotal += total;
+            if (isoDate.startsWith(currentYear))  anioTotal += total;
+          });
+
+          totalHoy.textContent  = `$${hoyTotal.toFixed(2)}`;
+          totalMes.textContent  = `$${mesTotal.toFixed(2)}`;
+          totalAnio.textContent = `$${anioTotal.toFixed(2)}`;
+        } catch (err) {
+          console.error('Error cargando ventas:', err.message);
+          alert('Error cargando ventas: ' + err.message);
         }
-
-        const today = new Date().toISOString().slice(0, 10);
-        const currentMonth = new Date().toISOString().slice(0, 7);
-        const currentYear = new Date().toISOString().slice(0, 4);
-        let hoyTotal = 0, mesTotal = 0, anioTotal = 0;
-        ventasBody.innerHTML = '';
-
-        sales.forEach((sale) => {
-          const iso = new Date(sale.created_at).toISOString();
-          const total = Number(sale.total_price || 0);
-          const volumen = Number(sale.volume || 0);
-          ventasBody.innerHTML += `
-            <tr>
-              <td>${iso.slice(0, 10)}</td>
-              <td>${volumen} L</td>
-              <td>$${total.toFixed(2)}</td>
-            </tr>`;
-          if (iso.startsWith(today)) hoyTotal += total;
-          if (iso.startsWith(currentMonth)) mesTotal += total;
-          if (iso.startsWith(currentYear)) anioTotal += total;
-        });
-
-        totalHoy.textContent = `$${hoyTotal.toFixed(2)}`;
-        totalMes.textContent = `$${mesTotal.toFixed(2)}`;
-        totalAnio.textContent = `$${anioTotal.toFixed(2)}`;
       }
 
       await loadSales();
 
+      // Cerrar sesión
       logoutBtn.addEventListener('click', async () => {
         await supabase.auth.signOut();
-        window.location.href = 'https://aqualink.netlify.app/';
+        window.location.href = 'login.html';
       });
     });
   </script>
