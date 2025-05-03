@@ -1,108 +1,87 @@
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // reemplaza con tu anon key
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error || !user) {
     window.location.href = 'login.html';
     return;
   }
 
+  const userId = user.id;
+
+  // Logout
   document.getElementById('logout').addEventListener('click', async () => {
     await supabase.auth.signOut();
     window.location.href = 'login.html';
   });
 
-  const machineSelect = document.getElementById('machine-select');
-  const tableBody = document.getElementById('ventas-body');
-  const totalHoy = document.getElementById('total-hoy');
-  const totalMes = document.getElementById('total-mes');
-  const totalAnio = document.getElementById('total-anio');
-  const status = document.getElementById('status');
-
-  const { data: machines, error: machinesError } = await supabase
+  // Obtener máquinas
+  const { data: machines, error: machineError } = await supabase
     .from('machines')
-    .select('id, nombre')
-    .eq('owner_id', user.id);
+    .select('id, name')
+    .eq('owner_id', userId);
 
-  if (machinesError) {
-    status.textContent = 'Error al cargar máquinas: ' + machinesError.message;
+  const select = document.getElementById('machine-select');
+  machines.forEach(machine => {
+    const opt = document.createElement('option');
+    opt.value = machine.id;
+    opt.textContent = machine.name;
+    select.appendChild(opt);
+  });
+
+  select.addEventListener('change', () => {
+    cargarVentas(userId, select.value);
+  });
+
+  // Cargar ventas al iniciar
+  cargarVentas(userId);
+});
+
+async function cargarVentas(userId, machineId = '') {
+  let query = supabase
+    .from('sales')
+    .select('created_at, volume, total_price')
+    .eq('machine_owner_id', userId);
+
+  if (machineId) query = query.eq('machine_id', machineId);
+
+  const { data: ventas, error } = await query;
+
+  if (error) {
+    console.error('Error al obtener ventas:', error);
+    document.getElementById('status').textContent = 'Error cargando ventas.';
     return;
   }
 
-  // Llenar el selector con todas las máquinas
-  machines.forEach(machine => {
-    const option = document.createElement('option');
-    option.value = machine.id;
-    option.textContent = machine.nombre || `Máquina ${machine.id}`;
-    machineSelect.appendChild(option);
+  const tbody = document.getElementById('ventas-body');
+  tbody.innerHTML = '';
+
+  let totalHoy = 0, totalMes = 0, totalAnio = 0;
+  const hoy = new Date().toISOString().slice(0, 10);
+  const mes = hoy.slice(0, 7);
+  const anio = hoy.slice(0, 4);
+
+  ventas.forEach(v => {
+    const fecha = v.created_at.slice(0, 10);
+    const precio = parseFloat(v.total_price);
+
+    if (fecha === hoy) totalHoy += precio;
+    if (fecha.startsWith(mes)) totalMes += precio;
+    if (fecha.startsWith(anio)) totalAnio += precio;
+
+    const row = `
+      <tr>
+        <td class="py-2 px-4 border-b">${fecha}</td>
+        <td class="py-2 px-4 border-b">${v.volume} L</td>
+        <td class="py-2 px-4 border-b">$${precio.toFixed(2)}</td>
+      </tr>`;
+    tbody.insertAdjacentHTML('beforeend', row);
   });
 
-  // Función para cargar ventas
-  async function cargarVentas(machineId = null) {
-    tableBody.innerHTML = '';
-    status.textContent = 'Cargando ventas...';
-
-    let query = supabase.from('sales').select('*').order('timestamp', { ascending: false });
-    if (machineId) {
-      query = query.eq('machine_id', machineId);
-    }
-
-    const { data: ventas, error: ventasError } = await query;
-    if (ventasError) {
-      status.textContent = 'Error al cargar ventas: ' + ventasError.message;
-      return;
-    }
-
-    // Inicializar totales
-    const hoy = new Date();
-    const mes = hoy.getMonth();
-    const anio = hoy.getFullYear();
-
-    let litrosHoy = 0, totalHoyNum = 0;
-    let litrosMes = 0, totalMesNum = 0;
-    let litrosAnio = 0, totalAnioNum = 0;
-
-    ventas.forEach(v => {
-      const fecha = new Date(v.timestamp);
-      const vol = v.volume || 0;
-      const price = v.total_price || 0;
-
-      if (fecha.toDateString() === hoy.toDateString()) {
-        litrosHoy += vol;
-        totalHoyNum += price;
-      }
-      if (fecha.getFullYear() === anio && fecha.getMonth() === mes) {
-        litrosMes += vol;
-        totalMesNum += price;
-      }
-      if (fecha.getFullYear() === anio) {
-        litrosAnio += vol;
-        totalAnioNum += price;
-      }
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="py-2 px-4 border-b">${fecha.toLocaleString()}</td>
-        <td class="py-2 px-4 border-b">${vol}L</td>
-        <td class="py-2 px-4 border-b">$${price}</td>
-      `;
-      tableBody.appendChild(row);
-    });
-
-    totalHoy.textContent = `${litrosHoy}L / $${totalHoyNum}`;
-    totalMes.textContent = `${litrosMes}L / $${totalMesNum}`;
-    totalAnio.textContent = `${litrosAnio}L / $${totalAnioNum}`;
-    status.textContent = ventas.length ? '' : 'No hay ventas registradas.';
-  }
-
-  // Cargar ventas iniciales (todas las máquinas)
-  cargarVentas();
-
-  // Cambiar filtro al seleccionar otra máquina
-  machineSelect.addEventListener('change', () => {
-    const machineId = machineSelect.value;
-    cargarVentas(machineId || null);
-  });
-});
+  document.getElementById('total-hoy').textContent = `$${totalHoy.toFixed(2)}`;
+  document.getElementById('total-mes').textContent = `$${totalMes.toFixed(2)}`;
+  document.getElementById('total-anio').textContent = `$${totalAnio.toFixed(2)}`;
+}
