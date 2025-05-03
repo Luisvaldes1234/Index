@@ -113,7 +113,7 @@ sections:
             justifyContent: center
         type: FeaturedItem
       - title: Gestión flexible
-        subtitle: Faster
+        subtitle: Cambia precios y volúmenes remotamente
         text: >-
           Sed ut perspiciatis unde omnis iste natus error sit voluptatem
           accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae.
