@@ -77,7 +77,7 @@ sections:
         type: PricingPlan
       - title: Anual
         price: $4499
-        details: per month
+        details: Ahorra $1501
         description: >-
           Sed ut perspiciatis unde omnis iste natus error sit voluptatem
           accusantium doloremque laudantium, totam rem aperiam.
