@@ -83,7 +83,7 @@
         },
         {
             "label": "Log in",
-            "url": "/",
+            "url": "/Login.html",
             "icon": "arrowRight",
             "iconPosition": "right",
             "style": "primary",
