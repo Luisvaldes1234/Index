@@ -82,7 +82,7 @@
             "type": "Button"
         },
         {
-            "label": "Log in",
+            "label": "Iniciar Sesion",
             "url": "/https://aqualink.netlify.app/Login.html",
             "icon": "arrowRight",
             "iconPosition": "right",
