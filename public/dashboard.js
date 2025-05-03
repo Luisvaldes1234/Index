@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const totalMes = document.getElementById('total-mes');
   const totalAnio = document.getElementById('total-anio');
 
-  // Obtener usuario autenticado
   const userResponse = await supabase.auth.getUser();
   const user = userResponse.data.user;
 
@@ -21,7 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   console.log("Usuario autenticado:", user.id);
 
-  // Obtener máquinas del usuario
   const { data: machines, error: machinesError } = await supabase
     .from('machines')
     .select('*')
