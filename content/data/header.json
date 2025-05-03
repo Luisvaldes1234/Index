@@ -82,15 +82,15 @@
             "type": "Button"
         },
         {
-            "label": "Log in",
-            "url": "/",
+            "label": "Iniciar Sesion",
+            "url": "/Login.html",
             "icon": "arrowRight",
             "iconPosition": "right",
             "style": "primary",
             "type": "Button"
         }
     ],
-    "variant": "logo-left-primary-nav-centered",
+    "variant": "logo-left-primary-nav-left",
     "colors": "bg-light-fg-dark",
     "type": "Header"
 }
