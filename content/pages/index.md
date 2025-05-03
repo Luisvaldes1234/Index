@@ -10,7 +10,7 @@ sections:
     subtitle: 'Tu máquina de agua, ahora inteligente.'
     text: "> Con\_AquaLink\_puedes conocer exactamente:\n\n\n\n*   > Cuántos litros se vendieron hoy\n\n*   > Cuánto dinero hay en la máquina\n\n*   > Cuándo se usó y con qué monedas\n\n*   > Y todo, sin tener que ir a verla\n\n\n\n\n\n\nAdemás, puedes cambiar precios y volúmenes desde una interfaz web segura.\n\nSolo los usuarios suscritos acceden al panel privado.\n"
     actions:
-      - label: Get started
+      - label: Saber mas
         altText: ''
         url: /
         showIcon: false
