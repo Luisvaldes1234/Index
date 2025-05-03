@@ -1,87 +1,85 @@
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // reemplaza con tu anon key
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Usa tu key completa aquí
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const logoutBtn = document.getElementById('logout');
+  const machineSelect = document.getElementById('machine-select');
+  const ventasBody = document.getElementById('ventas-body');
+  const totalHoy = document.getElementById('total-hoy');
+  const totalMes = document.getElementById('total-mes');
+  const totalAnio = document.getElementById('total-anio');
 
-  if (error || !user) {
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
     window.location.href = 'login.html';
     return;
   }
 
-  const userId = user.id;
-
-  // Logout
-  document.getElementById('logout').addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    window.location.href = 'login.html';
-  });
-
-  // Obtener máquinas
-  const { data: machines, error: machineError } = await supabase
+  const { data: machines } = await supabase
     .from('machines')
-    .select('id, name')
-    .eq('owner_id', userId);
+    .select('*')
+    .eq('owner_id', user.id);
 
-  const select = document.getElementById('machine-select');
-  machines.forEach(machine => {
-    const opt = document.createElement('option');
-    opt.value = machine.id;
-    opt.textContent = machine.name;
-    select.appendChild(opt);
+  machines.forEach((machine) => {
+    const option = document.createElement('option');
+    option.value = machine.id;
+    option.textContent = machine.name;
+    machineSelect.appendChild(option);
   });
 
-  select.addEventListener('change', () => {
-    cargarVentas(userId, select.value);
+  machineSelect.addEventListener('change', () => {
+    loadSales(machineSelect.value);
   });
 
-  // Cargar ventas al iniciar
-  cargarVentas(userId);
-});
+  async function loadSales(machineId) {
+    let query = supabase.from('sales').select('*').eq('machine_owner_id', user.id);
 
-async function cargarVentas(userId, machineId = '') {
-  let query = supabase
-    .from('sales')
-    .select('created_at, volume, total_price')
-    .eq('machine_owner_id', userId);
+    if (machineId) {
+      query = query.eq('machine_id', machineId);
+    }
 
-  if (machineId) query = query.eq('machine_id', machineId);
+    const { data: sales } = await query;
 
-  const { data: ventas, error } = await query;
+    const today = new Date().toISOString().slice(0, 10);
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentYear = new Date().toISOString().slice(0, 4);
 
-  if (error) {
-    console.error('Error al obtener ventas:', error);
-    document.getElementById('status').textContent = 'Error cargando ventas.';
-    return;
+    let hoyTotal = 0, mesTotal = 0, anioTotal = 0;
+
+    ventasBody.innerHTML = '';
+
+    sales.forEach((sale) => {
+      const date = new Date(sale.created_at);
+      const iso = date.toISOString();
+
+      const total = Number(sale.total_price);
+      const row = `
+        <tr>
+          <td class="py-2 px-4 border-b">${iso.slice(0, 10)}</td>
+          <td class="py-2 px-4 border-b">${sale.volume} L</td>
+          <td class="py-2 px-4 border-b">$${total.toFixed(2)}</td>
+        </tr>
+      `;
+      ventasBody.innerHTML += row;
+
+      if (iso.startsWith(today)) hoyTotal += total;
+      if (iso.startsWith(currentMonth)) mesTotal += total;
+      if (iso.startsWith(currentYear)) anioTotal += total;
+    });
+
+    totalHoy.textContent = `$${hoyTotal.toFixed(2)}`;
+    totalMes.textContent = `$${mesTotal.toFixed(2)}`;
+    totalAnio.textContent = `$${anioTotal.toFixed(2)}`;
   }
 
-  const tbody = document.getElementById('ventas-body');
-  tbody.innerHTML = '';
+  await loadSales();
 
-  let totalHoy = 0, totalMes = 0, totalAnio = 0;
-  const hoy = new Date().toISOString().slice(0, 10);
-  const mes = hoy.slice(0, 7);
-  const anio = hoy.slice(0, 4);
-
-  ventas.forEach(v => {
-    const fecha = v.created_at.slice(0, 10);
-    const precio = parseFloat(v.total_price);
-
-    if (fecha === hoy) totalHoy += precio;
-    if (fecha.startsWith(mes)) totalMes += precio;
-    if (fecha.startsWith(anio)) totalAnio += precio;
-
-    const row = `
-      <tr>
-        <td class="py-2 px-4 border-b">${fecha}</td>
-        <td class="py-2 px-4 border-b">${v.volume} L</td>
-        <td class="py-2 px-4 border-b">$${precio.toFixed(2)}</td>
-      </tr>`;
-    tbody.insertAdjacentHTML('beforeend', row);
+  logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = 'https://aqualink.netlify.app/';
   });
-
-  document.getElementById('total-hoy').textContent = `$${totalHoy.toFixed(2)}`;
-  document.getElementById('total-mes').textContent = `$${totalMes.toFixed(2)}`;
-  document.getElementById('total-anio').textContent = `$${totalAnio.toFixed(2)}`;
-}
+});
