@@ -83,7 +83,7 @@
         },
         {
             "label": "Log in",
-            "url": "/Login.html",
+            "url": "/https://aqualink.netlify.app/Login.html",
             "icon": "arrowRight",
             "iconPosition": "right",
             "style": "primary",
