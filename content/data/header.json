@@ -74,7 +74,7 @@
     "secondaryLinks": [
         {
             "label": "Registrarse",
-            "altText": "Sign up",
+            "altText": "Registrarse",
             "url": "https://app.netlify.com/signup",
             "icon": "arrowRight",
             "iconPosition": "right",
