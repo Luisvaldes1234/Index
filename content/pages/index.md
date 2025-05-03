@@ -8,10 +8,7 @@ sections:
       color: text-dark
       type: TitleBlock
     subtitle: 'Tu máquina de agua, ahora inteligente.'
-    text: >
-      A Netlify Create website is a git repo that you own. Every code commit is
-      instantly reflected in the visual editor and since every visual edit is a
-      git commit, git workflows and collaboration just work.
+    text: "> Con\_AquaLink\_puedes conocer exactamente:\n\n\n\n*   > Cuántos litros se vendieron hoy\n\n*   > Cuánto dinero hay en la máquina\n\n*   > Cuándo se usó y con qué monedas\n\n*   > Y todo, sin tener que ir a verla\n\n\n\n\n\n\nAdemás, puedes cambiar precios y volúmenes desde una interfaz web segura.\n\nSolo los usuarios suscritos acceden al panel privado.\n"
     actions:
       - label: Get started
         altText: ''
