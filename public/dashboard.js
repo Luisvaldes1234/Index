@@ -1,5 +1,5 @@
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -10,28 +10,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   const totalMes = document.getElementById('total-mes');
   const totalAnio = document.getElementById('total-anio');
 
-  // Autenticación
   const {
-    data: { user }
+    data: { user },
+    error: userError
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (userError || !user) {
     window.location.href = 'login.html';
     return;
   }
 
-  // Obtener máquinas del usuario
+  console.log('Usuario activo:', user.id);
+
+  // Cargar máquinas del usuario
   const { data: machines, error: machineError } = await supabase
     .from('machines')
     .select('*')
     .eq('owner_id', user.id);
 
-  if (machineError || !machines || machines.length === 0) {
-    machineSelect.innerHTML += '<option value="">No hay máquinas</option>';
+  if (machineError) {
+    console.error('Error cargando máquinas:', machineError.message);
     return;
   }
 
-  // Cargar select de máquinas
   machines.forEach((machine) => {
     const option = document.createElement('option');
     option.value = machine.id;
@@ -43,14 +44,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadSales(machineSelect.value);
   });
 
-  // Cargar ventas
   async function loadSales(machineId) {
-    const machineIds = machines.map(m => m.id);
-
     let query = supabase
       .from('sales')
       .select('*')
-      .in('machine_id', machineIds);
+      .eq('machine_owner_id', user.id);
 
     if (machineId) {
       query = query.eq('machine_id', machineId);
@@ -59,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { data: sales, error: salesError } = await query;
 
     if (salesError) {
-      ventasBody.innerHTML = '<tr><td colspan="3" class="py-2 px-4 text-center text-red-500">Error al cargar ventas.</td></tr>';
+      console.error('Error cargando ventas:', salesError.message);
       return;
     }
 
@@ -71,14 +69,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     ventasBody.innerHTML = '';
 
     sales.forEach((sale) => {
-      const date = new Date(sale.created_at);
-      const iso = date.toISOString();
-      const total = Number(sale.total_price);
+      const iso = new Date(sale.timestamp).toISOString();
+      const total = Number(sale.total_price || 0);
+      const volumen = Number(sale.volume || 0);
 
       const row = `
         <tr>
           <td class="py-2 px-4 border-b">${iso.slice(0, 10)}</td>
-          <td class="py-2 px-4 border-b">${sale.volume} L</td>
+          <td class="py-2 px-4 border-b">${volumen} L</td>
           <td class="py-2 px-4 border-b">$${total.toFixed(2)}</td>
         </tr>
       `;
@@ -94,10 +92,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     totalAnio.textContent = `$${anioTotal.toFixed(2)}`;
   }
 
-  // Carga inicial
   await loadSales();
 
-  // Cerrar sesión
   logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
     window.location.href = 'https://aqualink.netlify.app/';
