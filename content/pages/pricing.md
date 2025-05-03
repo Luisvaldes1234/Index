@@ -45,7 +45,7 @@ sections:
         type: PricingPlan
       - title: 6 Meses
         price: $2499
-        details: per month
+        details: Ahorra $501
         description: >-
           Sed ut perspiciatis unde omnis, iste natus error sit voluptatem
           accusantium doloremque.
