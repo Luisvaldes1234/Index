@@ -59,7 +59,7 @@ sections:
     subtitle: Subtitle goes here
     items:
       - type: FeaturedItem
-        title: +60% menos visitas físicas
+        title: 60% menos visitas físicas
         subtitle: Numbers Done
         text: >+
           > Ya no necesitas ir físicamente a la máquina para saber si se vendió
