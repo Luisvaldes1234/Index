@@ -1,63 +1,132 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Panel de Ventas</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Supabase</title>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
 </head>
-<body class="bg-gray-100 font-sans">
+<body>
+  <h1>Dashboard de Ventas</h1>
+  <button id="logout">Cerrar Sesión</button>
 
-  <div class="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-md">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl font-bold text-gray-800">Panel de Ventas</h1>
-      <button id="logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Cerrar sesión</button>
-    </div>
+  <section>
+    <h2>Seleccione la Máquina</h2>
+    <select id="machine-select">
+      <option value="">Todas las máquinas</option>
+    </select>
+  </section>
 
-    <div class="mb-4">
-      <label for="machine-select" class="block text-gray-700 font-medium mb-2">Filtrar por máquina:</label>
-      <select id="machine-select" class="w-full p-2 border border-gray-300 rounded">
-        <option value="">Todas las máquinas</option>
-      </select>
-    </div>
+  <section>
+    <h2>Resumen Financiero</h2>
+    <p>Total Hoy: <span id="total-hoy">$0.00</span></p>
+    <p>Total Mes: <span id="total-mes">$0.00</span></p>
+    <p>Total Año: <span id="total-anio">$0.00</span></p>
+  </section>
 
-    <!-- Totales -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
-      <div class="bg-blue-100 p-4 rounded">
-        <h3 class="text-sm font-medium text-gray-600">Hoy</h3>
-        <p id="total-hoy" class="text-lg font-bold text-gray-800">-</p>
-      </div>
-      <div class="bg-green-100 p-4 rounded">
-        <h3 class="text-sm font-medium text-gray-600">Este mes</h3>
-        <p id="total-mes" class="text-lg font-bold text-gray-800">-</p>
-      </div>
-      <div class="bg-yellow-100 p-4 rounded">
-        <h3 class="text-sm font-medium text-gray-600">Este año</h3>
-        <p id="total-anio" class="text-lg font-bold text-gray-800">-</p>
-      </div>
-    </div>
-
-    <!-- Tabla de ventas -->
-    <table class="min-w-full bg-white border border-gray-300">
+  <section>
+    <h2>Detalle de Ventas</h2>
+    <table>
       <thead>
-        <tr class="bg-gray-200 text-gray-700 text-left">
-          <th class="py-2 px-4 border-b">Fecha</th>
-          <th class="py-2 px-4 border-b">Volumen</th>
-          <th class="py-2 px-4 border-b">Total</th>
+        <tr>
+          <th>Fecha</th>
+          <th>Volumen</th>
+          <th>Total (MXN)</th>
         </tr>
       </thead>
       <tbody id="ventas-body">
-        <!-- Cargado dinámicamente -->
+        <!-- Filas generadas dinámicamente -->
       </tbody>
     </table>
+  </section>
 
-    <div id="status" class="mt-4 text-sm text-gray-600"></div>
-  </div>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGx...';
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const logoutBtn = document.getElementById('logout');
+      const machineSelect = document.getElementById('machine-select');
+      const ventasBody = document.getElementById('ventas-body');
+      const totalHoy = document.getElementById('total-hoy');
+      const totalMes = document.getElementById('total-mes');
+      const totalAnio = document.getElementById('total-anio');
 
-  <!-- Tu script -->
-  <script src="dashboard.js"></script>
+      const { data: userResponse } = await supabase.auth.getUser();
+      const user = userResponse.user;
+
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const { data: machines, error: machinesError } = await supabase
+        .from('machines')
+        .select('*')
+        .eq('owner_id', user.id);
+      if (machinesError) {
+        console.error('Error cargando máquinas:', machinesError.message);
+        return;
+      }
+      machines.forEach((machine) => {
+        const option = document.createElement('option');
+        option.value = machine.id;
+        option.textContent = machine.name || `Máquina ${machine.id}`;
+        machineSelect.appendChild(option);
+      });
+
+      machineSelect.addEventListener('change', () => {
+        loadSales(machineSelect.value);
+      });
+
+      async function loadSales(machineId = '') {
+        let query = supabase
+          .from('sales')
+          .select('*')
+          .eq('machine_owner_id', user.id);
+        if (machineId) query = query.eq('machine_id', machineId);
+
+        const { data: sales, error: salesError } = await query;
+        if (salesError) {
+          console.error('Error cargando ventas:', salesError.message);
+          return;
+        }
+
+        const today = new Date().toISOString().slice(0, 10);
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        const currentYear = new Date().toISOString().slice(0, 4);
+        let hoyTotal = 0, mesTotal = 0, anioTotal = 0;
+        ventasBody.innerHTML = '';
+
+        sales.forEach((sale) => {
+          const iso = new Date(sale.created_at).toISOString();
+          const total = Number(sale.total_price || 0);
+          const volumen = Number(sale.volume || 0);
+          ventasBody.innerHTML += `
+            <tr>
+              <td>${iso.slice(0, 10)}</td>
+              <td>${volumen} L</td>
+              <td>$${total.toFixed(2)}</td>
+            </tr>`;
+          if (iso.startsWith(today)) hoyTotal += total;
+          if (iso.startsWith(currentMonth)) mesTotal += total;
+          if (iso.startsWith(currentYear)) anioTotal += total;
+        });
+
+        totalHoy.textContent = `$${hoyTotal.toFixed(2)}`;
+        totalMes.textContent = `$${mesTotal.toFixed(2)}`;
+        totalAnio.textContent = `$${anioTotal.toFixed(2)}`;
+      }
+
+      await loadSales();
+
+      logoutBtn.addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'https://aqualink.netlify.app/';
+      });
+    });
+  </script>
 </body>
 </html>
