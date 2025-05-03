@@ -9,14 +9,11 @@
   <!-- Supabase JS -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; background: #f5f5f5; }
-    h1 { text-align: center; }
-    #controls { display: flex; justify-content: flex-end; gap: 1rem; margin-bottom: 1rem; }
-    select, button { padding: 0.5rem 1rem; font-size: 1rem; }
-    #chart-container { background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 2rem; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    th, td { padding: 0.75rem; border-bottom: 1px solid #e0e0e0; }
-    th { background: #fafafa; text-align: left; }
+    body { font-family: Arial, sans-serif; margin: 2rem; background: #f9f9f9; }
+    h1 { text-align: center; margin-bottom: 1rem; }
+    #controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; }
+    select, input[type='date'], button { padding: 0.5rem 1rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; }
+    #chart-container { background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; }
   </style>
 </head>
 <body>
@@ -25,31 +22,16 @@
     <select id="machine-select">
       <option value="">Todas las máquinas</option>
     </select>
+    <input type="date" id="start-date" />
+    <input type="date" id="end-date" />
+    <button id="apply-filters">Aplicar filtros</button>
+    <button id="download-csv">Descargar CSV</button>
     <button id="logout">Cerrar Sesión</button>
   </div>
 
   <div id="chart-container">
     <canvas id="salesChart"></canvas>
   </div>
-
-  <section id="summary">
-    <p>Total Hoy: <strong id="total-hoy">$0.00</strong></p>
-    <p>Total Mes: <strong id="total-mes">$0.00</strong></p>
-    <p>Total Año: <strong id="total-anio">$0.00</strong></p>
-  </section>
-
-  <section>
-    <table>
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Volumen</th>
-          <th>Total (MXN)</th>
-        </tr>
-      </thead>
-      <tbody id="ventas-body"></tbody>
-    </table>
-  </section>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -58,14 +40,17 @@
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     let salesChart;
+    let currentLabels = [];
+    let currentData = [];
+
     document.addEventListener('DOMContentLoaded', async () => {
-      const logoutBtn     = document.getElementById('logout');
-      const machineSelect = document.getElementById('machine-select');
-      const ventasBody    = document.getElementById('ventas-body');
-      const totalHoyEl    = document.getElementById('total-hoy');
-      const totalMesEl    = document.getElementById('total-mes');
-      const totalAnioEl   = document.getElementById('total-anio');
-      const ctx           = document.getElementById('salesChart').getContext('2d');
+      const logoutBtn      = document.getElementById('logout');
+      const machineSelect  = document.getElementById('machine-select');
+      const startDateInput = document.getElementById('start-date');
+      const endDateInput   = document.getElementById('end-date');
+      const applyFilters   = document.getElementById('apply-filters');
+      const downloadCsvBtn = document.getElementById('download-csv');
+      const ctx            = document.getElementById('salesChart').getContext('2d');
 
       // Verificar sesión
       const { data: { session }, error: sessErr } = await supabase.auth.getSession();
@@ -73,72 +58,82 @@
       const user = session.user;
 
       // Cargar máquinas
-      const { data: machines, error: machErr } = await supabase
+      const { data: machines } = await supabase
         .from('machines').select('id,name').eq('owner_id', user.id);
-      if (machErr) console.error('Machines load error:', machErr.message);
       machines.forEach(m => {
         const opt = document.createElement('option');
         opt.value = m.id; opt.textContent = m.name || `Máquina ${m.id}`;
         machineSelect.appendChild(opt);
       });
 
-      // Inicializar gráfico
+      // Inicializar gráfico (solo ingresos mensuales)
       salesChart = new Chart(ctx, {
         type: 'bar',
-        data: { labels: [], datasets: [
-          { label: 'Litros', data: [], backgroundColor: 'rgba(0,123,255,0.5)' },
-          { label: 'Ingresos (MXN)', data: [], backgroundColor: 'rgba(40,167,69,0.5)' }
-        ] },
+        data: { labels: [], datasets: [{ label: 'Ingresos (MXN)', data: [] }] },
         options: { responsive: true, scales: { y: { beginAtZero: true } } }
       });
 
-      machineSelect.addEventListener('change', () => loadSales(machineSelect.value));
+      // Eventos
+      applyFilters.addEventListener('click', () => loadSales());
+      machineSelect.addEventListener('change', () => loadSales());
       logoutBtn.addEventListener('click', async () => { await supabase.auth.signOut(); window.location.href = 'login.html'; });
+      downloadCsvBtn.addEventListener('click', downloadCsv);
 
+      // Primera carga
       await loadSales();
 
-      async function loadSales(machineId = '') {
+      async function loadSales() {
         try {
+          // Consultar ventas filtradas
           let q = supabase
-            .from('sales').select('created_at,volume,total_price')
+            .from('sales_view')
+            .select('created_at,total_price,machine_id,machine_owner_id')
             .eq('machine_owner_id', user.id);
-          if (machineId) q = q.eq('machine_id', machineId);
+          if (machineSelect.value) q = q.eq('machine_id', machineSelect.value);
+          if (startDateInput.value) q = q.gte('created_at', startDateInput.value);
+          if (endDateInput.value)   q = q.lte('created_at', endDateInput.value);
 
-          const { data: sales, error: salesErr } = await q;
-          if (salesErr) throw salesErr;
+          const { data: sales, error } = await q;
+          if (error) throw error;
 
-          ventasBody.innerHTML = '';
-          const labels = [], dataVol = [], dataRev = [];
-          const today  = new Date().toISOString().slice(0, 10);
-          const month  = new Date().toISOString().slice(0, 7);
-          const year   = new Date().toISOString().slice(0, 4);
-          let sumToday = 0, sumMonth = 0, sumYear = 0;
-
+          // Agrupar por mes
+          const agg = {};
           sales.forEach(s => {
-            const date = s.created_at.slice(0, 10);
-            const vol  = Number(s.volume)     || 0;
-            const rev  = Number(s.total_price) || 0;
-            labels.push(date);
-            dataVol.push(vol);
-            dataRev.push(rev);
-            ventasBody.innerHTML += `<tr><td>${date}</td><td>${vol} L</td><td>$${rev.toFixed(2)}</td></tr>`;
-            if (date === today)      sumToday += rev;
-            if (date.startsWith(month)) sumMonth += rev;
-            if (date.startsWith(year))  sumYear += rev;
+            const d = new Date(s.created_at);
+            const key = d.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+            agg[key] = (agg[key] || 0) + Number(s.total_price);
           });
 
-          totalHoyEl.textContent  = `$${sumToday.toFixed(2)}`;
-          totalMesEl.textContent  = `$${sumMonth.toFixed(2)}`;
-          totalAnioEl.textContent = `$${sumYear.toFixed(2)}`;
+          // Ordenar etiquetas cronológicamente
+          const sorted = Object.keys(agg).sort((a, b) => {
+            const [ma, ya] = a.split(' ');
+            const [mb, yb] = b.split(' ');
+            return new Date(`${ma} 1, ${ya}`) - new Date(`${mb} 1, ${yb}`);
+          });
 
-          salesChart.data.labels            = labels;
-          salesChart.data.datasets[0].data  = dataVol;
-          salesChart.data.datasets[1].data  = dataRev;
+          // Actualizar datos
+          currentLabels = sorted;
+          currentData   = sorted.map(m => agg[m]);
+
+          salesChart.data.labels            = currentLabels;
+          salesChart.data.datasets[0].data  = currentData;
           salesChart.update();
         } catch (err) {
           console.error('Error cargando ventas:', err.message);
           alert('Error cargando ventas: ' + err.message);
         }
+      }
+
+      function downloadCsv() {
+        let csv = 'Mes,Ingresos (MXN)\n';
+        currentLabels.forEach((l, i) => { csv += `${l},${currentData[i]}\n`; });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = 'ingresos_mensuales.csv';
+        a.click();
+        URL.revokeObjectURL(url);
       }
     });
   </script>
