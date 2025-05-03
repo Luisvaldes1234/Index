@@ -89,10 +89,10 @@ sections:
               borderRadius: x-large
       - title: 100% trazabilidad diaria
         subtitle: Reportes de ventas automáticos
-        text: >-
-          Sed ut perspiciatis unde omnis iste natus error sit voluptatem
-          accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae.
-          explicabo.
+        text: >+
+          > Recibe reportes con fecha, volumen y monedas insertadas. Sabrás
+          cuántos litros se vendieron, a qué hora y cuánto dinero hay.
+
         image:
           url: /images/icon2.svg
           altText: Featured icon two
