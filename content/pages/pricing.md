@@ -13,7 +13,7 @@ sections:
     plans:
       - title: 3 Meses
         price: $1499
-        details: No credit card required
+        details: ''
         description: >-
           Sed ut perspiciatis unde omnis, iste natus error sit voluptatem
           accusantium doloremque.
