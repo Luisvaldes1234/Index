@@ -52,7 +52,6 @@
     <input type="password" id="password" placeholder="Contraseña" />
     <button onclick="login()">Ingresar</button>
     <div id="message"></div>
-    <a href="password-reset.html">¿Olvidaste tu contraseña?</a>
     <a href="signup.html">¿No tienes cuenta? Crear cuenta</a>
   </div>
 
@@ -72,7 +71,11 @@
         msg.textContent = 'Error: ' + error.message;
         msg.style.color = 'red';
       } else {
-        window.location.href = '/dashboard.html';
+        msg.textContent = 'Ingreso exitoso...';
+        msg.style.color = 'green';
+        setTimeout(() => {
+          window.location.href = '/dashboard.html';
+        }, 1500);
       }
     }
   </script>
