@@ -2,140 +2,143 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard de Ventas</title>
-  <!-- Chart.js -->
+  <title>Dashboard de Ventas por Volumen</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Supabase JS -->
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; background: #f9f9f9; }
-    h1 { text-align: center; margin-bottom: 1rem; }
-    #controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; }
-    select, input[type='date'], button { padding: 0.5rem 1rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; }
-    #chart-container { background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-  <h1>Dashboard de Ventas</h1>
-  <div id="controls">
-    <select id="machine-select">
-      <option value="">Todas las máquinas</option>
+  <h1>Reporte de Ventas por Volumen</h1>
+
+  <section id="ventasPorVolumen">
+    <label for="periodo">Seleccionar período:</label>
+    <select id="periodo">
+      <option value="dia">Día</option>
+      <option value="semana">Semana</option>
+      <option value="mes">Mes</option>
+      <option value="anio">Año</option>
     </select>
-    <input type="date" id="start-date" />
-    <input type="date" id="end-date" />
-    <button id="apply-filters">Aplicar filtros</button>
-    <button id="download-csv">Descargar CSV</button>
-    <button id="logout">Cerrar Sesión</button>
-  </div>
 
-  <div id="chart-container">
-    <canvas id="salesChart"></canvas>
-  </div>
+    <input type="date" id="fechaSeleccionada" />
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    <button onclick="cargarVentas()">Ver Reporte</button>
 
-    let salesChart;
-    let currentLabels = [];
-    let currentData = [];
+    <div id="resultadoVentas"></div>
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      const logoutBtn      = document.getElementById('logout');
-      const machineSelect  = document.getElementById('machine-select');
-      const startDateInput = document.getElementById('start-date');
-      const endDateInput   = document.getElementById('end-date');
-      const applyFilters   = document.getElementById('apply-filters');
-      const downloadCsvBtn = document.getElementById('download-csv');
-      const ctx            = document.getElementById('salesChart').getContext('2d');
+    <canvas id="graficoVentas" width="400" height="200"></canvas>
 
-      // Verificar sesión
-      const { data: { session }, error: sessErr } = await supabase.auth.getSession();
-      if (sessErr || !session) { window.location.href = 'login.html'; return; }
-      const user = session.user;
+    <button onclick="descargarCSV()">Descargar CSV</button>
+  </section>
 
-      // Cargar máquinas
-      const { data: machines } = await supabase
-        .from('machines').select('id,name').eq('owner_id', user.id);
-      machines.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.id; opt.textContent = m.name || `Máquina ${m.id}`;
-        machineSelect.appendChild(opt);
-      });
+  <script>
+    const supabaseUrl = 'https://ikouxllerfjnibjtlklk.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-      // Inicializar gráfico (solo ingresos mensuales)
-      salesChart = new Chart(ctx, {
-        type: 'bar',
-        data: { labels: [], datasets: [{ label: 'Ingresos (MXN)', data: [] }] },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
-      });
+    let resumenGlobal = {};
 
-      // Eventos
-      applyFilters.addEventListener('click', () => loadSales());
-      machineSelect.addEventListener('change', () => loadSales());
-      logoutBtn.addEventListener('click', async () => { await supabase.auth.signOut(); window.location.href = 'login.html'; });
-      downloadCsvBtn.addEventListener('click', downloadCsv);
+    async function cargarVentas() {
+      const periodo = document.getElementById("periodo").value;
+      const fecha = new Date(document.getElementById("fechaSeleccionada").value);
+      let desde, hasta;
 
-      // Primera carga
-      await loadSales();
+      if (periodo === "dia") {
+        desde = new Date(fecha);
+        hasta = new Date(fecha);
+        hasta.setDate(hasta.getDate() + 1);
+      } else if (periodo === "semana") {
+        const dia = fecha.getDay();
+        desde = new Date(fecha);
+        desde.setDate(fecha.getDate() - dia);
+        hasta = new Date(desde);
+        hasta.setDate(hasta.getDate() + 7);
+      } else if (periodo === "mes") {
+        desde = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+        hasta = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 1);
+      } else {
+        desde = new Date(fecha.getFullYear(), 0, 1);
+        hasta = new Date(fecha.getFullYear() + 1, 0, 1);
+      }
 
-      async function loadSales() {
-        try {
-          // Consultar ventas filtradas
-          let q = supabase
-            .from('sales_view')
-            .select('created_at,total_price,machine_id,machine_owner_id')
-            .eq('machine_owner_id', user.id);
-          if (machineSelect.value) q = q.eq('machine_id', machineSelect.value);
-          if (startDateInput.value) q = q.gte('created_at', startDateInput.value);
-          if (endDateInput.value)   q = q.lte('created_at', endDateInput.value);
+      const { data, error } = await supabase
+        .from('ventas')
+        .select('*')
+        .gte('fecha', desde.toISOString())
+        .lt('fecha', hasta.toISOString());
 
-          const { data: sales, error } = await q;
-          if (error) throw error;
+      if (error) {
+        console.error(error);
+        alert("Error cargando datos.");
+        return;
+      }
 
-          // Agrupar por mes
-          const agg = {};
-          sales.forEach(s => {
-            const d = new Date(s.created_at);
-            const key = d.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
-            agg[key] = (agg[key] || 0) + Number(s.total_price);
-          });
+      mostrarVentas(data);
+    }
 
-          // Ordenar etiquetas cronológicamente
-          const sorted = Object.keys(agg).sort((a, b) => {
-            const [ma, ya] = a.split(' ');
-            const [mb, yb] = b.split(' ');
-            return new Date(`${ma} 1, ${ya}`) - new Date(`${mb} 1, ${yb}`);
-          });
+    function mostrarVentas(data) {
+      const resumen = { '5': 0, '10': 0, '20': 0 };
+      const conteo = { '5': 0, '10': 0, '20': 0 };
 
-          // Actualizar datos
-          currentLabels = sorted;
-          currentData   = sorted.map(m => agg[m]);
-
-          salesChart.data.labels            = currentLabels;
-          salesChart.data.datasets[0].data  = currentData;
-          salesChart.update();
-        } catch (err) {
-          console.error('Error cargando ventas:', err.message);
-          alert('Error cargando ventas: ' + err.message);
+      data.forEach(v => {
+        const litros = v.volumen_litros.toString();
+        if (resumen[litros] !== undefined) {
+          resumen[litros] += v.total;
+          conteo[litros]++;
         }
+      });
+
+      resumenGlobal = { resumen, conteo };
+
+      let html = '<h3>Resumen:</h3><ul>';
+      for (let l of ['5', '10', '20']) {
+        html += `<li>${l}L x ${resumen[l].toFixed(2)}$ (${conteo[l]} ventas)</li>`;
+      }
+      html += '</ul>';
+
+      document.getElementById("resultadoVentas").innerHTML = html;
+      generarGrafico(resumen, conteo);
+    }
+
+    function generarGrafico(resumen, conteo) {
+      const ctx = document.getElementById('graficoVentas').getContext('2d');
+      if (window.ventasChart) window.ventasChart.destroy();
+
+      window.ventasChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['5L', '10L', '20L'],
+          datasets: [{
+            label: 'Ingresos por volumen ($)',
+            data: [resumen['5'], resumen['10'], resumen['20']],
+            backgroundColor: ['#4caf50', '#2196f3', '#ff9800']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    function descargarCSV() {
+      const { resumen, conteo } = resumenGlobal;
+      let csv = 'Volumen (L),Ventas ($),Cantidad de ventas\n';
+
+      for (let l of ['5', '10', '20']) {
+        csv += `${l},${resumen[l].toFixed(2)},${conteo[l]}\n`;
       }
 
-      function downloadCsv() {
-        let csv = 'Mes,Ingresos (MXN)\n';
-        currentLabels.forEach((l, i) => { csv += `${l},${currentData[i]}\n`; });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href     = url;
-        a.download = 'ingresos_mensuales.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ventas_por_volumen.csv';
+      a.click();
+    }
   </script>
 </body>
 </html>
