@@ -8,23 +8,16 @@ function mostrarSeccion(id) {
   document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
 
-  if (id === 'litros') {
-    cargarGraficoLitros();
-  }
+  if (id === 'litros') cargarGraficoLitros();
 }
 
-// === Cargar lista de máquinas al inicio ===
+// === Cargar lista de máquinas ===
 async function cargarMaquinas() {
   const { data, error } = await supabase.from('maquinas').select('id, nombre');
-
-  if (error) {
-    console.error("Error al cargar máquinas:", error);
-    return;
-  }
+  if (error) return console.error("Error al cargar máquinas:", error);
 
   const select = document.getElementById('filtroMaquina');
   select.innerHTML = '<option value="">Todas las máquinas</option>';
-
   data.forEach(m => {
     const option = document.createElement('option');
     option.value = m.id;
@@ -33,7 +26,7 @@ async function cargarMaquinas() {
   });
 }
 
-// === Cargar resumen de ventas ===
+// === Resumen de ventas ===
 async function cargarResumen() {
   const filtroPeriodo = document.getElementById('filtroPeriodo').value;
   const filtroMaquina = document.getElementById('filtroMaquina').value;
@@ -67,20 +60,14 @@ async function cargarResumen() {
   }
 
   const { data, error } = await query;
+  if (error) return alert("❌ Error al cargar datos");
 
-  if (error) {
-    console.error('Error al cargar ventas:', error);
-    alert("Error al cargar datos de Supabase");
-    return;
-  }
-
-  let total = 0;
-  let litros = 0;
+  let total = 0, litros = 0;
   const conteo = {};
 
   data.forEach(v => {
-    total += v.total;
-    litros += v.volumen_litros;
+    total += v.total || 0;
+    litros += v.volumen_litros || 0;
     const clave = `${v.volumen_litros}L`;
     conteo[clave] = (conteo[clave] || 0) + 1;
   });
@@ -97,20 +84,16 @@ async function cargarResumen() {
   }
 }
 
-// === Gráfico de litros vendidos ===
+// === Gráfico de litros vendidos por día (últimos 7 días) ===
 async function cargarGraficoLitros() {
   const { data, error } = await supabase
     .from('ventas')
     .select('volumen_litros, created_at')
-    .gte('created_at', new Date(new Date().setDate(new Date().getDate() - 6)).toISOString()); // últimos 7 días
+    .gte('created_at', new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString());
 
-  if (error) {
-    console.error('Error al cargar datos del gráfico:', error);
-    return;
-  }
+  if (error) return console.error('Error al cargar datos del gráfico:', error);
 
   const porDia = {};
-
   data.forEach(v => {
     const fecha = new Date(v.created_at).toLocaleDateString();
     porDia[fecha] = (porDia[fecha] || 0) + v.volumen_litros;
@@ -127,15 +110,15 @@ async function cargarGraficoLitros() {
       datasets: [{
         label: 'Litros vendidos por día',
         data: litros,
-        borderWidth: 1,
-        backgroundColor: 'rgba(59, 130, 246, 0.6)'
+        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1
       }]
     },
     options: {
+      responsive: true,
       scales: {
-        y: {
-          beginAtZero: true
-        }
+        y: { beginAtZero: true }
       }
     }
   });
@@ -159,10 +142,41 @@ async function guardarConfiguracion() {
   if (error) {
     console.error('Error al guardar configuración:', error);
     alert('❌ Error al guardar configuración');
+  } else {
+    alert('✅ Configuración guardada correctamente');
+  }
+}
+
+// === Exportar historial como CSV ===
+async function exportarHistorialCSV() {
+  const { data, error } = await supabase
+    .from('ventas')
+    .select('id, machine_id, volumen_litros, total, created_at');
+
+  if (error) {
+    console.error('Error al exportar:', error);
+    alert("❌ No se pudo exportar historial");
     return;
   }
 
-  alert('✅ Configuración guardada correctamente');
+  if (!data || data.length === 0) {
+    alert("⚠️ No hay datos para exportar");
+    return;
+  }
+
+  const headers = Object.keys(data[0]);
+  const rows = data.map(obj => headers.map(h => `"${obj[h] ?? ''}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `historial_ventas_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 // === Ejecutar al cargar ===
