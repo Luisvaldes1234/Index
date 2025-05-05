@@ -1,100 +1,85 @@
-const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
+const supabaseUrl = 'https://ikouxllerfjnibjtlklk.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const logoutBtn = document.getElementById('logout');
-  const machineSelect = document.getElementById('machine-select');
-  const ventasBody = document.getElementById('ventas-body');
-  const totalHoy = document.getElementById('total-hoy');
-  const totalMes = document.getElementById('total-mes');
-  const totalAnio = document.getElementById('total-anio');
+// Navegación entre pestañas
+function mostrarSeccion(id) {
+  document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
 
-  const userResponse = await supabase.auth.getUser();
-  const user = userResponse.data.user;
+// Cargar resumen de ventas
+async function cargarResumen() {
+  const filtroPeriodo = document.getElementById('filtroPeriodo').value;
+  const filtroMaquina = document.getElementById('filtroMaquina').value;
 
-  if (!user) {
-    window.location.href = 'login.html';
-    return;
+  const fecha = new Date();
+  let desde, hasta = new Date();
+
+  if (filtroPeriodo === 'dia') {
+    desde = new Date(fecha.setHours(0, 0, 0, 0));
+    hasta = new Date(fecha.setHours(23, 59, 59, 999));
+  } else if (filtroPeriodo === 'semana') {
+    const firstDay = fecha.getDate() - fecha.getDay();
+    desde = new Date(fecha.setDate(firstDay));
+    hasta = new Date(fecha.setDate(firstDay + 7));
+  } else if (filtroPeriodo === 'mes') {
+    desde = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+    hasta = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 1);
+  } else {
+    desde = new Date(fecha.getFullYear(), 0, 1);
+    hasta = new Date(fecha.getFullYear() + 1, 0, 1);
   }
 
-  console.log("Usuario autenticado:", user.id);
-
-  const { data: machines, error: machinesError } = await supabase
-    .from('machines')
+  let query = supabase
+    .from('ventas')
     .select('*')
-    .eq('owner_id', user.id);
+    .gte('fecha', desde.toISOString())
+    .lt('fecha', hasta.toISOString());
 
-  if (machinesError) {
-    console.error('Error cargando máquinas:', machinesError.message);
+  if (filtroMaquina) {
+    query = query.eq('maquina_id', filtroMaquina);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error al cargar ventas:', error);
     return;
   }
 
-  machines.forEach((machine) => {
-    const option = document.createElement('option');
-    option.value = machine.id;
-    option.textContent = machine.name || `Máquina ${machine.id}`;
-    machineSelect.appendChild(option);
+  let total = 0;
+  let litros = 0;
+  const conteo = {};
+
+  data.forEach(v => {
+    total += v.total;
+    litros += v.volumen_litros;
+    const clave = `${v.volumen_litros}L`;
+    conteo[clave] = (conteo[clave] || 0) + 1;
   });
 
-  machineSelect.addEventListener('change', () => {
-    loadSales(machineSelect.value);
-  });
+  document.getElementById('ventasTotales').innerText = `$${total.toFixed(2)}`;
+  document.getElementById('litrosTotales').innerText = `${litros} L`;
 
-  async function loadSales(machineId = '') {
-    let query = supabase
-      .from('sales')
-      .select('*')
-      .eq('machine_owner_id', user.id);
-
-    if (machineId) {
-      query = query.eq('machine_id', machineId);
-    }
-
-    const { data: sales, error: salesError } = await query;
-
-    if (salesError) {
-      console.error('Error cargando ventas:', salesError.message);
-      return;
-    }
-
-    console.log('Ventas obtenidas:', sales);
-
-    const today = new Date().toISOString().slice(0, 10);
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const currentYear = new Date().toISOString().slice(0, 4);
-
-    let hoyTotal = 0, mesTotal = 0, anioTotal = 0;
-    ventasBody.innerHTML = '';
-
-    sales.forEach((sale) => {
-      const iso = new Date(sale.created_at).toISOString();
-      const total = Number(sale.total_price || 0);
-      const volumen = Number(sale.volume || 0);
-
-      const row = `
-        <tr>
-          <td class="py-2 px-4 border-b">${iso.slice(0, 10)}</td>
-          <td class="py-2 px-4 border-b">${volumen} L</td>
-          <td class="py-2 px-4 border-b">$${total.toFixed(2)}</td>
-        </tr>
-      `;
-      ventasBody.innerHTML += row;
-
-      if (iso.startsWith(today)) hoyTotal += total;
-      if (iso.startsWith(currentMonth)) mesTotal += total;
-      if (iso.startsWith(currentYear)) anioTotal += total;
-    });
-
-    totalHoy.textContent = `$${hoyTotal.toFixed(2)}`;
-    totalMes.textContent = `$${mesTotal.toFixed(2)}`;
-    totalAnio.textContent = `$${anioTotal.toFixed(2)}`;
+  const lista = document.getElementById('volumenesVendidos');
+  lista.innerHTML = '';
+  for (const clave in conteo) {
+    const li = document.createElement('li');
+    li.innerText = `${clave}: ${conteo[clave]} ventas`;
+    lista.appendChild(li);
   }
+}
 
-  await loadSales();
+// Guardar configuración (simulado por ahora)
+function guardarConfiguracion() {
+  const form = document.getElementById('formConfig');
+  const litros = form.btn1_litros.value;
+  const precio = form.btn1_precio.value;
 
-  logoutBtn.addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    window.location.href = 'https://aqualink.netlify.app/';
+  console.log("Enviar configuración:", {
+    boton1: { litros, precio }
   });
-});
+
+  alert("Configuración guardada (simulada)");
+}
