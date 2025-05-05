@@ -7,6 +7,10 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 function mostrarSeccion(id) {
   document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
+
+  if (id === 'litros') {
+    cargarGraficoLitros();
+  }
 }
 
 // === Cargar lista de máquinas al inicio ===
@@ -19,6 +23,8 @@ async function cargarMaquinas() {
   }
 
   const select = document.getElementById('filtroMaquina');
+  select.innerHTML = '<option value="">Todas las máquinas</option>';
+
   data.forEach(m => {
     const option = document.createElement('option');
     option.value = m.id;
@@ -53,11 +59,11 @@ async function cargarResumen() {
   let query = supabase
     .from('ventas')
     .select('*')
-    .gte('fecha', desde.toISOString())
-    .lt('fecha', hasta.toISOString());
+    .gte('created_at', desde.toISOString())
+    .lt('created_at', hasta.toISOString());
 
   if (filtroMaquina) {
-    query = query.eq('maquina_id', filtroMaquina);
+    query = query.eq('machine_id', filtroMaquina);
   }
 
   const { data, error } = await query;
@@ -89,6 +95,50 @@ async function cargarResumen() {
     li.innerText = `${clave}: ${conteo[clave]} ventas`;
     lista.appendChild(li);
   }
+}
+
+// === Gráfico de litros vendidos ===
+async function cargarGraficoLitros() {
+  const { data, error } = await supabase
+    .from('ventas')
+    .select('volumen_litros, created_at')
+    .gte('created_at', new Date(new Date().setDate(new Date().getDate() - 6)).toISOString()); // últimos 7 días
+
+  if (error) {
+    console.error('Error al cargar datos del gráfico:', error);
+    return;
+  }
+
+  const porDia = {};
+
+  data.forEach(v => {
+    const fecha = new Date(v.created_at).toLocaleDateString();
+    porDia[fecha] = (porDia[fecha] || 0) + v.volumen_litros;
+  });
+
+  const labels = Object.keys(porDia);
+  const litros = Object.values(porDia);
+
+  const ctx = document.getElementById('graficoLitros').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Litros vendidos por día',
+        data: litros,
+        borderWidth: 1,
+        backgroundColor: 'rgba(59, 130, 246, 0.6)'
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
 }
 
 // === Guardar configuración remota ===
