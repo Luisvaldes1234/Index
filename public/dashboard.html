@@ -23,6 +23,7 @@
 
     <!-- Contenido principal -->
     <main class="flex-1 p-6">
+
       <!-- Sección: Resumen -->
       <section id="resumen">
         <h2 class="text-2xl font-semibold mb-4">Resumen de Ventas</h2>
@@ -82,10 +83,14 @@
       <!-- Sección: Historial -->
       <section id="historial" class="hidden">
         <h2 class="text-2xl font-semibold mb-4">Historial de Ventas</h2>
+        <button onclick="exportarHistorialCSV()" class="mb-4 bg-green-600 text-white px-4 py-2 rounded">
+          📤 Exportar CSV
+        </button>
         <div id="tablaHistorial" class="overflow-auto bg-white rounded shadow p-4">
           <!-- Aquí irá la tabla -->
         </div>
       </section>
+
     </main>
   </div>
 </body>
