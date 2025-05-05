@@ -1,15 +1,15 @@
-// === Configurar Supabase ===
-const supabaseUrl = 'https://ikouxllerfjnibjtlklk.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ';
+// === Conexión a Supabase ===
+const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// === Navegación entre pestañas ===
+// === Navegación entre secciones ===
 function mostrarSeccion(id) {
   document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
 }
 
-// === Cargar lista de máquinas ===
+// === Cargar lista de máquinas al inicio ===
 async function cargarMaquinas() {
   const { data, error } = await supabase.from('maquinas').select('id, nombre');
 
@@ -115,7 +115,7 @@ async function guardarConfiguracion() {
   alert('✅ Configuración guardada correctamente');
 }
 
-// === Al iniciar la página ===
+// === Ejecutar al cargar ===
 document.addEventListener("DOMContentLoaded", () => {
   cargarMaquinas();
   mostrarSeccion('resumen');
