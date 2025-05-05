@@ -2,84 +2,91 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Aqualink</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script defer src="dashboard.js"></script>
-  <script defer src="api.js"></script>
+  <script src="dashboard.js" defer></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 text-gray-900">
   <div class="flex min-h-screen">
     <!-- Sidebar -->
-    <aside class="w-64 bg-white shadow-lg p-4">
-      <h2 class="text-2xl font-bold text-blue-600 mb-6">Aqualink</h2>
-      <nav class="space-y-4">
-        <button class="w-full text-left" onclick="mostrarSeccion('resumen')">Resumen</button>
-        <button class="w-full text-left" onclick="mostrarSeccion('litros')">Litros Vendidos</button>
-        <button class="w-full text-left" onclick="mostrarSeccion('config')">Configurar Máquina</button>
-        <button class="w-full text-left" onclick="mostrarSeccion('historial')">Historial</button>
+    <aside class="w-64 bg-white shadow-md p-4 space-y-4">
+      <h1 class="text-xl font-bold mb-6">Aqualink Dashboard</h1>
+      <nav class="space-y-2">
+        <button onclick="mostrarSeccion('resumen')" class="block w-full text-left hover:text-blue-600">📊 Resumen</button>
+        <button onclick="mostrarSeccion('litros')" class="block w-full text-left hover:text-blue-600">💧 Litros Vendidos</button>
+        <button onclick="mostrarSeccion('config')" class="block w-full text-left hover:text-blue-600">⚙️ Configuración Remota</button>
+        <button onclick="mostrarSeccion('historial')" class="block w-full text-left hover:text-blue-600">🕒 Historial</button>
       </nav>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Contenido principal -->
     <main class="flex-1 p-6">
-      <!-- Resumen -->
-      <section id="resumen" class="hidden">
-        <h1 class="text-2xl font-bold mb-4">Resumen</h1>
-        <div class="flex gap-4 mb-4">
-          <select id="filtroMaquina" class="border p-2"></select>
-          <input type="date" id="filtroFecha" class="border p-2" />
-          <button onclick="cargarResumen()" class="bg-blue-500 text-white px-4 py-2">Aplicar</button>
+      <!-- Sección: Resumen -->
+      <section id="resumen">
+        <h2 class="text-2xl font-semibold mb-4">Resumen de Ventas</h2>
+        <div class="flex space-x-4 mb-4">
+          <select id="filtroMaquina" class="border rounded p-2">
+            <option value="">Todas las máquinas</option>
+          </select>
+          <select id="filtroPeriodo" class="border rounded p-2">
+            <option value="dia">Hoy</option>
+            <option value="semana">Esta semana</option>
+            <option value="mes">Este mes</option>
+            <option value="anio">Este año</option>
+          </select>
+          <button onclick="cargarResumen()" class="bg-blue-600 text-white px-4 py-2 rounded">Actualizar</button>
         </div>
-        <div id="resumenDatos" class="grid grid-cols-2 gap-4"></div>
-        <canvas id="graficoResumen" class="mt-6"></canvas>
+
+        <div id="resumenDatos" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white p-4 rounded shadow">
+            <p class="text-gray-500">Ventas Totales</p>
+            <p id="ventasTotales" class="text-xl font-bold">$0</p>
+          </div>
+          <div class="bg-white p-4 rounded shadow">
+            <p class="text-gray-500">Litros Vendidos</p>
+            <p id="litrosTotales" class="text-xl font-bold">0 L</p>
+          </div>
+          <div class="bg-white p-4 rounded shadow">
+            <p class="text-gray-500">Compras por Volumen</p>
+            <ul id="volumenesVendidos" class="text-sm space-y-1"></ul>
+          </div>
+        </div>
       </section>
 
-      <!-- Litros Vendidos -->
+      <!-- Sección: Litros -->
       <section id="litros" class="hidden">
-        <h1 class="text-2xl font-bold mb-4">Litros Vendidos</h1>
-        <div id="tablaLitros" class="overflow-x-auto"></div>
-        <canvas id="graficoLitros" class="mt-6"></canvas>
+        <h2 class="text-2xl font-semibold mb-4">Análisis de Litros Vendidos</h2>
+        <canvas id="graficoLitros" width="400" height="200"></canvas>
       </section>
 
-      <!-- Configurar Máquina -->
+      <!-- Sección: Configuración -->
       <section id="config" class="hidden">
-        <h1 class="text-2xl font-bold mb-4">Configuración Remota</h1>
+        <h2 class="text-2xl font-semibold mb-4">Configuración Remota</h2>
         <form id="formConfig" class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label>Nombre de Máquina</label>
-            <input type="text" name="nombre" class="border p-2 w-full">
+            <label class="block">Botón 1 (litros):</label>
+            <input type="number" name="btn1_litros" class="w-full border p-2 rounded" />
           </div>
           <div>
-            <label>Volumen Botón 1 (L)</label>
-            <input type="number" name="b1" class="border p-2 w-full">
+            <label class="block">Botón 1 (precio):</label>
+            <input type="number" name="btn1_precio" class="w-full border p-2 rounded" />
           </div>
-          <div>
-            <label>Precio Botón 1 ($)</label>
-            <input type="number" name="p1" class="border p-2 w-full">
+          <div class="md:col-span-3">
+            <button type="button" onclick="guardarConfiguracion()" class="bg-green-600 text-white px-4 py-2 rounded">Guardar Cambios</button>
           </div>
-          <!-- Botón 2 y 3 similares -->
         </form>
-        <button onclick="guardarConfiguracion()" class="bg-green-500 text-white mt-4 px-4 py-2">Guardar y Enviar</button>
       </section>
 
-      <!-- Historial -->
+      <!-- Sección: Historial -->
       <section id="historial" class="hidden">
-        <h1 class="text-2xl font-bold mb-4">Historial de Ventas</h1>
-        <div id="tablaHistorial" class="overflow-x-auto"></div>
-        <button onclick="descargarHistorialCSV()" class="bg-gray-700 text-white mt-4 px-4 py-2">Descargar CSV</button>
+        <h2 class="text-2xl font-semibold mb-4">Historial de Ventas</h2>
+        <div id="tablaHistorial" class="overflow-auto bg-white rounded shadow p-4">
+          <!-- Aquí irá la tabla -->
+        </div>
       </section>
     </main>
   </div>
-
-  <script>
-    function mostrarSeccion(id) {
-      document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
-      document.getElementById(id).classList.remove('hidden');
-    }
-    window.onload = () => mostrarSeccion('resumen');
-  </script>
 </body>
 </html>
