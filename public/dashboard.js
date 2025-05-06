@@ -210,6 +210,73 @@ async function cargarHistorial() {
 // === Guardar configuración remota ===
 async function guardarConfiguracion() {
   const form = document.getElementById('formConfig');
+  
+// === Cargar historial de ventas con filtro ===
+async function cargarHistorial() {
+  const periodo = document.getElementById('filtroHistorialPeriodo').value;
+  const ahora = new Date();
+  let desde = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+  let hasta = new Date();
+
+  if (periodo === 'anio') {
+    desde = new Date(ahora.getFullYear(), 0, 1);
+  } else if (periodo === 'todo') {
+    desde = new Date(2000, 0, 1); // Muy atrás
+  }
+
+  const { data, error } = await supabase
+    .from('ventas')
+    .select('*')
+    .gte('fecha', desde.toISOString())
+    .lte('fecha', hasta.toISOString())
+    .order('fecha', { ascending: false });
+
+  if (error) {
+    console.error('Error cargando historial:', error);
+    return;
+  }
+
+  const tabla = document.getElementById('tablaHistorial');
+  tabla.innerHTML = `
+    <table class="w-full text-sm">
+      <thead><tr><th>Fecha</th><th>Máquina</th><th>Volumen</th><th>Total</th></tr></thead>
+      <tbody>
+        ${data.map(v => `
+          <tr>
+            <td>${new Date(v.fecha).toLocaleString()}</td>
+            <td>${v.machine_id}</td>
+            <td>${v.volumen_litros} L</td>
+            <td>$${v.total}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// === Exportar CSV del historial mostrado ===
+function exportarHistorialCSV() {
+  const rows = Array.from(document.querySelectorAll('#tablaHistorial table tr')).map(row =>
+    Array.from(row.children).map(cell => cell.innerText)
+  );
+
+  const csvContent = rows.map(e => e.join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "historial_ventas.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// === Escuchar cambios de filtro ===
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById('filtroHistorialPeriodo').addEventListener('change', cargarHistorial);
+});
+
 
   const config = {
     maquina_id: document.getElementById('filtroMaquina').value || 'default',
