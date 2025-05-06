@@ -335,3 +335,121 @@ function exportarHistorialCSV() {
   a.click();
   URL.revokeObjectURL(url);
 }
+// === Generar checkboxes para máquinas ===
+async function generarCheckboxesMaquinas() {
+  const contenedor = document.getElementById('filtrosMaquinasGrafico');
+  contenedor.innerHTML = ''; // Limpiar
+
+  const { data: maquinas, error } = await supabase.from('maquinas').select('id, nombre');
+  if (error) {
+    console.error('Error al cargar máquinas:', error);
+    return;
+  }
+
+  maquinas.forEach(m => {
+    const label = document.createElement('label');
+    label.className = 'inline-flex items-center space-x-2';
+    label.innerHTML = `
+      <input type="checkbox" value="${m.id}" checked class="maquinaCheckbox">
+      <span>${m.nombre}</span>
+    `;
+    contenedor.appendChild(label);
+  });
+
+  // Recargar gráfica al cambiar selección
+  document.querySelectorAll('.maquinaCheckbox').forEach(chk => {
+    chk.addEventListener('change', cargarGraficoLitros);
+  });
+}
+
+// === Modifica cargarGraficoLitros para filtrar por checkboxes ===
+async function cargarGraficoLitros() {
+  const filtroPeriodo = document.getElementById('filtroPeriodo').value;
+  const ahora = new Date();
+  let desde, hasta;
+
+  if (filtroPeriodo === 'dia') {
+    desde = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+    hasta = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1);
+  } else if (filtroPeriodo === 'semana') {
+    const primerDia = ahora.getDate() - ahora.getDay();
+    desde = new Date(ahora.getFullYear(), ahora.getMonth(), primerDia);
+    hasta = new Date(ahora.getFullYear(), ahora.getMonth(), primerDia + 7);
+  } else if (filtroPeriodo === 'mes') {
+    desde = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+    hasta = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 1);
+  } else {
+    desde = new Date(ahora.getFullYear(), 0, 1);
+    hasta = new Date(ahora.getFullYear() + 1, 0, 1);
+  }
+
+  const seleccionadas = Array.from(document.querySelectorAll('.maquinaCheckbox:checked')).map(cb => parseInt(cb.value));
+
+  const { data: ventas, error } = await supabase
+    .from('ventas')
+    .select('fecha, volumen_litros, machine_id')
+    .gte('fecha', desde.toISOString())
+    .lt('fecha', hasta.toISOString());
+
+  if (error) {
+    console.error('Error cargando ventas:', error);
+    return;
+  }
+
+  const { data: maquinas } = await supabase.from('maquinas').select('id, nombre');
+  const nombreMaquina = {};
+  maquinas.forEach(m => nombreMaquina[m.id] = m.nombre);
+
+  const agrupado = {};
+  ventas.forEach(v => {
+    if (!seleccionadas.includes(v.machine_id)) return;
+
+    const fecha = new Date(v.fecha).toISOString().split('T')[0];
+    if (!agrupado[fecha]) agrupado[fecha] = {};
+    if (!agrupado[fecha][v.machine_id]) agrupado[fecha][v.machine_id] = 0;
+    agrupado[fecha][v.machine_id] += v.volumen_litros;
+  });
+
+  const fechas = Object.keys(agrupado).sort();
+  const datasets = [];
+
+  maquinas.forEach((m, idx) => {
+    if (!seleccionadas.includes(m.id)) return;
+
+    const datos = fechas.map(f => agrupado[f]?.[m.id] || 0);
+    const color = `hsl(${(idx * 137) % 360}, 70%, 50%)`;
+
+    datasets.push({
+      label: nombreMaquina[m.id],
+      data: datos,
+      backgroundColor: color
+    });
+  });
+
+  const ctx = document.getElementById('graficoLitros').getContext('2d');
+  if (window.miGraficoLitros) window.miGraficoLitros.destroy();
+
+  window.miGraficoLitros = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: fechas, datasets },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+// === Llamar al generarCheckboxes cuando se abre la sección ===
+function mostrarSeccion(id) {
+  document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+
+  if (id === 'litros') {
+    generarCheckboxesMaquinas();
+    cargarGraficoLitros();
+  }
+
+  if (id === 'historial') cargarHistorial();
+}
