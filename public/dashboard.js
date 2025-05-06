@@ -15,7 +15,6 @@ function mostrarSeccion(id) {
 // === Cargar lista de máquinas al inicio ===
 async function cargarMaquinas() {
   const { data, error } = await supabase.from('maquinas').select('id, nombre');
-
   if (error) {
     console.error("Error al cargar máquinas:", error);
     return;
@@ -59,12 +58,9 @@ async function cargarResumen() {
     .gte('fecha', desde.toISOString())
     .lt('fecha', hasta.toISOString());
 
-  if (filtroMaquina) {
-    query = query.eq('machine_id', filtroMaquina);
-  }
+  if (filtroMaquina) query = query.eq('machine_id', filtroMaquina);
 
   const { data, error } = await query;
-
   if (error) {
     console.error('Error al cargar ventas:', error);
     alert("Error al cargar datos de Supabase");
@@ -94,29 +90,6 @@ async function cargarResumen() {
   }
 }
 
-// === Guardar configuración remota ===
-async function guardarConfiguracion() {
-  const form = document.getElementById('formConfig');
-
-  const config = {
-    maquina_id: document.getElementById('filtroMaquina').value || 'default',
-    btn1_litros: parseFloat(form.btn1_litros.value),
-    btn1_precio: parseFloat(form.btn1_precio.value),
-    actualizada_en: new Date().toISOString()
-  };
-
-  const { data, error } = await supabase
-    .from('configuracion_maquina')
-    .upsert(config, { onConflict: ['maquina_id'] });
-
-  if (error) {
-    console.error('Error al guardar configuración:', error);
-    alert('❌ Error al guardar configuración');
-    return;
-  }
-
-  alert('✅ Configuración guardada correctamente');
-}
 // === Cargar gráfico de litros vendidos ===
 async function cargarGraficoLitros() {
   const filtroMaquina = document.getElementById('filtroMaquina').value;
@@ -146,14 +119,11 @@ async function cargarGraficoLitros() {
     .gte('fecha', desde.toISOString())
     .lt('fecha', hasta.toISOString());
 
-  if (filtroMaquina) {
-    query = query.eq('maquina_id', filtroMaquina);
-  }
+  if (filtroMaquina) query = query.eq('machine_id', filtroMaquina);
 
   const { data, error } = await query;
-
   if (error) {
-    console.error('Error al cargar datos para el gráfico:', error);
+    console.error('Error al cargar datos para gráfico:', error);
     return;
   }
 
@@ -189,6 +159,7 @@ async function cargarGraficoLitros() {
     }
   });
 }
+
 // === Cargar historial de ventas ===
 async function cargarHistorial() {
   const filtroMaquina = document.getElementById('filtroMaquina').value;
@@ -199,12 +170,9 @@ async function cargarHistorial() {
     .order('fecha', { ascending: false })
     .limit(100);
 
-  if (filtroMaquina) {
-    query = query.eq('maquina_id', filtroMaquina);
-  }
+  if (filtroMaquina) query = query.eq('machine_id', filtroMaquina);
 
   const { data, error } = await query;
-
   if (error) {
     console.error('Error al cargar historial:', error);
     return;
@@ -237,6 +205,30 @@ async function cargarHistorial() {
   const contenedor = document.getElementById('tablaHistorial');
   contenedor.innerHTML = '';
   contenedor.appendChild(tabla);
+}
+
+// === Guardar configuración remota ===
+async function guardarConfiguracion() {
+  const form = document.getElementById('formConfig');
+
+  const config = {
+    maquina_id: document.getElementById('filtroMaquina').value || 'default',
+    btn1_litros: parseFloat(form.btn1_litros.value),
+    btn1_precio: parseFloat(form.btn1_precio.value),
+    actualizada_en: new Date().toISOString()
+  };
+
+  const { data, error } = await supabase
+    .from('configuracion_maquina')
+    .upsert(config, { onConflict: ['maquina_id'] });
+
+  if (error) {
+    console.error('Error al guardar configuración:', error);
+    alert('❌ Error al guardar configuración');
+    return;
+  }
+
+  alert('✅ Configuración guardada correctamente');
 }
 
 // === Ejecutar al cargar ===
