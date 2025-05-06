@@ -27,6 +27,8 @@
       <!-- Sección: Resumen -->
       <section id="resumen">
         <h2 class="text-2xl font-semibold mb-4">Resumen de Ventas</h2>
+
+        <!-- Filtros existentes -->
         <div class="flex space-x-4 mb-4">
           <select id="filtroMaquina" class="border rounded p-2">
             <option value="">Todas las máquinas</option>
@@ -40,12 +42,13 @@
           <button onclick="cargarResumen()" class="bg-blue-600 text-white px-4 py-2 rounded">Actualizar</button>
         </div>
 
-        <div id="resumenDatos" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Cuadros resumen -->
+        <div id="resumenDatos" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div class="bg-white p-4 rounded shadow">
             <p class="text-gray-500">Ventas Totales</p>
             <p id="ventasTotales" class="text-xl font-bold">$0</p>
           </div>
-          <div class="bg-white p-4 rounded shadow">
+           <div class="bg-white p-4 rounded shadow">
             <p class="text-gray-500">Litros Vendidos</p>
             <p id="litrosTotales" class="text-xl font-bold">0 L</p>
           </div>
@@ -54,17 +57,34 @@
             <ul id="volumenesVendidos" class="text-sm space-y-1"></ul>
           </div>
         </div>
+
+        <!-- NUEVO: Filtros personalizados por fecha -->
+        <div class="mb-6 space-x-4">
+          <label class="font-semibold">Filtrar por período:</label>
+          <input type="date" id="fechaInicioResumen" class="border p-1">
+          <input type="date" id="fechaFinResumen" class="border p-1">
+          <button onclick="actualizarResumen()" class="bg-blue-500 text-white px-3 py-1 rounded">Aplicar</button>
+        </div>
+
+        <!-- NUEVO: Gráfica de Ventas por máquina -->
+        <div class="bg-white shadow rounded p-4 mb-6">
+          <h2 class="text-lg font-semibold mb-2">Ventas por máquina</h2>
+          <canvas id="graficaVentasMaquina" height="150"></canvas>
+        </div>
+
+        <!-- NUEVO: Gráfica de Ventas por horario -->
+        <div class="bg-white shadow rounded p-4">
+          <h2 class="text-lg font-semibold mb-2">Ventas por horario</h2>
+          <canvas id="graficaHorarios" height="150"></canvas>
+        </div>
       </section>
 
-<!-- Sección: Litros -->
+      <!-- Sección: Litros -->
       <section id="litros" class="hidden">
-  <h2 class="text-2xl font-semibold mb-4">Análisis de Litros Vendidos</h2>
-  
-  <!-- Aquí se insertan los checkboxes de máquinas -->
-  <div id="filtrosMaquinasGrafico" class="mb-4 space-x-4"></div>
-
-  <canvas id="graficoLitros" width="400" height="200"></canvas>
-</section>
+        <h2 class="text-2xl font-semibold mb-4">Análisis de Litros Vendidos</h2>
+        <div id="filtrosMaquinasGrafico" class="mb-4 space-x-4"></div>
+        <canvas id="graficoLitros" width="400" height="200"></canvas>
+      </section>
 
       <!-- Sección: Configuración -->
       <section id="config" class="hidden">
@@ -84,26 +104,21 @@
         </form>
       </section>
 
-     <!-- Sección: Historial -->
-<section id="historial" class="hidden">
-  <h2 class="text-2xl font-semibold mb-4">Historial de Ventas</h2>
-
-  <div class="flex items-center space-x-4 mb-4">
-    <select id="filtroHistorialPeriodo" class="border p-2 rounded">
-      <option value="mes">Este mes</option>
-      <option value="anio">Este año</option>
-      <option value="todo">Todo el historial</option>
-    </select>
-
-    <button onclick="exportarHistorialCSV()" class="bg-green-600 text-white px-4 py-2 rounded">
-      📤 Exportar CSV
-    </button>
-  </div>
-
-  <div id="tablaHistorial" class="overflow-auto bg-white rounded shadow p-4">
-    <!-- Aquí irá la tabla -->
-  </div>
-</section>
+      <!-- Sección: Historial -->
+      <section id="historial" class="hidden">
+        <h2 class="text-2xl font-semibold mb-4">Historial de Ventas</h2>
+        <div class="flex items-center space-x-4 mb-4">
+          <select id="filtroHistorialPeriodo" class="border p-2 rounded">
+            <option value="mes">Este mes</option>
+            <option value="anio">Este año</option>
+            <option value="todo">Todo el historial</option>
+          </select>
+          <button onclick="exportarHistorialCSV()" class="bg-green-600 text-white px-4 py-2 rounded">📤 Exportar CSV</button>
+        </div>
+        <div id="tablaHistorial" class="overflow-auto bg-white rounded shadow p-4">
+          <!-- Aquí irá la tabla -->
+        </div>
+      </section>
 
     </main>
   </div>
