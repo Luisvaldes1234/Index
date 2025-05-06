@@ -80,16 +80,26 @@
         </form>
       </section>
 
-      <!-- Sección: Historial -->
-      <section id="historial" class="hidden">
-        <h2 class="text-2xl font-semibold mb-4">Historial de Ventas</h2>
-        <button onclick="exportarHistorialCSV()" class="mb-4 bg-green-600 text-white px-4 py-2 rounded">
-          📤 Exportar CSV
-        </button>
-        <div id="tablaHistorial" class="overflow-auto bg-white rounded shadow p-4">
-          <!-- Aquí irá la tabla -->
-        </div>
-      </section>
+     <!-- Sección: Historial -->
+<section id="historial" class="hidden">
+  <h2 class="text-2xl font-semibold mb-4">Historial de Ventas</h2>
+
+  <div class="flex items-center space-x-4 mb-4">
+    <select id="filtroHistorialPeriodo" class="border p-2 rounded">
+      <option value="mes">Este mes</option>
+      <option value="anio">Este año</option>
+      <option value="todo">Todo el historial</option>
+    </select>
+
+    <button onclick="exportarHistorialCSV()" class="bg-green-600 text-white px-4 py-2 rounded">
+      📤 Exportar CSV
+    </button>
+  </div>
+
+  <div id="tablaHistorial" class="overflow-auto bg-white rounded shadow p-4">
+    <!-- Aquí irá la tabla -->
+  </div>
+</section>
 
     </main>
   </div>
