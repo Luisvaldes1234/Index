@@ -236,3 +236,25 @@ document.addEventListener("DOMContentLoaded", () => {
   cargarMaquinas();
   mostrarSeccion('resumen');
 });
+// === Exportar historial como CSV ===
+function exportarHistorialCSV() {
+  const tabla = document.querySelector('#tablaHistorial table');
+  if (!tabla) return alert("No hay historial para exportar");
+
+  let csv = '';
+  const filas = tabla.querySelectorAll('tr');
+
+  filas.forEach(fila => {
+    const celdas = fila.querySelectorAll('th, td');
+    const valores = Array.from(celdas).map(c => `"${c.innerText}"`);
+    csv += valores.join(',') + '\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'historial_ventas.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
