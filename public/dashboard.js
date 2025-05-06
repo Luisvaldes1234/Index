@@ -92,19 +92,18 @@ async function cargarResumen() {
 
 // === Cargar gráfico de litros vendidos ===
 async function cargarGraficoLitros() {
-  const filtroMaquina = document.getElementById('filtroMaquina').value;
   const filtroPeriodo = document.getElementById('filtroPeriodo').value;
 
   const ahora = new Date();
   let desde, hasta;
 
   if (filtroPeriodo === 'dia') {
-    desde = new Date(ahora.setHours(0, 0, 0, 0));
-    hasta = new Date(ahora.setHours(23, 59, 59, 999));
+    desde = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+    hasta = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1);
   } else if (filtroPeriodo === 'semana') {
     const primerDia = ahora.getDate() - ahora.getDay();
-    desde = new Date(ahora.setDate(primerDia));
-    hasta = new Date(ahora.setDate(primerDia + 7));
+    desde = new Date(ahora.getFullYear(), ahora.getMonth(), primerDia);
+    hasta = new Date(ahora.getFullYear(), ahora.getMonth(), primerDia + 7);
   } else if (filtroPeriodo === 'mes') {
     desde = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
     hasta = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 1);
@@ -113,28 +112,45 @@ async function cargarGraficoLitros() {
     hasta = new Date(ahora.getFullYear() + 1, 0, 1);
   }
 
-  let query = supabase
+  // Obtener datos
+  const { data: ventas, error } = await supabase
     .from('ventas')
-    .select('fecha, volumen_litros')
+    .select('fecha, volumen_litros, machine_id')
     .gte('fecha', desde.toISOString())
     .lt('fecha', hasta.toISOString());
 
-  if (filtroMaquina) query = query.eq('machine_id', filtroMaquina);
-
-  const { data, error } = await query;
   if (error) {
-    console.error('Error al cargar datos para gráfico:', error);
+    console.error('Error al cargar ventas para gráfico:', error);
     return;
   }
 
-  const resumenPorDia = {};
-  data.forEach(v => {
+  // Obtener nombres de máquinas
+  const { data: maquinas } = await supabase.from('maquinas').select('id, nombre');
+  const nombreMaquina = {};
+  maquinas.forEach(m => nombreMaquina[m.id] = m.nombre);
+
+  // Agrupar por fecha y máquina
+  const agrupado = {};
+  ventas.forEach(v => {
     const fecha = new Date(v.fecha).toISOString().split('T')[0];
-    resumenPorDia[fecha] = (resumenPorDia[fecha] || 0) + v.volumen_litros;
+    if (!agrupado[fecha]) agrupado[fecha] = {};
+    if (!agrupado[fecha][v.machine_id]) agrupado[fecha][v.machine_id] = 0;
+    agrupado[fecha][v.machine_id] += v.volumen_litros;
   });
 
-  const labels = Object.keys(resumenPorDia).sort();
-  const valores = labels.map(dia => resumenPorDia[dia]);
+  const fechas = Object.keys(agrupado).sort();
+  const datasets = [];
+
+  maquinas.forEach((m, idx) => {
+    const datos = fechas.map(f => agrupado[f]?.[m.id] || 0);
+    const color = `hsl(${(idx * 100) % 360}, 70%, 50%)`;
+
+    datasets.push({
+      label: nombreMaquina[m.id] || `Máquina ${m.id}`,
+      data: datos,
+      backgroundColor: color
+    });
+  });
 
   const ctx = document.getElementById('graficoLitros').getContext('2d');
   if (window.miGraficoLitros) window.miGraficoLitros.destroy();
@@ -142,14 +158,8 @@ async function cargarGraficoLitros() {
   window.miGraficoLitros = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels,
-      datasets: [{
-        label: 'Litros vendidos por día',
-        data: valores,
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        borderWidth: 1
-      }]
+      labels: fechas,
+      datasets: datasets
     },
     options: {
       responsive: true,
