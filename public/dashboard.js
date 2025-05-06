@@ -7,6 +7,9 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 function mostrarSeccion(id) {
   document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
+
+  if (id === 'litros') cargarGraficoLitros();
+  if (id === 'historial') cargarHistorial();
 }
 
 // === Cargar lista de máquinas al inicio ===
@@ -113,6 +116,127 @@ async function guardarConfiguracion() {
   }
 
   alert('✅ Configuración guardada correctamente');
+}
+// === Cargar gráfico de litros vendidos ===
+async function cargarGraficoLitros() {
+  const filtroMaquina = document.getElementById('filtroMaquina').value;
+  const filtroPeriodo = document.getElementById('filtroPeriodo').value;
+
+  const ahora = new Date();
+  let desde, hasta;
+
+  if (filtroPeriodo === 'dia') {
+    desde = new Date(ahora.setHours(0, 0, 0, 0));
+    hasta = new Date(ahora.setHours(23, 59, 59, 999));
+  } else if (filtroPeriodo === 'semana') {
+    const primerDia = ahora.getDate() - ahora.getDay();
+    desde = new Date(ahora.setDate(primerDia));
+    hasta = new Date(ahora.setDate(primerDia + 7));
+  } else if (filtroPeriodo === 'mes') {
+    desde = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+    hasta = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 1);
+  } else {
+    desde = new Date(ahora.getFullYear(), 0, 1);
+    hasta = new Date(ahora.getFullYear() + 1, 0, 1);
+  }
+
+  let query = supabase
+    .from('ventas')
+    .select('fecha, volumen_litros')
+    .gte('fecha', desde.toISOString())
+    .lt('fecha', hasta.toISOString());
+
+  if (filtroMaquina) {
+    query = query.eq('maquina_id', filtroMaquina);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error al cargar datos para el gráfico:', error);
+    return;
+  }
+
+  const resumenPorDia = {};
+  data.forEach(v => {
+    const fecha = new Date(v.fecha).toISOString().split('T')[0];
+    resumenPorDia[fecha] = (resumenPorDia[fecha] || 0) + v.volumen_litros;
+  });
+
+  const labels = Object.keys(resumenPorDia).sort();
+  const valores = labels.map(dia => resumenPorDia[dia]);
+
+  const ctx = document.getElementById('graficoLitros').getContext('2d');
+  if (window.miGraficoLitros) window.miGraficoLitros.destroy();
+
+  window.miGraficoLitros = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Litros vendidos por día',
+        data: valores,
+        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+// === Cargar historial de ventas ===
+async function cargarHistorial() {
+  const filtroMaquina = document.getElementById('filtroMaquina').value;
+
+  let query = supabase
+    .from('ventas')
+    .select('fecha, volumen_litros, total')
+    .order('fecha', { ascending: false })
+    .limit(100);
+
+  if (filtroMaquina) {
+    query = query.eq('maquina_id', filtroMaquina);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error al cargar historial:', error);
+    return;
+  }
+
+  const tabla = document.createElement('table');
+  tabla.classList.add('min-w-full', 'divide-y', 'divide-gray-200');
+
+  const thead = document.createElement('thead');
+  thead.innerHTML = `
+    <tr class="bg-gray-100">
+      <th class="px-4 py-2 text-left">Fecha</th>
+      <th class="px-4 py-2 text-left">Litros</th>
+      <th class="px-4 py-2 text-left">Total ($)</th>
+    </tr>`;
+  tabla.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  data.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="px-4 py-2">${new Date(row.fecha).toLocaleString()}</td>
+      <td class="px-4 py-2">${row.volumen_litros} L</td>
+      <td class="px-4 py-2">$${row.total.toFixed(2)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  tabla.appendChild(tbody);
+
+  const contenedor = document.getElementById('tablaHistorial');
+  contenedor.innerHTML = '';
+  contenedor.appendChild(tabla);
 }
 
 // === Ejecutar al cargar ===
