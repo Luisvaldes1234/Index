@@ -4,21 +4,17 @@
   <meta charset="UTF-8" />
   <title>Aqualink - Dashboard</title>
 
-  <!-- Supabase -->
+  <!-- Librerías necesarias -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- ✅ ESTA LÍNEA ES CLAVE -->
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Script personalizado -->
+  <!-- Tu JS personalizado -->
   <script src="dashboard.js" defer></script>
 
-  <!-- TailwindCSS -->
+  <!-- Estilos -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <style>
-    html {
-      scroll-behavior: smooth;
-    }
+    html { scroll-behavior: smooth; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 p-6">
