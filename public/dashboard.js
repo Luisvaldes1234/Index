@@ -145,6 +145,77 @@ function actualizarGraficaTop(ventas) {
     }
   });
 }
+function actualizarGraficaTop(ventas) {
+  const resumenIngresos = {};
+  const resumenLitros = {};
+
+  ventas.forEach(v => {
+    const nombre = `Máquina ${v.maquina_id}`;
+    resumenIngresos[nombre] = (resumenIngresos[nombre] || 0) + (v.total || 0);
+    resumenLitros[nombre] = (resumenLitros[nombre] || 0) + (v.litros || 0);
+  });
+
+  const topIngresos = Object.entries(resumenIngresos)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  const topLitros = Object.entries(resumenLitros)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  // Lista textual
+  const ul = document.getElementById("topMaquinas");
+  ul.innerHTML = "";
+  topIngresos.forEach(([nombre, total]) => {
+    const li = document.createElement("li");
+    li.textContent = `${nombre}: $${total.toFixed(2)}`;
+    ul.appendChild(li);
+  });
+
+  // Gráfico de ingresos
+  const ctx1 = document.getElementById("graficaVolumenes").getContext("2d");
+  if (window.graficaTop) window.graficaTop.destroy();
+  window.graficaTop = new Chart(ctx1, {
+    type: "bar",
+    data: {
+      labels: topIngresos.map(t => t[0]),
+      datasets: [{
+        label: "Ingresos",
+        data: topIngresos.map(t => t[1]),
+        backgroundColor: "rgba(54, 162, 235, 0.6)"
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: "Top 3 Máquinas por Ingreso" }
+      }
+    }
+  });
+
+  // Gráfico de litros
+  const ctx2 = document.getElementById("graficaLitros").getContext("2d");
+  if (window.graficaLitros) window.graficaLitros.destroy();
+  window.graficaLitros = new Chart(ctx2, {
+    type: "bar",
+    data: {
+      labels: topLitros.map(t => t[0]),
+      datasets: [{
+        label: "Litros vendidos",
+        data: topLitros.map(t => t[1]),
+        backgroundColor: "rgba(75, 192, 192, 0.6)"
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: "Top 3 Máquinas por Litros Vendidos" }
+      }
+    }
+  });
+}
 
 function cerrarSesion() {
   supabase.auth.signOut().then(() => {
