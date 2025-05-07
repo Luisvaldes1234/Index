@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mis Máquinas - Aqualink</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
@@ -22,14 +21,28 @@
           <label for="name" class="block text-sm font-medium">Nombre de la máquina</label>
           <input type="text" id="name" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
         </div>
-        <div>
-          <label for="liters" class="block text-sm font-medium">Litros por botón (ej: 5,10,20)</label>
-          <input type="text" id="liters" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium">Botón 1 - Litros</label>
+            <input type="number" id="liters1" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
+            <label class="block text-sm font-medium mt-2">Precio</label>
+            <input type="number" id="price1" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Botón 2 - Litros</label>
+            <input type="number" id="liters2" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
+            <label class="block text-sm font-medium mt-2">Precio</label>
+            <input type="number" id="price2" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Botón 3 - Litros</label>
+            <input type="number" id="liters3" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
+            <label class="block text-sm font-medium mt-2">Precio</label>
+            <input type="number" id="price3" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
+          </div>
         </div>
-        <div>
-          <label for="prices" class="block text-sm font-medium">Precios por botón (ej: 10,15,25)</label>
-          <input type="text" id="prices" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
-        </div>
+
         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Registrar</button>
       </form>
     </div>
@@ -40,6 +53,8 @@
     </div>
   </div>
 
+  <!-- Scripts en orden correcto -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="maquinas.js"></script>
 </body>
 </html>
