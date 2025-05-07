@@ -32,7 +32,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     option.textContent = m.nombre || `Máquina ${m.id}`;
     select.appendChild(option);
   });
+const ctx = document.getElementById("graficaVolumenes").getContext("2d");
+if (window.graficaTop) window.graficaTop.destroy();
 
+window.graficaTop = new Chart(ctx, {
+  type: "bar",
+  data: {
+    labels: top.map(t => t[0]),
+    datasets: [{
+      label: "Ingresos",
+      data: top.map(t => t[1]),
+      backgroundColor: "rgba(54, 162, 235, 0.6)"
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: {
+        display: true,
+        text: "Top 3 Máquinas por Ingreso"
+      }
+    }
+  }
+});
   actualizarResumen();
 });
 
