@@ -4,16 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Aqualink Dashboard</title>
-  <!-- Plugins -->
+
+  <!-- Cargamos primero el plugin, luego Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>html{scroll-behavior:smooth}</style>
+  <style>html { scroll-behavior: smooth; }</style>
   <script src="dashboard.js" defer></script>
 </head>
 <body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-  <!-- Header -->
+
+  <!-- HEADER -->
   <header class="flex justify-between p-4 bg-white dark:bg-gray-800 shadow-md">
     <h1 class="text-2xl font-bold">Aqualink Dashboard</h1>
     <div class="flex items-center space-x-4">
@@ -21,24 +24,25 @@
       <a href="configuracion.html" class="text-blue-500 dark:text-blue-300">Configuración Remota</a>
       <a href="reportes.html" class="text-blue-500 dark:text-blue-300">Reporte</a>
       <a href="suscripcion.html" class="text-blue-500 dark:text-blue-300">Suscripción</a>
-      <button id="btnCerrar" onclick="cerrarSesion()" class="bg-red-500 text-white px-4 py-1 rounded">Cerrar sesión</button>
+      <button onclick="cerrarSesion()" class="bg-red-500 text-white px-4 py-1 rounded">Cerrar sesión</button>
     </div>
   </header>
 
   <main class="p-6 space-y-6">
-    <!-- Filtros -->
+
+    <!-- FILTROS -->
     <div class="flex flex-wrap gap-4 bg-white dark:bg-gray-800 p-4 rounded shadow">
       <select id="filtroMaquina" class="border p-2 rounded bg-white dark:bg-gray-700">
         <option value="todas">Todas</option>
       </select>
       <input type="date" id="fechaInicioResumen" class="border p-2 rounded bg-white dark:bg-gray-700" />
       <input type="date" id="fechaFinResumen" class="border p-2 rounded bg-white dark:bg-gray-700" />
-      <button id="btnAplicar" class="bg-blue-600 text-white px-4 py-2 rounded">Aplicar</button>
-      <button id="btnExportar" class="bg-green-600 text-white px-4 py-2 rounded">Exportar CSV</button>
-      <button id="btnToggleDark" class="ml-auto bg-gray-600 text-white px-4 py-2 rounded">🌗</button>
+      <button id="btnAplicar" onclick="actualizarResumen()" class="bg-blue-600 text-white px-4 py-2 rounded">Aplicar</button>
+      <button id="btnExportar" onclick="exportarCSV()" class="bg-green-600 text-white px-4 py-2 rounded">Exportar CSV</button>
+      <button id="btnToggleDark" onclick="document.documentElement.classList.toggle('dark')" class="ml-auto bg-gray-600 text-white px-4 py-2 rounded">🌗</button>
     </div>
 
-    <!-- Tarjetas de KPIs -->
+    <!-- KPI CARDS -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
       <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-center">
         <p class="text-gray-500">Ingreso Total</p>
@@ -58,7 +62,7 @@
       </div>
     </div>
 
-    <!-- Gráfica Top 3 Ingresos + Lista -->
+    <!-- TOP 3 INGRESOS + LISTA -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
         <h2 class="text-lg font-semibold mb-4 text-center">Top 3 Máquinas por Ingreso</h2>
@@ -70,9 +74,8 @@
       </div>
     </div>
 
-    <!-- Gráficas Adicionales -->
-    <div id="graficasExtra" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
+    <!-- GRÁFICAS EXTRA -->
+    <div id="graficasExtra" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
       <!-- Litros por Máquina -->
       <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
         <h2 class="text-lg font-semibold mb-4">Litros por Máquina</h2>
@@ -95,8 +98,8 @@
       <div id="mensajeSinVentas" class="hidden col-span-full text-center py-6 text-red-600 dark:text-red-400 font-semibold">
         No hay ventas registradas para el período seleccionado.
       </div>
-
     </div>
+
   </main>
 </body>
 </html>
