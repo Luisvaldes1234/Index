@@ -1,9 +1,9 @@
-// Parte 1/3 - Inicialización y autenticación
-
+// === Inicializar Supabase ===
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+// === Al cargar la página ===
 document.addEventListener("DOMContentLoaded", async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return window.location.href = "login.html";
@@ -13,10 +13,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("fechaInicioResumen").value = inicioMes.toISOString().split("T")[0];
   document.getElementById("fechaFinResumen").value = hoy.toISOString().split("T")[0];
 
+  // Cargar máquinas
   const { data: maquinas, error } = await supabase
     .from("maquinas")
-    .select("id, nombre")
-    .eq("usuario_id", user.id);
+    .select("id, name") // Asegúrate de que sea "name" o ajusta si es "nombre"
+    .eq("owner_id", user.id); // Cambia a "usuario_id" si así lo renombraste
 
   if (error) {
     console.error("Error al cargar máquinas:", error.message);
@@ -27,14 +28,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   maquinas.forEach(m => {
     const option = document.createElement("option");
     option.value = m.id;
-    option.textContent = m.nombre;
+    option.textContent = m.name || `Máquina ${m.id}`;
     select.appendChild(option);
   });
 
   actualizarResumen();
 });
-
-// Parte 2/3 - Obtener y mostrar resumen de ventas
 
 async function actualizarResumen() {
   const maquinaSeleccionada = document.getElementById("filtroMaquina").value;
@@ -56,6 +55,7 @@ async function actualizarResumen() {
   }
 
   const { data: ventas, error } = await query;
+
   if (error) {
     console.error("Error al obtener ventas:", error.message);
     return;
@@ -78,13 +78,10 @@ async function actualizarResumen() {
   actualizarGraficaTop(ventas);
 }
 
-// Parte 3/3 - Mostrar top y cerrar sesión
-
 function actualizarGraficaTop(ventas) {
   const resumen = {};
-
   ventas.forEach(v => {
-    const nombre = v.nombre_maquina || `Máquina ${v.maquina_id}`;
+    const nombre = `Máquina ${v.maquina_id}`;
     resumen[nombre] = (resumen[nombre] || 0) + (v.total || 0);
   });
 
