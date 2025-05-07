@@ -4,10 +4,13 @@
   <meta charset="UTF-8" />
   <title>Aqualink - Dashboard</title>
 
-  <!-- ✅ Primero la librería de Supabase -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
-  <!-- ✅ Luego tu script personalizado -->
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Script personalizado -->
   <script src="dashboard.js" defer></script>
 
   <!-- TailwindCSS -->
@@ -54,8 +57,6 @@
 
   <!-- CONTENIDO PRINCIPAL -->
   <section id="resumen" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
-    <!-- PANEL IZQUIERDO: Desempeño económico -->
     <div class="bg-white shadow rounded p-6 space-y-4">
       <h2 class="text-xl font-bold">Desempeño Económico</h2>
       <div class="grid grid-cols-2 gap-4">
@@ -78,7 +79,7 @@
       </div>
     </div>
 
-    <!-- PANEL DERECHO: Ranking -->
+    <!-- Ranking -->
     <div class="bg-white shadow rounded p-6 space-y-4">
       <h2 class="text-xl font-bold">Ranking</h2>
       <div class="grid grid-cols-2 gap-4">
@@ -92,6 +93,5 @@
       </div>
     </div>
   </section>
-
 </body>
 </html>
