@@ -1,16 +1,20 @@
+// === Conexión a Supabase ===
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+// === Al cargar la página ===
 document.addEventListener("DOMContentLoaded", async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return window.location.href = "login.html";
 
+  // Preseleccionar rango del mes actual
   const hoy = new Date();
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   document.getElementById("fechaInicioResumen").value = inicioMes.toISOString().split("T")[0];
   document.getElementById("fechaFinResumen").value = hoy.toISOString().split("T")[0];
 
+  // Cargar máquinas del usuario
   const { data: maquinas, error } = await supabase
     .from("maquinas")
     .select("id, nombre")
@@ -29,9 +33,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     select.appendChild(option);
   });
 
-  actualizarResumen();
+  actualizarResumen(); // carga inicial
 });
-
 async function actualizarResumen() {
   const maquinaSeleccionada = document.getElementById("filtroMaquina").value;
   const fechaInicio = document.getElementById("fechaInicioResumen").value;
@@ -40,6 +43,7 @@ async function actualizarResumen() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
+  // Construir la consulta
   let query = supabase
     .from("ventas")
     .select("*")
@@ -58,8 +62,10 @@ async function actualizarResumen() {
     return;
   }
 
+  // Procesar datos
   let totalVentas = 0;
   let litrosTotales = 0;
+
   ventas.forEach(v => {
     totalVentas += v.total || 0;
     litrosTotales += v.litros || 0;
@@ -67,16 +73,18 @@ async function actualizarResumen() {
 
   const ticketPromedio = ventas.length ? totalVentas / ventas.length : 0;
 
+  // Mostrar en la UI
   document.getElementById("ventasTotales").textContent = `$${totalVentas.toFixed(2)}`;
   document.getElementById("litrosTotales").textContent = `${litrosTotales} L`;
   document.getElementById("ticketPromedio").textContent = `$${ticketPromedio.toFixed(2)}`;
   document.getElementById("cantidadVentas").textContent = ventas.length;
 
+  // Actualizar gráfica
   actualizarGraficaTop(ventas);
 }
-
 function actualizarGraficaTop(ventas) {
   const resumen = {};
+
   ventas.forEach(v => {
     const nombre = v.nombre_maquina || `Máquina ${v.maquina_id}`;
     resumen[nombre] = (resumen[nombre] || 0) + (v.total || 0);
@@ -86,6 +94,7 @@ function actualizarGraficaTop(ventas) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
 
+  // Lista textual
   const ul = document.getElementById("topMaquinas");
   ul.innerHTML = "";
   top.forEach(([nombre, total]) => {
@@ -94,6 +103,7 @@ function actualizarGraficaTop(ventas) {
     ul.appendChild(li);
   });
 
+  // Gráfica de barras
   const ctx = document.getElementById("graficaVolumenes").getContext("2d");
   if (window.graficaTop) window.graficaTop.destroy();
 
@@ -122,3 +132,4 @@ function cerrarSesion() {
     window.location.href = "login.html";
   });
 }
+
