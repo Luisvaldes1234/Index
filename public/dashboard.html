@@ -9,15 +9,27 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-100 text-gray-900 p-6">
+
+  <!-- HEADER DE NAVEGACIÓN -->
+  <header class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50 mb-6">
+    <h1 class="text-xl font-bold">Aqualink Dashboard</h1>
+    <nav class="space-x-6">
+      <a href="#mis-maquinas" class="text-blue-600 hover:underline">Mis máquinas</a>
+      <a href="#config-remota" class="text-blue-600 hover:underline">Configuración Remota</a>
+      <a href="#reporte" class="text-blue-600 hover:underline">Reporte</a>
+      <a href="#suscripcion" class="text-blue-600 hover:underline">Suscripción</a>
+    </nav>
+  </header>
+
   <!-- FILTROS DE FECHA -->
-<div class="flex flex-wrap items-center gap-4 mb-6 bg-white p-4 shadow rounded">
-  <label class="font-semibold text-gray-700">Filtrar por fecha:</label>
-  <input type="date" id="fechaInicioResumen" class="border p-2 rounded" />
-  <input type="date" id="fechaFinResumen" class="border p-2 rounded" />
-  <button onclick="actualizarResumen()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-    Aplicar
-  </button>
-</div>
+  <div class="flex flex-wrap items-center gap-4 mb-6 bg-white p-4 shadow rounded">
+    <label class="font-semibold text-gray-700">Filtrar por fecha:</label>
+    <input type="date" id="fechaInicioResumen" class="border p-2 rounded" />
+    <input type="date" id="fechaFinResumen" class="border p-2 rounded" />
+    <button onclick="actualizarResumen()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+      Aplicar
+    </button>
+  </div>
 
   <section id="resumen" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
