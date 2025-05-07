@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -32,6 +32,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   actualizarResumen(supabase);
+
+  // ✅ Función cerrar sesión ya usa el mismo `supabase`
+  document.querySelector("button[onclick='cerrarSesion()']").onclick = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "login.html";
+  };
 });
 
 async function actualizarResumen(supabase) {
@@ -116,14 +122,5 @@ function actualizarGraficaTop(ventas) {
         title: { display: true, text: "Top 3 Máquinas por Ingreso" }
       }
     }
-  });
-}
-
-function cerrarSesion() {
-  const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-  supabase.auth.signOut().then(() => {
-    window.location.href = "login.html";
   });
 }
