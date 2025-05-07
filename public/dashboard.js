@@ -60,7 +60,7 @@ async function actualizarResumen() {
     .lte("created_at", hasta);
 
   if (maquinaId !== "todas") {
-    q = q.eq("serial", maquinaId);
+    q = q.eq("serial", Number(maquinaId));
   }
 
   const { data: ventas, error } = await q;
