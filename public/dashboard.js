@@ -1,218 +1,187 @@
 // === Inicializar Supabase ===
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-// para almacenar la lista de ventas y el mapeo id→nombre
+// Estado global
 let ventasActuales = [];
-const maquinaMap = {};
+let chartVolumenes, chartLitros, chartVentasDiarias, chartTipoVolumen;
 
-// referencias a las instancias de Chart.js
-let chartTop, chartLitros, chartVentasDiarias, chartTipoVolumen;
+// === DOMContentLoaded ===
+document.addEventListener('DOMContentLoaded', async () => {
+  // Botones
+  document.getElementById('btnAplicar').onclick    = actualizarResumen;
+  document.getElementById('btnExportar').onclick   = exportarCSV;
+  document.getElementById('btnToggleDark').onclick = () => document.documentElement.classList.toggle('dark');
 
-document.addEventListener("DOMContentLoaded", async () => {
-  // 1) Autenticación
+  // Autenticación
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return window.location.href = "login.html";
+  if (!user) return window.location.href = 'login.html';
 
-  // 2) Fechas iniciales (1° del mes hasta hoy)
+  // Fechas por defecto
   const hoy = new Date();
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-  document.getElementById("fechaInicioResumen").value = inicioMes.toISOString().split("T")[0];
-  document.getElementById("fechaFinResumen").value = hoy.toISOString().split("T")[0];
+  document.getElementById('fechaInicioResumen').value = inicioMes.toISOString().split('T')[0];
+  document.getElementById('fechaFinResumen').value    = hoy.toISOString().split('T')[0];
 
-  // 3) Cargar máquinas del usuario y llenar <select>
-  const { data: maquinas, error: errM } = await supabase
-    .from("maquinas")
-    .select("id, nombre")
-    .eq("usuario_id", user.id);
-  if (errM) {
-    console.error("Error al cargar máquinas:", errM.message);
-    return;
+  // Cargar máquinas en el select
+  const { data: maquinas, error } = await supabase
+    .from('maquinas').select('id, nombre').eq('usuario_id', user.id);
+  if (error) console.error(error.message);
+  else {
+    const sel = document.getElementById('filtroMaquina');
+    maquinas.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.nombre || `Máquina ${m.id}`;
+      sel.appendChild(opt);
+    });
   }
-  const filtro = document.getElementById("filtroMaquina");
-  maquinas.forEach(m => {
-    maquinaMap[m.id] = m.nombre || `Máquina ${m.id}`;
-    const opt = document.createElement("option");
-    opt.value = m.id;
-    opt.textContent = maquinaMap[m.id];
-    filtro.appendChild(opt);
-  });
 
-  // 4) Botones
-  document.getElementById("btnAplicar").onclick = actualizarResumen;
-  document.getElementById("btnExportar").onclick = exportarCSV;
-  document.getElementById("btnToggleDark").onclick = () =>
-    document.documentElement.classList.toggle("dark");
+  // Inicializar gráficas vacías
+  initCharts();
 
-  // 5) Primera carga
+  // Primero resumen
   actualizarResumen();
 });
 
+function initCharts() {
+  const opts = { responsive:true, plugins:{ legend:{ display:false } } };
+
+  // Top 3 ingresos
+  chartVolumenes = new Chart(
+    document.getElementById('graficaVolumenes').getContext('2d'),
+    { type:'bar', data:{ labels:[], datasets:[{label:'Ingresos',data:[],backgroundColor:'rgba(54,162,235,0.6)'}] }, options:{
+        ...opts,
+        plugins:{ ...opts.plugins, datalabels:{ anchor:'end', align:'top', formatter:v=>`$${v.toFixed(2)}`, color:'#111', font:{ weight:'bold'} } },
+        title:{ display:true, text:'Top 3 Máquinas por Ingreso' }
+      }
+    }
+  );
+
+  // Litros por máquina
+  chartLitros = new Chart(
+    document.getElementById('graficaLitros').getContext('2d'),
+    { type:'bar', data:{ labels:[], datasets:[{label:'Litros',data:[],backgroundColor:'rgba(75,192,192,0.6)'}] }, options:{
+        ...opts, title:{ display:true, text:'Litros por Máquina' }
+      }
+    }
+  );
+
+  // Ventas diarias
+  chartVentasDiarias = new Chart(
+    document.getElementById('graficaVentasDiarias').getContext('2d'),
+    { type:'line', data:{ labels:[], datasets:[{label:'Total diario',data:[],fill:false,borderWidth:2}] }, options:{
+        ...opts, title:{ display:true, text:'Tendencia de Ventas Diarias' }
+      }
+    }
+  );
+
+  // Distribución volumen
+  chartTipoVolumen = new Chart(
+    document.getElementById('graficaTipoVolumen').getContext('2d'),
+    { type:'pie', data:{ labels:[], datasets:[{data:[],backgroundColor:['#3b82f6','#10b981','#f59e0b','#ef4444']} ] }, options:{
+        ...opts, title:{ display:true, text:'Distribución de Litros por Máquina' }
+      }
+    }
+  );
+}
+
 async function actualizarResumen() {
-  // Obtener filtros
-  const maquinaSeleccionada = document.getElementById("filtroMaquina").value;
-  const fechaInicio = document.getElementById("fechaInicioResumen").value;
-  const fechaFin = document.getElementById("fechaFinResumen").value;
+  // Leer filtros
+  const userRes = await supabase.auth.getUser();
+  if (!userRes.data.user) return;
+  const uid = userRes.data.user.id;
+  const maquina = document.getElementById('filtroMaquina').value;
+  const desde  = document.getElementById('fechaInicioResumen').value;
+  const hasta  = document.getElementById('fechaFinResumen').value;
 
-  // Volver a leer usuario
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  // Query ventas
+  // Query
   let q = supabase
-    .from("ventas")
-    .select("litros, total, fecha, maquina_id")
-    .eq("usuario_id", user.id)
-    .gte("fecha", fechaInicio)
-    .lte("fecha", fechaFin);
-  if (maquinaSeleccionada !== "todas") {
-    q = q.eq("maquina_id", maquinaSeleccionada);
-  }
+    .from('ventas').select('*')
+    .eq('usuario_id', uid)
+    .gte('fecha', desde)
+    .lte('fecha', hasta);
+  if (maquina!=='todas') q = q.eq('maquina_id', maquina);
+
   const { data: ventas, error } = await q;
-  if (error) {
-    console.error("Error al obtener ventas:", error.message);
-    return;
-  }
+  if (error) return console.error(error.message);
 
   ventasActuales = ventas;
 
-  // Mostrar mensaje si no hay ventas
-  const msg = document.getElementById("mensajeSinVentas");
-  if (ventas.length === 0) msg.classList.remove("hidden");
-  else msg.classList.add("hidden");
+  // Ocultar/mensaje si no hay datos
+  document.getElementById('mensajeSinVentas').classList.toggle('hidden', ventas.length>0);
 
-  // 6) KPIs
-  let totalVentas = 0, litrosTotales = 0;
+  // KPIs
+  const totalIngresos = ventas.reduce((sum,v)=> sum + (v.total||0), 0);
+  const totalLitros   = ventas.reduce((sum,v)=> sum + (v.litros||0), 0);
+  const ticketProm    = ventas.length ? totalIngresos/ventas.length : 0;
+
+  document.getElementById('ventasTotales').textContent  = `$${totalIngresos.toFixed(2)}`;
+  document.getElementById('litrosTotales').textContent  = `${totalLitros} L`;
+  document.getElementById('ticketPromedio').textContent = `$${ticketProm.toFixed(2)}`;
+  document.getElementById('cantidadVentas').textContent = ventas.length;
+
+  // Top 3 ingresos & lista
+  const resumenI = {};
+  const resumenL = {};
   ventas.forEach(v => {
-    totalVentas += v.total || 0;
-    litrosTotales += v.litros || 0;
+    const key = `Máquina ${v.maquina_id}`;
+    resumenI[key] = (resumenI[key]||0) + (v.total||0);
+    resumenL[key] = (resumenL[key]||0) + (v.litros||0);
   });
-  const ticketProm = ventas.length ? totalVentas / ventas.length : 0;
-  document.getElementById("ventasTotales").textContent = `$${totalVentas.toFixed(2)}`;
-  document.getElementById("litrosTotales").textContent = `${litrosTotales} L`;
-  document.getElementById("ticketPromedio").textContent = `$${ticketProm.toFixed(2)}`;
-  document.getElementById("cantidadVentas").textContent = ventas.length;
+  const topI = Object.entries(resumenI).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const topL = Object.entries(resumenL).sort((a,b)=>b[1]-a[1]).slice(0,3);
 
-  // 7) Actualizar todas las gráficas
-  actualizarGraficaTop(ventas);
-  actualizarGraficaLitros(ventas);
-  actualizarGraficaVentasDiarias(ventas);
-  actualizarGraficaTipoVolumen(ventas);
-}
-
-function actualizarGraficaTop(ventas) {
-  // Agrupar ingresos por máquina
-  const resumen = {};
-  ventas.forEach(v => {
-    const nombre = maquinaMap[v.maquina_id] || `Máquina ${v.maquina_id}`;
-    resumen[nombre] = (resumen[nombre] || 0) + (v.total || 0);
-  });
-  const top3 = Object.entries(resumen)
-    .sort((a,b)=> b[1]-a[1])
-    .slice(0,3);
-  // Lista textual
-  const ul = document.getElementById("topMaquinas");
-  ul.innerHTML = "";
-  top3.forEach(([nom, tot]) => {
-    const li = document.createElement("li");
-    li.textContent = `${nom}: $${tot.toFixed(2)}`;
+  // actualizar lista
+  const ul = document.getElementById('topMaquinas');
+  ul.innerHTML = '';
+  topI.forEach(([name, val])=>{
+    const li = document.createElement('li');
+    li.textContent = `${name}: $${val.toFixed(2)}`;
     ul.appendChild(li);
   });
-  // Gráfico
-  const ctx = document.getElementById("graficaVolumenes").getContext("2d");
-  if (chartTop) chartTop.destroy();
-  chartTop = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: top3.map(t=>t[0]),
-      datasets: [{ label:"Ingresos", data: top3.map(t=>t[1]), backgroundColor: "rgba(54,162,235,0.6)" }]
-    },
-    options: { responsive:true, plugins:{ legend:{display:false}, title:{display:true, text:"Top 3 Máquinas por Ingreso"} } },
-    plugins: [ChartDataLabels]
-  });
-}
 
-function actualizarGraficaLitros(ventas) {
-  // Agrupar litros por máquina (todos, no solo top)
-  const resumen = {};
-  ventas.forEach(v => {
-    const nombre = maquinaMap[v.maquina_id] || `Máquina ${v.maquina_id}`;
-    resumen[nombre] = (resumen[nombre] || 0) + (v.litros || 0);
-  });
-  const entries = Object.entries(resumen);
-  const ctx = document.getElementById("graficaLitros").getContext("2d");
-  if (chartLitros) chartLitros.destroy();
-  chartLitros = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: entries.map(e=>e[0]),
-      datasets: [{ label:"Litros vendidos", data: entries.map(e=>e[1]), backgroundColor: "rgba(75,192,192,0.6)" }]
-    },
-    options: { responsive:true, plugins:{ legend:{display:false}, title:{display:true, text:"Litros por Máquina"} } }
-  });
-}
+  // actualizar gráficas
+  chartVolumenes.data.labels   = topI.map(t=>t[0]);
+  chartVolumenes.data.datasets[0].data = topI.map(t=>t[1]);
+  chartVolumenes.update();
 
-function actualizarGraficaVentasDiarias(ventas) {
-  // Grupo por fecha (YYYY-MM-DD)
-  const resumen = {};
-  ventas.forEach(v => {
-    const dia = v.fecha.split("T")[0];
-    resumen[dia] = (resumen[dia] || 0) + 1;
-  });
-  const dias = Object.keys(resumen).sort();
-  const datos = dias.map(d=>resumen[d]);
-  const ctx = document.getElementById("graficaVentasDiarias").getContext("2d");
-  if (chartVentasDiarias) chartVentasDiarias.destroy();
-  chartVentasDiarias = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: dias,
-      datasets: [{ label:"Ventas diarias", data:datos, fill:false, tension:0.3 }]
-    },
-    options: { responsive:true, plugins:{ legend:{display:false}, title:{display:true, text:"Tendencia de Ventas Diarias"} } }
-  });
-}
+  chartLitros.data.labels   = topL.map(t=>t[0]);
+  chartLitros.data.datasets[0].data = topL.map(t=>t[1]);
+  chartLitros.update();
 
-function actualizarGraficaTipoVolumen(ventas) {
-  // Distribución de litros (pie)
-  const resumen = {};
-  ventas.forEach(v => {
-    const nombre = maquinaMap[v.maquina_id] || `Máquina ${v.maquina_id}`;
-    resumen[nombre] = (resumen[nombre] || 0) + (v.litros || 0);
+  // Ventas diarias
+  const byDay = {};
+  ventas.forEach(v=>{
+    const d = new Date(v.fecha).toLocaleDateString('sv');
+    byDay[d] = (byDay[d]||0) + (v.total||0);
   });
-  const entries = Object.entries(resumen);
-  const ctx = document.getElementById("graficaTipoVolumen").getContext("2d");
-  if (chartTipoVolumen) chartTipoVolumen.destroy();
-  chartTipoVolumen = new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: entries.map(e=>e[0]),
-      datasets: [{
-        data: entries.map(e=>e[1]),
-        backgroundColor: [
-          "#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6"
-        ]
-      }]
-    },
-    options: { responsive:true, plugins:{ title:{display:true, text:"Distribución de Litros por Máquina"} } }
-  });
+  const days = Object.keys(byDay).sort();
+  chartVentasDiarias.data.labels = days;
+  chartVentasDiarias.data.datasets[0].data = days.map(d=>byDay[d]);
+  chartVentasDiarias.update();
+
+  // Pie volumen
+  chartTipoVolumen.data.labels   = topL.map(t=>t[0]);
+  chartTipoVolumen.data.datasets[0].data = topL.map(t=>t[1]);
+  chartTipoVolumen.update();
 }
 
 function exportarCSV() {
-  if (!ventasActuales.length) {
-    return alert("No hay datos para exportar.");
-  }
-  const headers = Object.keys(ventasActuales[0]);
-  const rows = ventasActuales.map(v => headers.map(h=> v[h] ?? ""));
-  let csv = [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
-  const blob = new Blob([csv], { type:"text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "ventas.csv"; a.click();
+  if (!ventasActuales.length) return alert('No hay datos para exportar');
+  const cols = Object.keys(ventasActuales[0]);
+  const filas = ventasActuales.map(r=> cols.map(c=>r[c]||'').join(','));
+  const csv  = [cols.join(','), ...filas].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'ventas.csv';
+  a.click();
   URL.revokeObjectURL(url);
 }
 
 function cerrarSesion() {
-  supabase.auth.signOut().then(() => window.location.href = "login.html");
+  supabase.auth.signOut().then(()=> window.location.href='login.html');
 }
