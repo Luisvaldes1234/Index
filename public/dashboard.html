@@ -46,9 +46,9 @@
       Aplicar
     </button>
   </div>
-    <!-- CONTENIDO PRINCIPAL -->
-  <section id="resumen" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
+  <!-- CONTENIDO PRINCIPAL -->
+  <section id="resumen" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
     <!-- PANEL IZQUIERDO: Desempeño económico -->
     <div class="bg-white shadow rounded p-6 space-y-4">
       <h2 class="text-xl font-bold">Desempeño Económico</h2>
@@ -85,104 +85,7 @@
         </div>
       </div>
     </div>
-
   </section>
-    <!-- SCRIPTS -->
-  <script>
-    const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Reemplaza con tu propia anon key
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-    // Proteger sesión
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) window.location.href = "login.html";
-    });
-
-    document.addEventListener("DOMContentLoaded", async () => {
-      const hoy = new Date();
-      const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-
-      document.getElementById("fechaInicioResumen").value = inicioMes.toISOString().split("T")[0];
-      document.getElementById("fechaFinResumen").value = hoy.toISOString().split("T")[0];
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Cargar máquinas asociadas al usuario
-      const { data: maquinas, error } = await supabase
-        .from("maquinas")
-        .select("id, nombre")
-        .eq("usuario_id", user.id);
-
-      if (error) {
-        console.error("Error al cargar máquinas:", error.message);
-        return;
-      }
-
-      const select = document.getElementById("filtroMaquina");
-      maquinas.forEach(m => {
-        const option = document.createElement("option");
-        option.value = m.id;
-        option.textContent = m.nombre;
-        select.appendChild(option);
-      });
-
-      // Cargar resumen inicial
-      actualizarResumen();
-    });
-
-    async function actualizarResumen() {
-      const maquinaSeleccionada = document.getElementById("filtroMaquina").value;
-      const fechaInicio = document.getElementById("fechaInicioResumen").value;
-      const fechaFin = document.getElementById("fechaFinResumen").value;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      let query = supabase
-        .from("ventas")
-        .select("*")
-        .eq("usuario_id", user.id)
-        .gte("fecha", fechaInicio)
-        .lte("fecha", fechaFin);
-
-      if (maquinaSeleccionada !== "todas") {
-        query = query.eq("maquina_id", maquinaSeleccionada);
-      }
-
-      const { data: ventas, error } = await query;
-
-      if (error) {
-        console.error("Error al obtener ventas:", error.message);
-        return;
-      }
-
-      // Procesar los datos
-      let totalVentas = 0;
-      let litrosTotales = 0;
-      let ticketPromedio = 0;
-
-      ventas.forEach(v => {
-        totalVentas += v.total || 0;
-        litrosTotales += v.litros || 0;
-      });
-
-      ticketPromedio = ventas.length ? totalVentas / ventas.length : 0;
-
-      document.getElementById("ventasTotales").textContent = `$${totalVentas.toFixed(2)}`;
-      document.getElementById("litrosTotales").textContent = `${litrosTotales} L`;
-      document.getElementById("ticketPromedio").textContent = `$${ticketPromedio.toFixed(2)}`;
-      document.getElementById("cantidadVentas").textContent = ventas.length;
-
-      // Puedes aquí también actualizar gráficas si lo deseas
-    }
-
-    function cerrarSesion() {
-      supabase.auth.signOut().then(() => {
-        window.location.href = "login.html";
-      });
-    }
-  </script>
 
 </body>
 </html>
