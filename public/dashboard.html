@@ -56,16 +56,16 @@
     </div>
 
     <!-- Gráficas y ranking -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h3 class="text-xl font-semibold mb-4">Top 3 Máquinas por Ingreso</h3>
-        <canvas id="graficaVolumenes" height="200"></canvas>
-      </div>
-      <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h3 class="text-xl font-semibold mb-4">Top 3 Máquinas</h3>
-        <ul id="topMaquinas" class="space-y-2 text-lg"></ul>
-      </div>
-    </div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div>
+    <h3 class="text-lg font-semibold text-center mb-2">Top 3 Máquinas por Ingreso</h3>
+    <canvas id="graficaVolumenes" height="200"></canvas>
+  </div>
+  <div class="flex flex-col items-start justify-center">
+    <h3 class="text-lg font-semibold mb-2">Top 3 Máquinas</h3>
+    <ul id="topMaquinas" class="space-y-1 text-sm text-gray-800"></ul>
+  </div>
+</div>
 
     <!-- Otras gráficas a agregar debajo (parte 2 en siguiente mensaje) -->
     <div id="graficasExtra" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
