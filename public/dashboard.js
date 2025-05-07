@@ -1,24 +1,18 @@
+// Parte 1/3 - Inicialización y autenticación
+
+const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
 document.addEventListener("DOMContentLoaded", async () => {
-  const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
-
-  // ✅ Usa la función correctamente
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return window.location.href = "login.html";
 
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return window.location.href = "login.html";
-
-  // Establecer fechas
   const hoy = new Date();
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   document.getElementById("fechaInicioResumen").value = inicioMes.toISOString().split("T")[0];
   document.getElementById("fechaFinResumen").value = hoy.toISOString().split("T")[0];
 
-  // Cargar máquinas
   const { data: maquinas, error } = await supabase
     .from("maquinas")
     .select("id, nombre")
@@ -37,16 +31,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     select.appendChild(option);
   });
 
-  actualizarResumen(supabase);
-
-  // ✅ Función cerrar sesión ya usa el mismo `supabase`
-  document.querySelector("button[onclick='cerrarSesion()']").onclick = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "login.html";
-  };
+  actualizarResumen();
 });
 
-async function actualizarResumen(supabase) {
+// Parte 2/3 - Obtener y mostrar resumen de ventas
+
+async function actualizarResumen() {
   const maquinaSeleccionada = document.getElementById("filtroMaquina").value;
   const fechaInicio = document.getElementById("fechaInicioResumen").value;
   const fechaFin = document.getElementById("fechaFinResumen").value;
@@ -88,6 +78,8 @@ async function actualizarResumen(supabase) {
   actualizarGraficaTop(ventas);
 }
 
+// Parte 3/3 - Mostrar top y cerrar sesión
+
 function actualizarGraficaTop(ventas) {
   const resumen = {};
 
@@ -128,5 +120,11 @@ function actualizarGraficaTop(ventas) {
         title: { display: true, text: "Top 3 Máquinas por Ingreso" }
       }
     }
+  });
+}
+
+function cerrarSesion() {
+  supabase.auth.signOut().then(() => {
+    window.location.href = "login.html";
   });
 }
