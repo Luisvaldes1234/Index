@@ -1,4 +1,4 @@
-// Configura tu Supabase
+// Conexión a Supabase
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -51,8 +51,16 @@ form.addEventListener('submit', async (e) => {
 
   const serial = document.getElementById('serial').value.trim();
   const name = document.getElementById('name').value.trim();
-  const liters = document.getElementById('liters').value.trim();
-  const prices = document.getElementById('prices').value.trim();
+  const liters = [
+    document.getElementById('liters1').value.trim(),
+    document.getElementById('liters2').value.trim(),
+    document.getElementById('liters3').value.trim()
+  ];
+  const prices = [
+    document.getElementById('price1').value.trim(),
+    document.getElementById('price2').value.trim(),
+    document.getElementById('price3').value.trim()
+  ];
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (!user || authError) {
@@ -62,8 +70,8 @@ form.addEventListener('submit', async (e) => {
   const { error } = await supabase.from('maquinas').insert({
     serial,
     name,
-    liters,
-    prices,
+    liters: liters.join(','),
+    prices: prices.join(','),
     user_id: user.id
   });
 
