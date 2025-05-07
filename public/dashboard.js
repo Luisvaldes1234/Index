@@ -122,6 +122,54 @@ function actualizarGraficaLitros(ventas) {
     }
   });
 }
+function actualizarGraficaIngresos(ventas) {
+  const mapIngresos = {};
+  ventas.forEach(v => {
+    const label = `Máquina ${v.serial}`;
+    mapIngresos[label] = (mapIngresos[label] || 0) + (Number(v.precio_total) || 0);
+  });
+  const top = Object.entries(mapIngresos)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  const ul = document.getElementById("topMaquinas");
+  ul.innerHTML = "";
+  top.forEach(([label, val]) => {
+    const li = document.createElement("li");
+    li.textContent = `${label}: $${val.toFixed(2)}`;
+    ul.appendChild(li);
+  });
+
+  const ctx = document.getElementById("graficaVolumenes").getContext("2d");
+  if (chartIngresos) chartIngresos.destroy();
+  chartIngresos = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: top.map(t => t[0]),
+      datasets: [{
+        label: "Ingresos",
+        data: top.map(t => t[1]),
+        backgroundColor: "rgba(54,162,235,0.6)"
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: "Top 3 Máquinas por Ingreso" },
+        datalabels: {
+          anchor: "end",
+          align: "top",
+          formatter: v => `$${v.toFixed(2)}`,
+          color: "#111",
+          font: { weight: "bold" }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
 
 function actualizarGraficaVentasDiarias(ventas) {
   const mapD = {};
