@@ -60,12 +60,12 @@ async function actualizarResumen() {
   if (!user) return;
 
   // Query base
-  let q = supabase
-    .from("ventas")
-    .select("*")
-    .eq("usuario_id", user.id)
-    .gte("fecha", desde)
-    .lte("fecha", hasta);
+ let q = supabase
+  .from("ventas")
+  .select("*")
+  .eq("user_id", user.id)         // antes: usuario_id
+  .gte("created_at", desde)       // antes: fecha
+  .lte("created_at", hasta);      // antes: fecha
 
   // Si filtrar por máquina específica
   if (maquinaId !== "todas") {
