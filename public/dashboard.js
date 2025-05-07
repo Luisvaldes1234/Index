@@ -14,10 +14,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("fechaFinResumen").value = hoy.toISOString().split("T")[0];
 
   // Cargar máquinas
-  const { data: maquinas, error } = await supabase
-    .from("maquinas")
-    .select("id, name") // Asegúrate de que sea "name" o ajusta si es "nombre"
-    .eq("owner_id", user.id); // Cambia a "usuario_id" si así lo renombraste
+const { data: maquinas, error } = await supabase
+  .from("maquinas")
+  .select("id, nombre")
+  .eq("usuario_id", user.id);  // ✅ LÍNEA CORREGIDA
 
   if (error) {
     console.error("Error al cargar máquinas:", error.message);
