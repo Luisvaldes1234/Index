@@ -32,13 +32,16 @@ async function loadMachines(userId) {
   }
 
   data.forEach((m) => {
+    const liters = m.liters ? m.liters.split(',') : [];
+    const prices = m.prices ? m.prices.split(',') : [];
+    const botones = liters.map((litro, i) => `Botón ${i + 1}: ${litro}L - $${prices[i] || '0'}`).join('<br>');
+
     const li = document.createElement('li');
     li.className = 'bg-white dark:bg-gray-800 p-4 rounded shadow';
     li.innerHTML = `
       <div class="font-bold text-lg">${m.name}</div>
       <div class="text-sm">Serie: ${m.serial}</div>
-      <div class="text-sm">Litros: ${m.liters}</div>
-      <div class="text-sm">Precios: ${m.prices}</div>
+      <div class="text-sm mt-2">${botones}</div>
     `;
     list.appendChild(li);
   });
