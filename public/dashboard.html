@@ -2,34 +2,35 @@
 <html lang="es" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Aqualink Dashboard</title>
 
-  <!-- 1) Supabase JS -->
+  <!-- 1) Supabase JS debe cargarse primero -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <!-- 2) Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- 3) Chart DataLabels Plugin (después de Chart.js) -->
+  <!-- 3) Plugin DataLabels (después de Chart.js) -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <!-- 4) Tu script, con defer para que espere al DOM -->
   <script src="dashboard.js" defer></script>
 
   <!-- TailwindCSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
   <style> html { scroll-behavior: smooth; } </style>
 </head>
+
 <body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
 
   <!-- HEADER -->
   <header class="flex justify-between p-4 bg-white dark:bg-gray-800 shadow-md">
     <h1 class="text-2xl font-bold">Aqualink Dashboard</h1>
-    <div class="flex items-center space-x-4">
+    <nav class="flex items-center space-x-4">
       <a href="maquinas.html" class="text-blue-500 dark:text-blue-300">Mis máquinas</a>
       <a href="configuracion.html" class="text-blue-500 dark:text-blue-300">Configuración Remota</a>
       <a href="reportes.html" class="text-blue-500 dark:text-blue-300">Reporte</a>
       <a href="suscripcion.html" class="text-blue-500 dark:text-blue-300">Suscripción</a>
       <button onclick="cerrarSesion()" class="bg-red-500 text-white px-4 py-1 rounded">Cerrar sesión</button>
-    </div>
+    </nav>
   </header>
 
   <main class="p-6 space-y-6">
@@ -39,30 +40,30 @@
       <select id="filtroMaquina" class="border p-2 rounded bg-white dark:bg-gray-700">
         <option value="todas">Todas</option>
       </select>
-      <input type="date" id="fechaInicioResumen" class="border p-2 rounded bg-white dark:bg-gray-700" />
-      <input type="date" id="fechaFinResumen" class="border p-2 rounded bg-white dark:bg-gray-700" />
+      <input type="date" id="fechaInicioResumen" class="border p-2 rounded bg-white dark:bg-gray-700"/>
+      <input type="date" id="fechaFinResumen"    class="border p-2 rounded bg-white dark:bg-gray-700"/>
       <button id="btnAplicar" class="bg-blue-600 text-white px-4 py-2 rounded">Aplicar</button>
       <button id="btnExportar" class="bg-green-600 text-white px-4 py-2 rounded">Exportar CSV</button>
       <button id="btnToggleDark" class="ml-auto bg-gray-600 text-white px-4 py-2 rounded">🌗</button>
     </div>
 
-    <!-- KPIs -->
+    <!-- TARJETAS DE KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
       <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-center">
         <p class="text-gray-500">Ingreso Total</p>
-        <h2 id="ventasTotales" class="text-2xl font-bold text-green-600 dark:text-green-400">$0.00</h2>
+        <p id="ventasTotales" class="text-2xl font-bold text-green-600 dark:text-green-400">$0.00</p>
       </div>
       <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-center">
         <p class="text-gray-500">Litros Vendidos</p>
-        <h2 id="litrosTotales" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0 L</h2>
+        <p id="litrosTotales" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0 L</p>
       </div>
       <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-center">
         <p class="text-gray-500">Ticket Promedio</p>
-        <h2 id="ticketPromedio" class="text-2xl font-bold text-yellow-500 dark:text-yellow-400">$0.00</h2>
+        <p id="ticketPromedio" class="text-2xl font-bold text-yellow-500 dark:text-yellow-400">$0.00</p>
       </div>
       <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-center">
         <p class="text-gray-500">Ventas Registradas</p>
-        <h2 id="cantidadVentas" class="text-2xl font-bold">0</h2>
+        <p id="cantidadVentas" class="text-2xl font-bold">0</p>
       </div>
     </div>
 
@@ -78,7 +79,7 @@
       </div>
     </div>
 
-    <!-- GRÁFICAS EXTRA -->
+    <!-- GRÁFICAS ADICIONALES -->
     <div id="graficasExtra" class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
       <!-- Litros por Máquina -->
@@ -87,20 +88,21 @@
         <canvas id="graficaLitros" height="180"></canvas>
       </div>
 
-      <!-- Ventas Diarias -->
+      <!-- Tendencia Ventas Diarias -->
       <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
         <h2 class="text-lg font-semibold mb-4">Tendencia de Ventas Diarias</h2>
         <canvas id="graficaVentasDiarias" height="180"></canvas>
       </div>
 
-      <!-- Distribución de Volumen -->
+      <!-- Distribución Volumen -->
       <div class="bg-white dark:bg-gray-800 p-6 rounded shadow md:col-span-2">
         <h2 class="text-lg font-semibold mb-4">Distribución de Litros por Máquina</h2>
         <canvas id="graficaTipoVolumen" height="180"></canvas>
       </div>
 
-      <!-- Mensaje cuando no hay datos -->
-      <div id="mensajeSinVentas" class="hidden col-span-full text-center py-6 text-red-600 dark:text-red-400 font-semibold">
+      <!-- Mensaje “sin datos” -->
+      <div id="mensajeSinVentas"
+           class="hidden col-span-full text-center py-6 text-red-600 dark:text-red-400 font-semibold">
         No hay ventas registradas para el período seleccionado.
       </div>
 
