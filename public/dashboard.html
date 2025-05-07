@@ -7,17 +7,25 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="dashboard.js" defer></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
 </head>
 <body class="bg-gray-100 text-gray-900 p-6">
 
   <!-- HEADER DE NAVEGACIÓN -->
-  <header class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50 mb-6">
-    <h1 class="text-xl font-bold">Aqualink Dashboard</h1>
-    <nav class="space-x-6">
+  <header class="bg-white shadow-md p-4 flex flex-wrap justify-between items-center sticky top-0 z-50 mb-6">
+    <h1 class="text-xl font-bold mb-2 sm:mb-0">Aqualink Dashboard</h1>
+    <nav class="flex flex-wrap items-center gap-4">
       <a href="#mis-maquinas" class="text-blue-600 hover:underline">Mis máquinas</a>
       <a href="#config-remota" class="text-blue-600 hover:underline">Configuración Remota</a>
       <a href="#reporte" class="text-blue-600 hover:underline">Reporte</a>
       <a href="#suscripcion" class="text-blue-600 hover:underline">Suscripción</a>
+      <button onclick="cerrarSesion()" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition">
+        Cerrar sesión
+      </button>
     </nav>
   </header>
 
@@ -31,63 +39,91 @@
     </button>
   </div>
 
-  <section id="resumen" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+  <!-- SECCIÓN MIS MÁQUINAS -->
+  <section id="mis-maquinas" class="mb-10">
+    <h2 class="text-2xl font-bold mb-4">Mis Máquinas</h2>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div class="bg-white shadow rounded p-6 space-y-4">
+        <h3 class="text-xl font-semibold">Desempeño Económico</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-gray-500">Ingreso Total (Período)</p>
+            <p id="ventasTotales" class="text-2xl font-bold text-green-600">$0.00</p>
+          </div>
+          <div>
+            <p class="text-gray-500">Litros Vendidos</p>
+            <p id="litrosTotales" class="text-2xl font-bold text-blue-600">0 L</p>
+          </div>
+          <div>
+            <p class="text-gray-500">Ticket Promedio</p>
+            <p id="ticketPromedio" class="text-2xl font-bold text-yellow-500">$0.00</p>
+          </div>
+          <div>
+            <p class="text-gray-500">Ventas Registradas</p>
+            <p id="cantidadVentas" class="text-2xl font-bold">0</p>
+          </div>
+        </div>
+      </div>
 
-    <!-- PANEL IZQUIERDO: Desempeño económico -->
-    <div class="bg-white shadow rounded p-6 space-y-4">
-      <h2 class="text-xl font-bold">Desempeño Económico</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <p class="text-gray-500">Ingreso Total (Período)</p>
-          <p id="ventasTotales" class="text-2xl font-bold text-green-600">$0.00</p>
-        </div>
-        <div>
-          <p class="text-gray-500">Litros Vendidos</p>
-          <p id="litrosTotales" class="text-2xl font-bold text-blue-600">0 L</p>
-        </div>
-        <div>
-          <p class="text-gray-500">Ticket Promedio</p>
-          <p id="ticketPromedio" class="text-2xl font-bold text-yellow-500">$0.00</p>
-        </div>
-        <div>
-          <p class="text-gray-500">Ventas Registradas</p>
-          <p id="cantidadVentas" class="text-2xl font-bold">0</p>
+      <div class="bg-white shadow rounded p-6 space-y-4">
+        <h3 class="text-xl font-semibold">Distribución y Ranking</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <canvas id="graficaVolumenes" height="160"></canvas>
+          </div>
+          <div>
+            <p class="text-gray-500 font-semibold mb-2">Top 3 Máquinas</p>
+            <ul id="topMaquinas" class="space-y-1 text-sm text-gray-800"></ul>
+          </div>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- PANEL DERECHO: Distribución y Ranking -->
-    <div class="bg-white shadow rounded p-6 space-y-4">
-      <h2 class="text-xl font-bold">Distribución y Ranking</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <canvas id="graficaVolumenes" height="160"></canvas>
-        </div>
-        <div>
-          <p class="text-gray-500 font-semibold mb-2">Top 3 Máquinas</p>
-          <ul id="topMaquinas" class="space-y-1 text-sm text-gray-800"></ul>
-        </div>
-      </div>
+  <!-- SECCIÓN CONFIGURACIÓN REMOTA -->
+  <section id="config-remota" class="mb-10">
+    <h2 class="text-2xl font-bold mb-4">Configuración Remota</h2>
+    <div class="bg-white shadow rounded p-6">
+      <p class="text-gray-700">Aquí irá la interfaz para configurar tus máquinas de forma remota.</p>
+      <!-- Puedes agregar inputs, sliders, switches o formularios aquí -->
     </div>
+  </section>
 
-    <!-- GRÁFICAS COMPLEMENTARIAS -->
-    <div class="col-span-1 xl:col-span-2 grid grid-cols-1 xl:grid-cols-2 gap-6">
+  <!-- SECCIÓN REPORTE -->
+  <section id="reporte" class="mb-10">
+    <h2 class="text-2xl font-bold mb-4">Reporte</h2>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <div class="bg-white shadow rounded p-4">
         <h3 class="font-semibold mb-2">Ventas por Máquina</h3>
         <canvas id="graficaVentasMaquina" height="160"></canvas>
       </div>
-
       <div class="bg-white shadow rounded p-4">
         <h3 class="font-semibold mb-2">Ventas por Horario</h3>
         <canvas id="graficaHorarios" height="160"></canvas>
       </div>
-
       <div class="bg-white shadow rounded p-4 xl:col-span-2">
         <h3 class="font-semibold mb-2">Tendencia de Ventas Diarias</h3>
         <canvas id="graficaVentasPorDia" height="180"></canvas>
       </div>
     </div>
   </section>
+
+  <!-- SECCIÓN SUSCRIPCIÓN -->
+  <section id="suscripcion" class="mb-10">
+    <h2 class="text-2xl font-bold mb-4">Suscripción</h2>
+    <div class="bg-white shadow rounded p-6">
+      <p class="text-gray-700">Aquí podrás gestionar los planes de suscripción, pagos y estado de cada cliente.</p>
+      <!-- Agrega aquí el formulario de suscripción o control de usuarios -->
+    </div>
+  </section>
+
+  <script>
+    function cerrarSesion() {
+      supabase.auth.signOut().then(() => {
+        window.location.href = "login.html"; // redirige al login o a donde quieras
+      });
+    }
+  </script>
 
 </body>
 </html>
