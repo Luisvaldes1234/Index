@@ -126,24 +126,32 @@ function actualizarGraficaTop(ventas) {
   const ctx = document.getElementById("graficaVolumenes").getContext("2d");
   if (window.graficaTop) window.graficaTop.destroy();
 
-  window.graficaTop = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: top.map(t => t[0]),
-      datasets: [{
-        label: "Ingresos",
-        data: top.map(t => t[1]),
-        backgroundColor: "rgba(54, 162, 235, 0.6)"
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        title: { display: true, text: "Top 3 Máquinas por Ingreso" }
+window.graficaTop = new Chart(ctx, {
+  type: "bar",
+  data: {
+    labels: top.map(t => t[0]),
+    datasets: [{
+      label: "Ingresos",
+      data: top.map(t => t[1]),
+      backgroundColor: "rgba(54, 162, 235, 0.6)"
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: "Top 3 Máquinas por Ingreso" },
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        formatter: value => `$${value.toFixed(2)}`,
+        color: '#111',
+        font: { weight: 'bold' }
       }
     }
-  });
+  },
+  plugins: [ChartDataLabels]
+});
 }
 function actualizarGraficaTop(ventas) {
   const resumenIngresos = {};
