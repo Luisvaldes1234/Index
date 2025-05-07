@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Aqualink Dashboard</title>
+  <title>Aqualink - Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="dashboard.js" defer></script>
@@ -15,112 +15,171 @@
 </head>
 <body class="bg-gray-100 text-gray-900 p-6">
 
-  <!-- HEADER DE NAVEGACIÓN -->
+  <!-- HEADER -->
   <header class="bg-white shadow-md p-4 flex flex-wrap justify-between items-center sticky top-0 z-50 mb-6">
     <h1 class="text-xl font-bold mb-2 sm:mb-0">Aqualink Dashboard</h1>
     <nav class="flex flex-wrap items-center gap-4">
-      <a href="#mis-maquinas" class="text-blue-600 hover:underline">Mis máquinas</a>
-      <a href="#config-remota" class="text-blue-600 hover:underline">Configuración Remota</a>
-      <a href="#reportes" class="text-blue-600 hover:underline">Reportes</a>
-      <a href="#suscripcion" class="text-blue-600 hover:underline">Suscripción</a>
+      <a href="maquinas.html" class="text-blue-600 hover:underline">Mis máquinas</a>
+      <a href="configuracion.html" class="text-blue-600 hover:underline">Configuración Remota</a>
+      <a href="reportes.html" class="text-blue-600 hover:underline">Reporte</a>
+      <a href="suscripcion.html" class="text-blue-600 hover:underline">Suscripción</a>
       <button onclick="cerrarSesion()" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition">
         Cerrar sesión
       </button>
     </nav>
   </header>
 
-  <!-- FILTROS DE FECHA -->
+  <!-- FILTROS -->
   <div class="flex flex-wrap items-center gap-4 mb-6 bg-white p-4 shadow rounded">
-    <label class="font-semibold text-gray-700">Filtrar por fecha:</label>
+    <label class="font-semibold text-gray-700">Máquina:</label>
+    <select id="filtroMaquina" class="border p-2 rounded">
+      <option value="todas">Todas</option>
+    </select>
+
+    <label class="font-semibold text-gray-700">Desde:</label>
     <input type="date" id="fechaInicioResumen" class="border p-2 rounded" />
+
+    <label class="font-semibold text-gray-700">Hasta:</label>
     <input type="date" id="fechaFinResumen" class="border p-2 rounded" />
+
     <button onclick="actualizarResumen()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
       Aplicar
     </button>
   </div>
+    <!-- CONTENIDO PRINCIPAL -->
+  <section id="resumen" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
-  <!-- SECCIÓN MIS MÁQUINAS -->
-  <section id="mis-maquinas" class="mb-10">
-    <h2 class="text-2xl font-bold mb-4">Mis Máquinas</h2>
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-      <div class="bg-white shadow rounded p-6 space-y-4">
-        <h3 class="text-xl font-semibold">Desempeño Económico</h3>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <p class="text-gray-500">Ingreso Total (Período)</p>
-            <p id="ventasTotales" class="text-2xl font-bold text-green-600">$0.00</p>
-          </div>
-          <div>
-            <p class="text-gray-500">Litros Vendidos</p>
-            <p id="litrosTotales" class="text-2xl font-bold text-blue-600">0 L</p>
-          </div>
-          <div>
-            <p class="text-gray-500">Ticket Promedio</p>
-            <p id="ticketPromedio" class="text-2xl font-bold text-yellow-500">$0.00</p>
-          </div>
-          <div>
-            <p class="text-gray-500">Ventas Registradas</p>
-            <p id="cantidadVentas" class="text-2xl font-bold">0</p>
-          </div>
+    <!-- PANEL IZQUIERDO: Desempeño económico -->
+    <div class="bg-white shadow rounded p-6 space-y-4">
+      <h2 class="text-xl font-bold">Desempeño Económico</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-gray-500">Ingreso Total (Período)</p>
+          <p id="ventasTotales" class="text-2xl font-bold text-green-600">$0.00</p>
         </div>
-      </div>
-
-      <div class="bg-white shadow rounded p-6 space-y-4">
-        <h3 class="text-xl font-semibold">Distribución y Ranking</h3>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <canvas id="graficaVolumenes" height="160"></canvas>
-          </div>
-          <div>
-            <p class="text-gray-500 font-semibold mb-2">Top 3 Máquinas</p>
-            <ul id="topMaquinas" class="space-y-1 text-sm text-gray-800"></ul>
-          </div>
+        <div>
+          <p class="text-gray-500">Litros Vendidos</p>
+          <p id="litrosTotales" class="text-2xl font-bold text-blue-600">0 L</p>
+        </div>
+        <div>
+          <p class="text-gray-500">Ticket Promedio</p>
+          <p id="ticketPromedio" class="text-2xl font-bold text-yellow-500">$0.00</p>
+        </div>
+        <div>
+          <p class="text-gray-500">Ventas Registradas</p>
+          <p id="cantidadVentas" class="text-2xl font-bold">0</p>
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- SECCIÓN CONFIGURACIÓN REMOTA -->
-  <section id="config-remota" class="mb-10">
-    <h2 class="text-2xl font-bold mb-4">Configuración Remota</h2>
-    <div class="bg-white shadow rounded p-6">
-      <p class="text-gray-700">Aquí irá la interfaz para configurar tus máquinas de forma remota.</p>
-      <!-- Puedes agregar inputs, sliders, switches o formularios aquí -->
-    </div>
-  </section>
-
-  <!-- SECCIÓN REPORTE -->
-  <section id="reporte" class="mb-10">
-    <h2 class="text-2xl font-bold mb-4">Reporte</h2>
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-      <div class="bg-white shadow rounded p-4">
-        <h3 class="font-semibold mb-2">Ventas por Máquina</h3>
-        <canvas id="graficaVentasMaquina" height="160"></canvas>
-      </div>
-      <div class="bg-white shadow rounded p-4">
-        <h3 class="font-semibold mb-2">Ventas por Horario</h3>
-        <canvas id="graficaHorarios" height="160"></canvas>
-      </div>
-      <div class="bg-white shadow rounded p-4 xl:col-span-2">
-        <h3 class="font-semibold mb-2">Tendencia de Ventas Diarias</h3>
-        <canvas id="graficaVentasPorDia" height="180"></canvas>
+    <!-- PANEL DERECHO: Ranking -->
+    <div class="bg-white shadow rounded p-6 space-y-4">
+      <h2 class="text-xl font-bold">Ranking</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <canvas id="graficaVolumenes" height="160"></canvas>
+        </div>
+        <div>
+          <p class="text-gray-500 font-semibold mb-2">Top 3 Máquinas</p>
+          <ul id="topMaquinas" class="space-y-1 text-sm text-gray-800"></ul>
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- SECCIÓN SUSCRIPCIÓN -->
-  <section id="suscripcion" class="mb-10">
-    <h2 class="text-2xl font-bold mb-4">Suscripción</h2>
-    <div class="bg-white shadow rounded p-6">
-      <p class="text-gray-700">Aquí podrás gestionar los planes de suscripción, pagos y estado de cada cliente.</p>
-      <!-- Agrega aquí el formulario de suscripción o control de usuarios -->
-    </div>
   </section>
-
+    <!-- SCRIPTS -->
   <script>
+    const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Reemplaza con tu propia anon key
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Proteger sesión
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) window.location.href = "login.html";
+    });
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const hoy = new Date();
+      const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+      document.getElementById("fechaInicioResumen").value = inicioMes.toISOString().split("T")[0];
+      document.getElementById("fechaFinResumen").value = hoy.toISOString().split("T")[0];
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Cargar máquinas asociadas al usuario
+      const { data: maquinas, error } = await supabase
+        .from("maquinas")
+        .select("id, nombre")
+        .eq("usuario_id", user.id);
+
+      if (error) {
+        console.error("Error al cargar máquinas:", error.message);
+        return;
+      }
+
+      const select = document.getElementById("filtroMaquina");
+      maquinas.forEach(m => {
+        const option = document.createElement("option");
+        option.value = m.id;
+        option.textContent = m.nombre;
+        select.appendChild(option);
+      });
+
+      // Cargar resumen inicial
+      actualizarResumen();
+    });
+
+    async function actualizarResumen() {
+      const maquinaSeleccionada = document.getElementById("filtroMaquina").value;
+      const fechaInicio = document.getElementById("fechaInicioResumen").value;
+      const fechaFin = document.getElementById("fechaFinResumen").value;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      let query = supabase
+        .from("ventas")
+        .select("*")
+        .eq("usuario_id", user.id)
+        .gte("fecha", fechaInicio)
+        .lte("fecha", fechaFin);
+
+      if (maquinaSeleccionada !== "todas") {
+        query = query.eq("maquina_id", maquinaSeleccionada);
+      }
+
+      const { data: ventas, error } = await query;
+
+      if (error) {
+        console.error("Error al obtener ventas:", error.message);
+        return;
+      }
+
+      // Procesar los datos
+      let totalVentas = 0;
+      let litrosTotales = 0;
+      let ticketPromedio = 0;
+
+      ventas.forEach(v => {
+        totalVentas += v.total || 0;
+        litrosTotales += v.litros || 0;
+      });
+
+      ticketPromedio = ventas.length ? totalVentas / ventas.length : 0;
+
+      document.getElementById("ventasTotales").textContent = `$${totalVentas.toFixed(2)}`;
+      document.getElementById("litrosTotales").textContent = `${litrosTotales} L`;
+      document.getElementById("ticketPromedio").textContent = `$${ticketPromedio.toFixed(2)}`;
+      document.getElementById("cantidadVentas").textContent = ventas.length;
+
+      // Puedes aquí también actualizar gráficas si lo deseas
+    }
+
     function cerrarSesion() {
       supabase.auth.signOut().then(() => {
-        window.location.href = "login.html"; // redirige al login o a donde quieras
+        window.location.href = "login.html";
       });
     }
   </script>
