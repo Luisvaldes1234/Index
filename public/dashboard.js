@@ -3,246 +3,248 @@ const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// Datos actuales para CSV
+// Variables globales para guardar instancias de Chart y datos
 let ventasActuales = [];
+let graficaIngresos, graficaLitros, graficaDiaria, graficaTipoVolumen;
 
-// === Cuando carga la página ===
-document.addEventListener("DOMContentLoaded", async () => {
+// === Al cargar la página ===
+document.addEventListener('DOMContentLoaded', async () => {
   // 1) Autenticación
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return window.location.href = "login.html";
+  const { data:{ user } } = await supabase.auth.getUser();
+  if (!user) return window.location.href = 'login.html';
 
-  // 2) Fechas iniciales (primer día del mes hasta hoy)
+  // 2) Inicializar filtros de fecha
   const hoy = new Date();
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-  document.getElementById("fechaInicioResumen").value = inicioMes.toISOString().split("T")[0];
-  document.getElementById("fechaFinResumen").value    = hoy.toISOString().split("T")[0];
+  document.getElementById('fechaInicioResumen').value = inicioMes.toISOString().slice(0,10);
+  document.getElementById('fechaFinResumen'   ).value = hoy.toISOString().slice(0,10);
 
   // 3) Cargar lista de máquinas
-  const { data: maquinas, error: errMaq } = await supabase
-    .from("maquinas")
-    .select("id, nombre")
-    .eq("usuario_id", user.id);
-  if (errMaq) {
-    console.error("Error al cargar máquinas:", errMaq.message);
-    return;
+  const { data: maquinas, error: errM } = await supabase
+    .from('maquinas')
+    .select('id, name')
+    .eq('usuario_id', user.id);
+  if (errM) console.error('Error al cargar máquinas:', errM);
+  else {
+    const sel = document.getElementById('filtroMaquina');
+    maquinas.forEach(m => {
+      const o = document.createElement('option');
+      o.value = m.id;
+      o.textContent = m.name || `Máquina ${m.id}`;
+      sel.appendChild(o);
+    });
   }
-  const select = document.getElementById("filtroMaquina");
-  maquinas.forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = m.id;
-    opt.textContent = m.nombre || `Máquina ${m.id}`;
-    select.appendChild(opt);
-  });
 
-  // 4) Botones
-  document.getElementById("btnAplicar").addEventListener("click", actualizarResumen);
-  document.getElementById("btnExportar").addEventListener("click", exportarCSV);
-  document.getElementById("btnToggleDark").addEventListener("click", () => {
-    document.documentElement.classList.toggle("dark");
-  });
+  // 4) Botón Aplicar
+  document.querySelector('button[onclick="actualizarResumen()"]')
+    .addEventListener('click', actualizarResumen);
 
-  // 5) Carga inicial
+  // 5) Botón CSV
+  document.querySelector('button[onclick="exportarCSV()"]')
+    .addEventListener('click', exportarCSV);
+
+  // 6) Toggle Dark
+  document.querySelector('button[onclick="document.body.classList.toggle(\'dark\')"]')
+    .addEventListener('click', ()=>{/* no hace falta más */});
+
+  // 7) Lanzar primer cálculo
   actualizarResumen();
 });
 
-
-// === Función principal: obtiene ventas y actualiza todo ===
+// === Función principal ===
 async function actualizarResumen() {
-  const maquinaId = document.getElementById("filtroMaquina").value;
-  const desde     = document.getElementById("fechaInicioResumen").value;
-  const hasta     = document.getElementById("fechaFinResumen").value;
+  // Leer filtros
+  const maquina = document.getElementById('filtroMaquina').value;
+  const desde   = document.getElementById('fechaInicioResumen').value;
+  const hasta   = document.getElementById('fechaFinResumen'   ).value;
 
-  // volver a obtener user (por seguridad)
-  const { data: { user } } = await supabase.auth.getUser();
+  // Volver a obtener usuario
+  const { data:{ user } } = await supabase.auth.getUser();
   if (!user) return;
 
   // Construir consulta
   let q = supabase
-    .from("ventas")
-    .select("*")
-    .eq("usuario_id", user.id)
-    .gte("fecha", desde)
-    .lte("fecha", hasta);
-  if (maquinaId !== "todas") q = q.eq("maquina_id", maquinaId);
+    .from('ventas')
+    .select('*')
+    .eq('usuario_id', user.id)
+    .gte('fecha', desde)
+    .lte('fecha', hasta);
+  if (maquina !== 'todas') q = q.eq('maquina_id', maquina);
 
   const { data: ventas, error } = await q;
-  if (error) {
-    console.error("Error al obtener ventas:", error.message);
-    return;
-  }
+  if (error) return console.error('Error al obtener ventas:', error);
 
-  // Guardar para CSV
-  ventasActuales = ventas;
+  ventasActuales = ventas; // para CSV
 
-  // 1) Desempeño económico
-  let total = 0, litros = 0;
-  ventas.forEach(v => {
-    total  += v.total  || 0;
-    litros += v.litros || 0;
-  });
-  const ticketProm = ventas.length ? (total / ventas.length) : 0;
+  // 1) Mostrar mensaje sin ventas
+  document.getElementById('mensajeSinVentas').classList.toggle('hidden', ventas.length>0);
 
-  document.getElementById("ventasTotales").textContent  = `$${total.toFixed(2)}`;
-  document.getElementById("litrosTotales").textContent  = `${litros} L`;
-  document.getElementById("ticketPromedio").textContent = `$${ticketProm.toFixed(2)}`;
-  document.getElementById("cantidadVentas").textContent = ventas.length;
+  // 2) Calcular y mostrar totales
+  const totVtas = ventas.reduce((a,v)=>a+(v.total||0),0);
+  const totLit  = ventas.reduce((a,v)=>a+(v.litros||0),0);
+  const prom    = ventas.length ? totVtas/ventas.length : 0;
 
-  // 2–5) Actualizar gráficas
-  actualizarGraficaTop(ventas);
-  actualizarGraficaLitros(ventas);
+  document.getElementById('ventasTotales' ).textContent = `$${totVtas.toFixed(2)}`;
+  document.getElementById('litrosTotales' ).textContent = `${totLit} L`;
+  document.getElementById('ticketPromedio').textContent = `$${prom.toFixed(2)}`;
+  document.getElementById('cantidadVentas').textContent = ventas.length;
+
+  // 3) Actualizar gráficas
+  actualizarGraficaIngresos(ventas);
+  actualizarGraficaLitrosVendidos(ventas);
   actualizarGraficaVentasDiarias(ventas);
   actualizarGraficaTipoVolumen(ventas);
 }
 
+// === Top 3 Ingresos ===
+function actualizarGraficaIngresos(ventas) {
+  // destruir si existía
+  if (graficaIngresos) graficaIngresos.destroy();
 
-// === Gráfica 1: Top 3 Máquinas por Ingreso ===
-function actualizarGraficaTop(ventas) {
-  const agg = {};
-  ventas.forEach(v => {
-    const key = `Máquina ${v.maquina_id}`;
-    agg[key] = (agg[key] || 0) + (v.total || 0);
+  // Agrupar totales por máquina
+  const mapa = {};
+  ventas.forEach(v=>{
+    const key = v.name || `Máquina ${v.maquina_id}`;
+    mapa[key] = (mapa[key]||0) + (v.total||0);
   });
-  const top = Object.entries(agg)
-    .sort((a,b)=>b[1]-a[1])
-    .slice(0,3);
-
-  // Lista textual
-  const ul = document.getElementById("topMaquinas");
-  ul.innerHTML = "";
-  top.forEach(([name,val])=>{
-    const li = document.createElement("li");
-    li.textContent = `${name}: $${val.toFixed(2)}`;
-    ul.appendChild(li);
-  });
+  const arr = Object.entries(mapa).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const labels = arr.map(r=>r[0]);
+  const data   = arr.map(r=>r[1]);
 
   // Bar chart
-  const ctx = document.getElementById("graficaVolumenes").getContext("2d");
-  if (window.graficaTop) window.graficaTop.destroy();
-  window.graficaTop = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: top.map(t=>t[0]),
-      datasets:[{
-        label:"Ingresos",
-        data: top.map(t=>t[1]),
-        backgroundColor:"rgba(54,162,235,0.6)"
-      }]
-    },
+  const ctx = document.getElementById('graficaVolumenes').getContext('2d');
+  graficaIngresos = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ data, backgroundColor:'rgba(54,162,235,0.6)' }]},
     options:{
-      responsive:true,
-      plugins:{ 
-        legend:{ display:false },
-        title:{ display:true, text:"Top 3 Máquinas por Ingreso" }
-      }
-    }
-  });
-}
-
-
-// === Gráfica 2: Litros Vendidos por Máquina ===
-function actualizarGraficaLitros(ventas) {
-  const agg = {};
-  ventas.forEach(v => {
-    const key = `Máquina ${v.maquina_id}`;
-    agg[key] = (agg[key] || 0) + (v.litros || 0);
-  });
-  const top = Object.entries(agg)
-    .sort((a,b)=>b[1]-a[1])
-    .slice(0,3);
-
-  const ctx = document.getElementById("graficaLitros").getContext("2d");
-  if (window.graficaLitros) window.graficaLitros.destroy();
-  window.graficaLitros = new Chart(ctx, {
-    type: "bar",
-    data:{
-      labels: top.map(t=>t[0]),
-      datasets:[{
-        label:"Litros",
-        data: top.map(t=>t[1]),
-        backgroundColor:"rgba(75,192,192,0.6)"
-      }]
-    },
-    options:{
-      responsive:true,
       plugins:{
-        legend:{ display:false },
-        title:{ display:true, text:"Top 3 Máquinas por Litros Vendidos" }
-      }
-    }
+        title:{ display:true, text:'Top 3 Máquinas por Ingreso' },
+        datalabels:{
+          anchor:'end', align:'top',
+          formatter: v=>`$${v.toFixed(2)}`,
+          font:{ weight:'bold' }, color:'#111'
+        }
+      },
+      responsive:true
+    },
+    plugins:[ChartDataLabels]
+  });
+
+  // Lista textual
+  const ul = document.getElementById('topMaquinas');
+  ul.innerHTML='';
+  arr.forEach(([n,t])=>{
+    const li=document.createElement('li');
+    li.textContent=`${n}: $${t.toFixed(2)}`;
+    ul.appendChild(li);
   });
 }
 
+// === Litros vendidos por máquina (Top 3) ===
+function actualizarGraficaLitrosVendidos(ventas) {
+  if (graficaLitros) graficaLitros.destroy();
 
-// === Gráfica 3: Tendencia de Ventas Diarias (total diario) ===
-function actualizarGraficaVentasDiarias(ventas) {
-  const agg = {};
-  ventas.forEach(v => {
-    const d = new Date(v.fecha).toISOString().split("T")[0];
-    agg[d] = (agg[d]||0) + (v.total||0);
+  const mapa = {};
+  ventas.forEach(v=>{
+    const key = v.name || `Máquina ${v.maquina_id}`;
+    mapa[key] = (mapa[key]||0) + (v.litros||0);
   });
-  const labels = Object.keys(agg).sort();
-  const data   = labels.map(l=>agg[l]);
+  const arr = Object.entries(mapa).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const labels = arr.map(r=>r[0]);
+  const data   = arr.map(r=>r[1]);
 
-  const ctx = document.getElementById("graficaVentasDiarias").getContext("2d");
-  if (window.graficaVentas) window.graficaVentas.destroy();
-  window.graficaVentas = new Chart(ctx, {
-    type:"line",
-    data:{ labels, datasets:[{
-      label:"Ventas diarias ($)",
-      data,
-      fill:false,
-      tension:0.3
-    }]},
+  const canvas = document.getElementById('graficaLitrosPorMaquina');
+  const ctx    = canvas.getContext('2d');
+  graficaLitros = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ data, backgroundColor:'rgba(75,192,192,0.6)' }]},
     options:{
-      responsive:true,
-      plugins:{ title:{ display:true, text:"Tendencia de Ventas Diarias" } }
+      plugins:{
+        title:{ display:true, text:'Top 3 Máquinas por Litros Vendidos' },
+        datalabels:{
+          anchor:'end', align:'top',
+          formatter: v=>`${v} L`,
+          font:{ weight:'bold' }, color:'#111'
+        }
+      },
+      responsive:true
+    },
+    plugins:[ChartDataLabels]
+  });
+}
+
+// === Tendencia de ventas diarias ===
+function actualizarGraficaVentasDiarias(ventas) {
+  if (graficaDiaria) graficaDiaria.destroy();
+
+  // acumular totales por día
+  const mapa = {};
+  ventas.forEach(v=>{
+    const dia = v.fecha.slice(0,10); // YYYY-MM-DD
+    mapa[dia] = (mapa[dia]||0) + (v.total||0);
+  });
+  const arr = Object.entries(mapa).sort((a,b)=>a[0].localeCompare(b[0]));
+  const labels = arr.map(r=>r[0]);
+  const data   = arr.map(r=>r[1]);
+
+  const ctx = document.getElementById('graficaVentasDiarias').getContext('2d');
+  graficaDiaria = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{ data, fill:false, borderColor:'rgba(255,159,64,0.8)' }]},
+    options:{
+      plugins:{
+        title:{ display:true, text:'Tendencia de Ventas Diarias' }
+      },
+      scales:{ y:{ beginAtZero:true } },
+      responsive:true
     }
   });
 }
 
-
-// === Gráfica 4: Distribución por Tipo de Volumen (litros escala) ===
+// === Distribución por tipo de volumen (pastel) ===
 function actualizarGraficaTipoVolumen(ventas) {
-  // Reutilizamos la agregación de litros por máquina
-  const agg = {};
-  ventas.forEach(v => {
-    const key = `Máquina ${v.maquina_id}`;
-    agg[key] = (agg[key] || 0) + (v.litros || 0);
-  });
-  const labels = Object.keys(agg);
-  const data   = labels.map(l=>agg[l]);
+  if (graficaTipoVolumen) graficaTipoVolumen.destroy();
 
-  const ctx = document.getElementById("graficaTipoVolumen").getContext("2d");
-  if (window.graficaTipo) window.graficaTipo.destroy();
-  window.graficaTipo = new Chart(ctx, {
-    type:"pie",
+  // Supuestamente tienes un campo v.tipoVolumen (por ejemplo "AC", "FRIO", etc.)
+  const mapa = {};
+  ventas.forEach(v=>{
+    const tipo = v.tipo_volumen || 'Desconocido';
+    mapa[tipo] = (mapa[tipo]||0) + (v.litros||0);
+  });
+  const labels = Object.keys(mapa);
+  const data   = Object.values(mapa);
+
+  const ctx = document.getElementById('graficaTipoVolumen').getContext('2d');
+  graficaTipoVolumen = new Chart(ctx, {
+    type:'pie',
     data:{ labels, datasets:[{ data, backgroundColor:[
-      "rgba(54,162,235,0.6)","rgba(75,192,192,0.6)","rgba(255,205,86,0.6)"
+      '#4ade80','#facc15','#60a5fa','#f87171','#a78bfa'
     ]}]},
     options:{
-      responsive:true,
-      plugins:{ title:{ display:true, text:"Distribución de Litros por Máquina" } }
+      plugins:{ title:{ display:true, text:'Distribución de Volumen por Tipo' }},
+      responsive:true
     }
   });
 }
-
 
 // === Exportar CSV ===
 function exportarCSV() {
-  if (!ventasActuales.length) return alert("No hay datos para exportar");
-  const header = Object.keys(ventasActuales[0]);
-  const rows = ventasActuales.map(r=> header.map(c=> r[c] ?? ""));
-  let csv = [header.join(",")].concat(rows.map(r=> r.join(","))).join("\n");
-  const blob = new Blob([csv], { type:"text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "ventas.csv"; a.click();
+  if (!ventasActuales.length) {
+    return alert('No hay datos para exportar');
+  }
+  const cols = Object.keys(ventasActuales[0]);
+  const rows = ventasActuales.map(v=> cols.map(c=>v[c]||''));
+  const lines = [ cols.join(','), ...rows.map(r=>r.join(',')) ];
+  const blob = new Blob([lines.join('\n')], { type:'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'ventas.csv';
+  a.click();
   URL.revokeObjectURL(url);
 }
 
-
-// === Cerrar Sesión ===
+// === Cerrar sesión ===
 function cerrarSesion() {
-  supabase.auth.signOut().then(() => window.location.href = "login.html");
+  supabase.auth.signOut().then(()=> window.location.href='login.html');
 }
