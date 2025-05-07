@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,7 +11,6 @@
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">Mis Máquinas</h1>
 
-    <!-- Formulario para agregar nueva máquina -->
     <div class="bg-white dark:bg-gray-800 shadow-md rounded p-6 mb-8">
       <h2 class="text-xl font-semibold mb-4">Registrar nueva máquina</h2>
       <form id="machineForm" class="space-y-4">
@@ -24,18 +23,17 @@
           <input type="text" id="name" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
         </div>
         <div>
-          <label for="liters" class="block text-sm font-medium">Litros por botón (separados por coma, ej: 5,10,20)</label>
+          <label for="liters" class="block text-sm font-medium">Litros por botón (ej: 5,10,20)</label>
           <input type="text" id="liters" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
         </div>
         <div>
-          <label for="prices" class="block text-sm font-medium">Precio por botón (separados por coma, ej: 10,15,25)</label>
+          <label for="prices" class="block text-sm font-medium">Precios por botón (ej: 10,15,25)</label>
           <input type="text" id="prices" class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700" required>
         </div>
         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Registrar</button>
       </form>
     </div>
 
-    <!-- Lista de máquinas registradas -->
     <div>
       <h2 class="text-xl font-semibold mb-4">Máquinas registradas</h2>
       <ul id="machineList" class="space-y-4"></ul>
