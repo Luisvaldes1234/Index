@@ -1,101 +1,111 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Aqualink Dashboard</title>
-  <!-- Chart.js + DataLabels -->
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <meta charset="UTF-8">
+  <title>Dashboard Aqualink</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <!-- Tailwind -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
-  <style>html{scroll-behavior:smooth}</style>
-  <!-- Tu lógica -->
   <script src="dashboard.js" defer></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-  <!-- HEADER -->
-  <header class="flex justify-between p-4 bg-white dark:bg-gray-800 shadow">
-    <h1 class="text-2xl font-bold">Aqualink Dashboard</h1>
-    <nav class="flex items-center space-x-4">
-      <a href="maquinas.html" class="text-blue-500 dark:text-blue-300">Mis máquinas</a>
-      <a href="configuracion.html" class="text-blue-500 dark:text-blue-300">Configuración Remota</a>
-      <a href="reportes.html" class="text-blue-500 dark:text-blue-300">Reporte</a>
-      <a href="suscripcion.html" class="text-blue-500 dark:text-blue-300">Suscripción</a>
-      <button onclick="cerrarSesion()" class="bg-red-500 text-white px-4 py-1 rounded">Cerrar sesión</button>
-    </nav>
-  </header>
+<body class="bg-gray-100 text-gray-900">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-md p-4 space-y-4">
+      <h1 class="text-xl font-bold mb-6">Aqualink Dashboard</h1>
+      <nav class="space-y-2">
+        <button onclick="mostrarSeccion('resumen')" class="block w-full text-left hover:text-blue-600">📊 Resumen</button>
+        <button onclick="mostrarSeccion('litros')" class="block w-full text-left hover:text-blue-600">💧 Litros Vendidos</button>
+        <button onclick="mostrarSeccion('config')" class="block w-full text-left hover:text-blue-600">⚙️ Configuración Remota</button>
+        <button onclick="mostrarSeccion('historial')" class="block w-full text-left hover:text-blue-600">🕒 Historial</button>
+      </nav>
+    </aside>
 
-  <main class="p-6 space-y-6">
-    <!-- FILTROS -->
-    <div class="flex flex-wrap gap-4 bg-white dark:bg-gray-800 p-4 rounded shadow">
-      <select id="filtroMaquina" class="border p-2 rounded bg-white dark:bg-gray-700">
-        <option value="todas">Todas</option>
-      </select>
-      <input type="date" id="fechaInicioResumen" class="border p-2 rounded bg-white dark:bg-gray-700"/>
-      <input type="date" id="fechaFinResumen"    class="border p-2 rounded bg-white dark:bg-gray-700"/>
-      <button id="btnAplicar"  class="bg-blue-600 text-white px-4 py-2 rounded">Aplicar</button>
-      <button id="btnExportar" class="bg-green-600 text-white px-4 py-2 rounded">Exportar CSV</button>
-      <button id="btnToggleDark" class="ml-auto bg-gray-600 text-white px-4 py-2 rounded">🌗</button>
-    </div>
+    <!-- Contenido principal -->
+    <main class="flex-1 p-6">
 
-    <!-- KPIs -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-center">
-        <p class="text-gray-500">Ingreso Total</p>
-        <p id="ventasTotales" class="text-2xl font-bold text-green-600 dark:text-green-400">$0.00</p>
-      </div>
-      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-center">
-        <p class="text-gray-500">Litros Vendidos</p>
-        <p id="litrosTotales" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0 L</p>
-      </div>
-      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-center">
-        <p class="text-gray-500">Ticket Promedio</p>
-        <p id="ticketPromedio" class="text-2xl font-bold text-yellow-500 dark:text-yellow-400">$0.00</p>
-      </div>
-      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow text-center">
-        <p class="text-gray-500">Ventas Registradas</p>
-        <p id="cantidadVentas" class="text-2xl font-bold">0</p>
-      </div>
-    </div>
+      <!-- Sección: Resumen -->
+      <section id="resumen">
+        <h2 class="text-2xl font-semibold mb-4">Resumen de Ventas</h2>
+        <div class="flex space-x-4 mb-4">
+          <select id="filtroMaquina" class="border rounded p-2">
+            <option value="">Todas las máquinas</option>
+          </select>
+          <select id="filtroPeriodo" class="border rounded p-2">
+            <option value="dia">Hoy</option>
+            <option value="semana">Esta semana</option>
+            <option value="mes">Este mes</option>
+            <option value="anio">Este año</option>
+          </select>
+          <button onclick="cargarResumen()" class="bg-blue-600 text-white px-4 py-2 rounded">Actualizar</button>
+        </div>
 
-    <!-- TOP 3 INGRESOS + LISTA -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h2 class="text-lg font-semibold text-center mb-4">Top 3 Máquinas por Ingreso</h2>
-        <canvas id="graficaVolumenes" height="200"></canvas>
-      </div>
-      <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h2 class="text-lg font-semibold mb-4">Top 3 Máquinas</h2>
-        <ul id="topMaquinas" class="space-y-2 text-sm"></ul>
-      </div>
-    </div>
+        <div id="resumenDatos" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white p-4 rounded shadow">
+            <p class="text-gray-500">Ventas Totales</p>
+            <p id="ventasTotales" class="text-xl font-bold">$0</p>
+          </div>
+          <div class="bg-white p-4 rounded shadow">
+            <p class="text-gray-500">Litros Vendidos</p>
+            <p id="litrosTotales" class="text-xl font-bold">0 L</p>
+          </div>
+          <div class="bg-white p-4 rounded shadow">
+            <p class="text-gray-500">Compras por Volumen</p>
+            <ul id="volumenesVendidos" class="text-sm space-y-1"></ul>
+          </div>
+        </div>
+      </section>
 
-    <!-- GRÁFICAS EXTRA -->
-    <div id="graficasExtra" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Litros por Máquina -->
-      <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h2 class="text-lg font-semibold mb-4">Litros por Máquina</h2>
-        <canvas id="graficaLitros" height="180"></canvas>
-      </div>
-      <!-- Ventas Diarias -->
-      <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <h2 class="text-lg font-semibold mb-4">Tendencia de Ventas Diarias</h2>
-        <canvas id="graficaVentasDiarias" height="180"></canvas>
-      </div>
-      <!-- Distribución Volumen -->
-      <div class="bg-white dark:bg-gray-800 p-6 rounded shadow md:col-span-2">
-        <h2 class="text-lg font-semibold mb-4">Distribución de Litros por Máquina</h2>
-        <canvas id="graficaTipoVolumen" height="180"></canvas>
-      </div>
-      <!-- Mensaje si no hay datos -->
-      <div id="mensajeSinVentas"
-           class="hidden col-span-full text-center py-6 text-red-600 dark:text-red-400 font-semibold">
-        No hay ventas registradas para el período seleccionado.
-      </div>
-    </div>
-  </main>
+<!-- Sección: Litros -->
+      <section id="litros" class="hidden">
+  <h2 class="text-2xl font-semibold mb-4">Análisis de Litros Vendidos</h2>
+  
+  <!-- Aquí se insertan los checkboxes de máquinas -->
+  <div id="filtrosMaquinasGrafico" class="mb-4 space-x-4"></div>
+
+  <canvas id="graficoLitros" width="400" height="200"></canvas>
+</section>
+
+      <!-- Sección: Configuración -->
+      <section id="config" class="hidden">
+        <h2 class="text-2xl font-semibold mb-4">Configuración Remota</h2>
+        <form id="formConfig" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block">Botón 1 (litros):</label>
+            <input type="number" name="btn1_litros" class="w-full border p-2 rounded" />
+          </div>
+          <div>
+            <label class="block">Botón 1 (precio):</label>
+            <input type="number" name="btn1_precio" class="w-full border p-2 rounded" />
+          </div>
+          <div class="md:col-span-3">
+            <button type="button" onclick="guardarConfiguracion()" class="bg-green-600 text-white px-4 py-2 rounded">Guardar Cambios</button>
+          </div>
+        </form>
+      </section>
+
+     <!-- Sección: Historial -->
+<section id="historial" class="hidden">
+  <h2 class="text-2xl font-semibold mb-4">Historial de Ventas</h2>
+
+  <div class="flex items-center space-x-4 mb-4">
+    <select id="filtroHistorialPeriodo" class="border p-2 rounded">
+      <option value="mes">Este mes</option>
+      <option value="anio">Este año</option>
+      <option value="todo">Todo el historial</option>
+    </select>
+
+    <button onclick="exportarHistorialCSV()" class="bg-green-600 text-white px-4 py-2 rounded">
+      📤 Exportar CSV
+    </button>
+  </div>
+
+  <div id="tablaHistorial" class="overflow-auto bg-white rounded shadow p-4">
+    <!-- Aquí irá la tabla -->
+  </div>
+</section>
+
+    </main>
+  </div>
 </body>
 </html>
