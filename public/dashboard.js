@@ -96,32 +96,50 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function cargarGraficas() {
+  const desde = document.getElementById("fechaDesde").value;
+  const hasta = document.getElementById("fechaHasta").value;
+  const maquina = document.getElementById("filtroMaquinaCSV").value;
+
   const { data: ventas, error } = await supabase
     .from("ventas")
-    .select("*");
+    .select("*")
+    .gte("created_at", new Date(desde).toISOString())
+    .lte("created_at", new Date(hasta + "T23:59:59").toISOString());
 
   if (error || !ventas) return console.error("Error al cargar ventas:", error);
 
-  renderGraficaHoras(ventas);
-  renderGraficaDias(ventas);
-  renderGraficaVolumen(ventas);
-  renderGraficaMaquinas(ventas);
-  renderTabla(ventas);
+  const filtradas = ventas.filter(v =>
+    !maquina || v.serial === maquina
+  );
+
+  renderGraficaHoras(filtradas);
+  renderGraficaDias(filtradas);
+  renderGraficaVolumen(filtradas);
+  renderGraficaMaquinas(filtradas, maquina);
 }
 
-function renderGraficaHoras(ventas) {
-  const horas = Array(24).fill(0);
+function renderGraficaMaquinas(ventas, maquinaFiltrada) {
+  const canvas = document.getElementById("graficaMaquinas");
+  if (!canvas) return;
+
+  const mapa = {};
+
   ventas.forEach(v => {
-    const h = new Date(v.created_at).getHours();
-    horas[h] += parseFloat(v.precio_total) || 0;
+    if (!v.serial) return;
+    mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.precio_total || 0);
   });
-  new Chart(document.getElementById("graficaHoras"), {
+
+  const labels = Object.keys(mapa);
+  const valores = labels.map(l => mapa[l]);
+
+  if (window.chartMaquinas) window.chartMaquinas.destroy();
+  window.chartMaquinas = new Chart(canvas, {
     type: "bar",
     data: {
-      labels: [...Array(24).keys()].map(h => `${h}:00`),
+      labels,
       datasets: [{
-        label: "Ventas por hora ($)",
-        data: horas
+        label: "Ventas por máquina ($)",
+        data: valores
       }]
     }
   });
@@ -298,3 +316,7 @@ async function cargarMaquinasParaCSV() {
     select.appendChild(op);
   });
 }
+// Escuchar cambios en filtros
+["fechaDesde", "fechaHasta", "filtroMaquinaCSV"].forEach(id => {
+  document.getElementById(id).addEventListener("change", cargarGraficas);
+});
