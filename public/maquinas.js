@@ -81,22 +81,20 @@ async function loadMachines() {
     const [pre1, pre2, pre3] = (maquina.prices || '').split(',');
 
     const card = `
-      <div class="p-4 bg-white dark:bg-gray-800 shadow rounded space-y-2">
+      <div id="card-${maquina.id}" class="p-4 bg-white dark:bg-gray-800 shadow rounded space-y-2">
         <h3 class="text-lg font-bold">${maquina.nombre}</h3>
         <p class="text-sm text-gray-600">Serial: ${maquina.serial}</p>
         <p>${estadoHTML}</p>
-        
-        <div class="grid grid-cols-3 gap-4 mt-2">
+
+        <div id="vista-${maquina.id}" class="grid grid-cols-3 gap-4 mt-2">
           <div>
-            <label class="text-sm">Litros</label>
-            <input data-id="${maquina.id}" data-type="litros" class="updateLitros w-full px-2 py-1 border rounded" value="${[lit1, lit2, lit3].join(',')}" />
+            <p><strong>Litros:</strong> ${[lit1, lit2, lit3].join(', ')}</p>
           </div>
           <div>
-            <label class="text-sm">Precios</label>
-            <input data-id="${maquina.id}" data-type="precios" class="updatePrecios w-full px-2 py-1 border rounded" value="${[pre1, pre2, pre3].join(',')}" />
+            <p><strong>Precios:</strong> ${[pre1, pre2, pre3].join(', ')}</p>
           </div>
           <div class="flex items-end">
-            <button onclick="guardarCambios(${maquina.id})" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Guardar</button>
+            <button onclick="activarEdicion(${maquina.id}, '${[lit1, lit2, lit3].join(',')}', '${[pre1, pre2, pre3].join(',')}')" class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">Editar</button>
           </div>
         </div>
       </div>
@@ -106,7 +104,26 @@ async function loadMachines() {
   });
 }
 
-// === GUARDAR CAMBIOS DE LITROS/PRECIOS ===
+// === ACTIVAR EDICIÓN DE LITROS Y PRECIOS ===
+function activarEdicion(id, litros, precios) {
+  const contenedor = document.getElementById(`vista-${id}`);
+  contenedor.innerHTML = `
+    <div>
+      <label class="text-sm">Litros</label>
+      <input data-id="${id}" data-type="litros" class="updateLitros w-full px-2 py-1 border rounded" value="${litros}" />
+    </div>
+    <div>
+      <label class="text-sm">Precios</label>
+      <input data-id="${id}" data-type="precios" class="updatePrecios w-full px-2 py-1 border rounded" value="${precios}" />
+    </div>
+    <div class="flex items-end gap-2">
+      <button onclick="guardarCambios(${id})" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Guardar</button>
+      <button onclick="loadMachines()" class="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600">Cancelar</button>
+    </div>
+  `;
+}
+
+// === GUARDAR CAMBIOS ===
 async function guardarCambios(id) {
   const inputLitros = document.querySelector(`input[data-id="${id}"][data-type="litros"]`);
   const inputPrecios = document.querySelector(`input[data-id="${id}"][data-type="precios"]`);
