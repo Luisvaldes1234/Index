@@ -44,20 +44,23 @@
     </div>
 
     <!-- TABLA DETALLADA -->
-    <div>
-      <h2 class="text-xl font-bold mb-4">Historial de ventas</h2>
-      <div class="mb-4 flex gap-4">
-        <input type="date" id="fechaInicio" class="px-3 py-1 border rounded" />
-        <input type="date" id="fechaFin" class="px-3 py-1 border rounded" />
-        <select id="filtroMaquina" class="px-3 py-1 border rounded">
-          <option value="">Todas las máquinas</option>
-        </select>
-        <button onclick="aplicarFiltros()" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Filtrar</button>
-      </div>
-      <div id="tablaVentas" class="overflow-x-auto"></div>
-    </div>
+  <!-- FILTROS Y EXPORTACIÓN -->
+<div class="mb-6 space-y-4">
+  <div class="flex gap-4 items-center flex-wrap">
+    <label class="text-sm">Desde:</label>
+    <input type="date" id="fechaDesde" class="px-3 py-1 border rounded" />
 
+    <label class="text-sm">Hasta:</label>
+    <input type="date" id="fechaHasta" class="px-3 py-1 border rounded" />
+
+    <label class="text-sm">Máquina:</label>
+    <select id="filtroMaquinaCSV" class="px-3 py-1 border rounded">
+      <option value="">Todas</option>
+    </select>
+
+    <button onclick="descargarCSV()" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">Descargar CSV</button>
   </div>
+</div>
 
   <script src="dashboard.js"></script>
 </body>
