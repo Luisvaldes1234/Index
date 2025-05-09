@@ -235,3 +235,50 @@ function renderTabla(ventas) {
     </table>
   `;
 }
+document.addEventListener("DOMContentLoaded", () => {
+  const ahora = new Date();
+  const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+  const hoy = new Date();
+
+  document.getElementById("fechaDesde").value = inicioMes.toISOString().split("T")[0];
+  document.getElementById("fechaHasta").value = hoy.toISOString().split("T")[0];
+});
+
+async function descargarCSV() {
+  const desde = document.getElementById("fechaDesde").value;
+  const hasta = document.getElementById("fechaHasta").value;
+  const maquina = document.getElementById("filtroMaquinaCSV").value;
+
+  if (!desde || !hasta) return alert("Selecciona ambas fechas");
+
+  const { data: ventas, error } = await supabase
+    .from("ventas")
+    .select("*")
+    .gte("created_at", new Date(desde).toISOString())
+    .lte("created_at", new Date(hasta + "T23:59:59").toISOString());
+
+  if (error) return alert("Error al obtener ventas");
+
+  const filtradas = ventas.filter(v =>
+    !maquina || v.serial === maquina
+  );
+
+  if (!filtradas.length) return alert("No hay ventas en este período");
+
+  const encabezados = ["Fecha", "Hora", "Máquina", "Litros", "Precio"];
+  const filas = filtradas.map(v => {
+    const f = new Date(v.created_at);
+    const fecha = f.toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" });
+    const hora = f.toLocaleTimeString("es-MX", { timeZone: "America/Mexico_City" });
+    return [fecha, hora, v.serial, v.litros, v.precio_total];
+  });
+
+  const csv = encabezados.join(",") + "\n" + filas.map(f => f.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `ventas_${desde}_a_${hasta}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
