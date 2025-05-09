@@ -282,3 +282,19 @@ async function descargarCSV() {
   a.click();
   URL.revokeObjectURL(url);
 }
+async function cargarMaquinasParaCSV() {
+  const { data: maquinas, error } = await supabase
+    .from("maquinas")
+    .select("serial")
+    .eq("user_id", user.id);
+
+  if (error || !maquinas) return;
+
+  const select = document.getElementById("filtroMaquinaCSV");
+  maquinas.forEach(m => {
+    const op = document.createElement("option");
+    op.value = m.serial;
+    op.textContent = m.serial;
+    select.appendChild(op);
+  });
+}
