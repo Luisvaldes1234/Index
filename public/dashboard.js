@@ -1,164 +1,237 @@
-// Conexión a Supabase
+// === CONEXIÓN A SUPABASE ===
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
 let user = null;
 
-// === AUTENTICAR USUARIO ===
+document.addEventListener('DOMContentLoaded', getUser);
+
 async function getUser() {
   const { data: { user: currentUser }, error } = await supabase.auth.getUser();
   if (error || !currentUser) {
-    alert('No estás autenticado');
+    alert("No estás autenticado.");
     return;
   }
   user = currentUser;
-  loadMachines();
+  cargarResumen();
 }
 
-getUser();
-
-// === REGISTRAR NUEVA MÁQUINA ===
-document.getElementById("machineForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const litros = [
-    document.getElementById("litros1").value,
-    document.getElementById("litros2").value,
-    document.getElementById("litros3").value
-  ].join(',');
-
-  const precios = [
-    document.getElementById("precio1").value,
-    document.getElementById("precio2").value,
-    document.getElementById("precio3").value
-  ].join(',');
-
-  const newMachine = {
-    serial: document.getElementById("serial").value,
-    nombre: document.getElementById("name").value,
-    user_id: user.id,
-    liters: litros,
-    prices: precios,
-    last_seen: new Date().toISOString()
+// === FUNCIONES RESUMEN ===
+async function cargarResumen() {
+  const resumen = {
+    litros: 0,
+    total: 0,
+    ultima: null,
+    ticket: 0,
+    activas: 0,
+    cantidad: 0
   };
 
-  const { error } = await supabase.from("maquinas").insert([newMachine]);
-  if (error) return alert("Error al registrar: " + error.message);
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const fechaInicio = hoy.toISOString();
 
-  e.target.reset();
-  loadMachines();
-});
-
-// === CARGAR MÁQUINAS EXISTENTES ===
-async function loadMachines() {
-  const { data: maquinas, error } = await supabase
-    .from("maquinas")
+  // 1. Ventas de hoy
+  const { data: ventas, error } = await supabase
+    .from("ventas")
     .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+    .gte("created_at", fechaInicio);
 
-  if (error) {
-    console.error("Error al cargar máquinas:", error);
-    return;
+  if (error) return console.error("Error al cargar ventas:", error);
+
+  if (ventas.length) {
+    resumen.litros = ventas.reduce((sum, v) => sum + (parseFloat(v.litros) || 0), 0);
+    resumen.total = ventas.reduce((sum, v) => sum + (parseFloat(v.precio_total) || 0), 0);
+    resumen.ticket = resumen.total / ventas.length;
+    resumen.ultima = ventas[ventas.length - 1].created_at;
   }
 
-  const contenedor = document.getElementById("machineList");
-  contenedor.innerHTML = "";
+  // 2. Máquinas activas
+  const { data: maquinas, error: errMaquinas } = await supabase
+    .from("maquinas")
+    .select("*")
+    .eq("user_id", user.id);
 
-  const now = new Date();
+  if (!errMaquinas && maquinas) {
+    const ahora = new Date();
+    resumen.cantidad = maquinas.length;
+    resumen.activas = maquinas.filter(m => {
+      if (!m.last_seen) return false;
+      const diff = (ahora - new Date(m.last_seen)) / 60000;
+      return diff < 10;
+    }).length;
+  }
 
-  maquinas.forEach(maquina => {
-    let fechaMX = "Nunca";
-    if (maquina.last_seen) {
-      const fechaUTC = new Date(maquina.last_seen);
-      fechaMX = fechaUTC.toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
-    }
-    const lastSeen = maquina.last_seen ? new Date(maquina.last_seen) : null;
-    const diff = lastSeen ? (now - lastSeen) / 60000 : Infinity;
-    const online = diff < 10;
-
-    const estadoHTML = online
-      ? `<span class="text-green-500 font-semibold">En línea</span>`
-      : `<span class="text-red-500 text-sm">Última conexión: ${fechaMX}</span>`;
-
-    const [lit1, lit2, lit3] = (maquina.liters || '').split(',');
-    const [pre1, pre2, pre3] = (maquina.prices || '').split(',');
-
-    const card = `
-      <div id="card-${maquina.id}" class="p-4 bg-white dark:bg-gray-800 shadow rounded space-y-2">
-        <h3 class="text-lg font-bold">${maquina.nombre}</h3>
-        <p class="text-sm text-gray-600">Serial: ${maquina.serial}</p>
-        <p>${estadoHTML}</p>
-
-        <div id="vista-${maquina.id}" class="grid grid-cols-3 gap-4 mt-2">
-          <div>
-            <p><strong>Litros:</strong> ${[lit1, lit2, lit3].join(', ')}</p>
-          </div>
-          <div>
-            <p><strong>Precios:</strong> ${[pre1, pre2, pre3].join(', ')}</p>
-          </div>
-          <div class="flex items-end">
-            <button onclick="activarEdicion(${maquina.id}, '${[lit1, lit2, lit3].join(',')}', '${[pre1, pre2, pre3].join(',')}')" class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">Editar</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    contenedor.innerHTML += card;
-  });
+  renderResumen(resumen);
 }
 
-// === ACTIVAR EDICIÓN DE LITROS Y PRECIOS ===
-function activarEdicion(id, litros, precios) {
-  const contenedor = document.getElementById(`vista-${id}`);
+// === MOSTRAR TARJETAS ===
+function renderResumen(r) {
+  const contenedor = document.getElementById("resumen");
   contenedor.innerHTML = `
-    <div>
-      <label class="text-sm">Litros</label>
-      <input data-id="${id}" data-type="litros" class="updateLitros w-full px-2 py-1 border rounded" value="${litros}" />
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Litros vendidos hoy</p>
+      <h2 class="text-2xl font-bold">${r.litros.toFixed(1)} L</h2>
     </div>
-    <div>
-      <label class="text-sm">Precios</label>
-      <input data-id="${id}" data-type="precios" class="updatePrecios w-full px-2 py-1 border rounded" value="${precios}" />
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Ventas totales hoy</p>
+      <h2 class="text-2xl font-bold">$${r.total.toFixed(2)}</h2>
     </div>
-    <div class="flex items-end gap-2">
-      <button onclick="guardarCambios(${id})" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Guardar</button>
-      <button onclick="loadMachines()" class="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600">Cancelar</button>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Ticket promedio</p>
+      <h2 class="text-2xl font-bold">$${r.ticket.toFixed(2)}</h2>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Máquinas activas</p>
+      <h2 class="text-2xl font-bold">${r.activas}/${r.cantidad}</h2>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Última venta</p>
+      <h2 class="text-2xl font-bold">${r.ultima ? new Date(r.ultima).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }) : 'N/A'}</h2>
     </div>
   `;
 }
+document.addEventListener("DOMContentLoaded", () => {
+  cargarGraficas();
+});
 
-// === GUARDAR CAMBIOS ===
-async function guardarCambios(id) {
-  const inputLitros = document.querySelector(`input[data-id="${id}"][data-type="litros"]`);
-  const inputPrecios = document.querySelector(`input[data-id="${id}"][data-type="precios"]`);
+async function cargarGraficas() {
+  const { data: ventas, error } = await supabase
+    .from("ventas")
+    .select("*");
 
-  const nuevosLitros = inputLitros.value;
-  const nuevosPrecios = inputPrecios.value;
+  if (error || !ventas) return console.error("Error al cargar ventas:", error);
 
-  const { error } = await supabase
-    .from("maquinas")
-    .update({
-      liters: nuevosLitros,
-      prices: nuevosPrecios
-    })
-    .eq("id", id);
-
-  if (error) {
-    alert("Error al guardar: " + error.message);
-  } else {
-    alert("Datos actualizados");
-    loadMachines();
-  }
+  renderGraficaHoras(ventas);
+  renderGraficaDias(ventas);
+  renderGraficaVolumen(ventas);
+  renderGraficaMaquinas(ventas);
+  renderTabla(ventas);
 }
 
-// === NAVEGACIÓN SUPERIOR ===
-const nav = document.createElement("nav");
-nav.className = "bg-gray-900 text-white px-4 py-2 flex gap-6";
-nav.innerHTML = `
-  <a href="/dashboard.html" class="hover:underline">Dashboard</a>
-  <a href="/reportes.html" class="hover:underline">Reportes</a>
-  <a href="/subscripcion.html" class="hover:underline">Subscripción</a>
-  <a href="/maquinas.html" class="hover:underline">Mis Máquinas</a>
-`;
-document.body.prepend(nav);
+function renderGraficaHoras(ventas) {
+  const horas = Array(24).fill(0);
+  ventas.forEach(v => {
+    const h = new Date(v.created_at).getHours();
+    horas[h] += parseFloat(v.precio_total) || 0;
+  });
+  new Chart(document.getElementById("graficaHoras"), {
+    type: "bar",
+    data: {
+      labels: [...Array(24).keys()].map(h => `${h}:00`),
+      datasets: [{
+        label: "Ventas por hora ($)",
+        data: horas
+      }]
+    }
+  });
+}
+
+function renderGraficaDias(ventas) {
+  const mapa = {};
+  ventas.forEach(v => {
+    const fecha = new Date(v.created_at).toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" });
+    mapa[fecha] = (mapa[fecha] || 0) + parseFloat(v.precio_total || 0);
+  });
+
+  const fechas = Object.keys(mapa).sort().slice(-7);
+  const valores = fechas.map(f => mapa[f]);
+
+  new Chart(document.getElementById("graficaDias"), {
+    type: "line",
+    data: {
+      labels: fechas,
+      datasets: [{
+        label: "Ventas diarias ($)",
+        data: valores,
+        tension: 0.3
+      }]
+    }
+  });
+}
+
+function renderGraficaVolumen(ventas) {
+  const conteo = { "5": 0, "10": 0, "20": 0 };
+  ventas.forEach(v => {
+    const l = parseInt(v.litros);
+    if (conteo[l] !== undefined) conteo[l]++;
+  });
+
+  new Chart(document.getElementById("graficaVolumen"), {
+    type: "pie",
+    data: {
+      labels: ["5L", "10L", "20L"],
+      datasets: [{
+        data: [conteo["5"], conteo["10"], conteo["20"]]
+      }]
+    }
+  });
+}
+
+async function renderGraficaMaquinas(ventas) {
+  const mapa = {};
+  ventas.forEach(v => {
+    if (!v.serial) return;
+    mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.precio_total || 0);
+  });
+
+  const labels = Object.keys(mapa);
+  const valores = labels.map(l => mapa[l]);
+
+  new Chart(document.getElementById("graficaMaquinas"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Ventas por máquina ($)",
+        data: valores
+      }]
+    }
+  });
+
+  // Cargar select de filtros
+  const filtro = document.getElementById("filtroMaquina");
+  labels.forEach(serial => {
+    const op = document.createElement("option");
+    op.value = serial;
+    op.textContent = serial;
+    filtro.appendChild(op);
+  });
+}
+
+function aplicarFiltros() {
+  cargarGraficas(); // Puedes hacer filtros más finos si prefieres, aquí lo simplificamos
+}
+
+function renderTabla(ventas) {
+  const tabla = document.getElementById("tablaVentas");
+  tabla.innerHTML = `
+    <table class="min-w-full table-auto border border-gray-300 dark:border-gray-700">
+      <thead>
+        <tr class="bg-gray-200 dark:bg-gray-700 text-sm">
+          <th class="px-2 py-1">Fecha</th>
+          <th class="px-2 py-1">Hora</th>
+          <th class="px-2 py-1">Máquina</th>
+          <th class="px-2 py-1">Litros</th>
+          <th class="px-2 py-1">Precio</th>
+        </tr>
+      </thead>
+      <tbody class="text-sm">
+        ${ventas.map(v => {
+          const f = new Date(v.created_at);
+          const fecha = f.toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" });
+          const hora = f.toLocaleTimeString("es-MX", { timeZone: "America/Mexico_City" });
+          return `
+            <tr class="border-t border-gray-300 dark:border-gray-700">
+              <td class="px-2 py-1">${fecha}</td>
+              <td class="px-2 py-1">${hora}</td>
+              <td class="px-2 py-1">${v.serial}</td>
+              <td class="px-2 py-1">${v.litros}</td>
+              <td class="px-2 py-1">$${parseFloat(v.precio_total).toFixed(2)}</td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
+}
