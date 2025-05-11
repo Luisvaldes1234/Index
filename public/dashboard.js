@@ -1,5 +1,5 @@
 // Variables globales
-let supabase;
+let supabaseClient;
 let usuario;
 let maquinas = [];
 let ventas = [];
@@ -18,11 +18,12 @@ function inicializarSupabase() {
   }
 
   try {
-    // Crear cliente de Supabase
-    supabase = supabase.createClient(
+    // Crear cliente de Supabase correctamente - usando el objeto global supabase
+    supabaseClient = supabase.createClient(
       'https://ikuouxllerjnibjtkll.supabase.co',
       window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
+    console.log("Supabase inicializado correctamente");
     return true;
   } catch (error) {
     console.error("Error al inicializar Supabase:", error);
@@ -39,7 +40,7 @@ async function verificarSesion() {
       return false;
     }
 
-    const { data, error } = await supabase.auth.getSession();
+    const { data, error } = await supabaseClient.auth.getSession();
     
     if (error) {
       console.error("Error al verificar sesión:", error);
@@ -66,7 +67,7 @@ async function verificarSesion() {
 // Obtener datos de las máquinas
 async function obtenerMaquinas() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('maquinas')
       .select('*')
       .eq('id_usuario', usuario.id);
@@ -106,7 +107,9 @@ async function obtenerVentas() {
     fechaHastaObj.setDate(fechaHastaObj.getDate() + 1);
     const fechaHastaAjustada = fechaHastaObj.toISOString().split('T')[0];
     
-    let query = supabase
+    console.log(`Obteniendo ventas desde ${fechaDesde} hasta ${fechaHastaAjustada}`);
+    
+    let query = supabaseClient
       .from('ventas')
       .select(`
         *,
@@ -124,7 +127,7 @@ async function obtenerVentas() {
     
     if (error) throw error;
     
-    ventas = data;
+    ventas = data || [];
     console.log("Ventas obtenidas:", ventas.length);
     
     return true;
@@ -139,16 +142,21 @@ async function obtenerVentas() {
 async function actualizarDashboard() {
   showLoading();
   
-  if (await verificarSesion()) {
-    if (await obtenerMaquinas()) {
-      if (await obtenerVentas()) {
-        actualizarTarjetasResumen();
-        actualizarGraficas();
+  try {
+    if (await verificarSesion()) {
+      if (await obtenerMaquinas()) {
+        if (await obtenerVentas()) {
+          actualizarTarjetasResumen();
+          actualizarGraficas();
+        }
       }
     }
+  } catch (error) {
+    console.error("Error al actualizar dashboard:", error);
+    showError("Error al actualizar el dashboard: " + error.message);
+  } finally {
+    hideLoading();
   }
-  
-  hideLoading();
 }
 
 // Actualizar tarjetas de resumen
@@ -317,6 +325,30 @@ function actualizarGraficaVolumen() {
     window.graficaVolumenChart.destroy();
   }
   
+  // Si no hay datos, mostrar mensaje
+  if (productos.length === 0) {
+    if (ctx) {
+      const parentElement = ctx.canvas.parentElement;
+      if (parentElement) {
+        const noDataMsg = document.createElement('div');
+        noDataMsg.className = 'text-center py-16 text-gray-500 dark:text-gray-400';
+        noDataMsg.innerHTML = 'No hay datos disponibles para este período';
+        
+        // Asegurarse de que no hay mensaje previo
+        const existingMsg = parentElement.querySelector('.text-center.py-16');
+        if (existingMsg) parentElement.removeChild(existingMsg);
+        
+        parentElement.appendChild(noDataMsg);
+      }
+    }
+    return;
+  }
+  
+  // Si hay datos, eliminar cualquier mensaje de no datos
+  const parentElement = ctx.canvas.parentElement;
+  const existingMsg = parentElement?.querySelector('.text-center.py-16');
+  if (existingMsg) parentElement.removeChild(existingMsg);
+  
   window.graficaVolumenChart = new Chart(ctx, {
     type: 'pie',
     data: {
@@ -421,11 +453,11 @@ function descargarCSV() {
       fechaFormateada,
       horaFormateada,
       venta.maquinas ? venta.maquinas.nombre : `Máquina ${venta.id_maquina}`,
-      venta.maquinas ? venta.maquinas.ubicacion : '',
-      venta.producto || '',
+      venta.maquinas ? venta.maquinas.ubicacion || 'No especificada' : 'No especificada',
+      venta.producto || 'No especificado',
       venta.unidades,
       venta.importe,
-      venta.metodo_pago || ''
+      venta.metodo_pago || 'No especificado'
     ];
   });
   
@@ -459,33 +491,52 @@ function descargarCSV() {
   document.body.removeChild(link);
 }
 
+// Formatear fecha para input type="date" (YYYY-MM-DD)
+function formatearFecha(fecha) {
+  const year = fecha.getFullYear();
+  const month = String(fecha.getMonth() + 1).padStart(2, '0');
+  const day = String(fecha.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // Configurar fechas por defecto cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
-  // Establecer fechas por defecto
-  if (document.getElementById('fechaDesde')) {
-    document.getElementById('fechaDesde').valueAsDate = inicioMes;
-  }
-  if (document.getElementById('fechaHasta')) {
-    document.getElementById('fechaHasta').valueAsDate = hoy;
-  }
-
-  // Configurar botón de descarga CSV
-  const btnDescargarCSV = document.getElementById('btnDescargarCSV');
-  if (btnDescargarCSV) {
-    btnDescargarCSV.addEventListener('click', descargarCSV);
-  }
-
-  // Escuchar cambios en fechas para actualizar
-  const fechaDesde = document.getElementById('fechaDesde');
-  const fechaHasta = document.getElementById('fechaHasta');
+  console.log("DOM cargado. Inicializando dashboard...");
   
-  if (fechaDesde) {
-    fechaDesde.addEventListener('change', actualizarDashboard);
-  }
-  if (fechaHasta) {
-    fechaHasta.addEventListener('change', actualizarDashboard);
-  }
+  try {
+    // Establecer fechas por defecto (primer día del mes actual hasta hoy)
+    const fechaDesdeInput = document.getElementById('fechaDesde');
+    const fechaHastaInput = document.getElementById('fechaHasta');
+    
+    if (fechaDesdeInput) {
+      fechaDesdeInput.value = formatearFecha(inicioMes);
+      console.log("Fecha desde establecida:", fechaDesdeInput.value);
+    }
+    
+    if (fechaHastaInput) {
+      fechaHastaInput.value = formatearFecha(hoy);
+      console.log("Fecha hasta establecida:", fechaHastaInput.value);
+    }
 
-  // Iniciar dashboard
-  actualizarDashboard();
+    // Configurar botón de descarga CSV
+    const btnDescargarCSV = document.getElementById('btnDescargarCSV');
+    if (btnDescargarCSV) {
+      btnDescargarCSV.addEventListener('click', descargarCSV);
+    }
+
+    // Escuchar cambios en fechas para actualizar
+    if (fechaDesdeInput) {
+      fechaDesdeInput.addEventListener('change', actualizarDashboard);
+    }
+    
+    if (fechaHastaInput) {
+      fechaHastaInput.addEventListener('change', actualizarDashboard);
+    }
+
+    // Iniciar dashboard
+    actualizarDashboard();
+  } catch (error) {
+    console.error("Error al inicializar el dashboard:", error);
+    showError("Error al inicializar el dashboard: " + error.message);
+  }
 });
