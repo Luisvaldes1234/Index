@@ -30,16 +30,15 @@
     <div id="listaMaquinas" class="space-y-4"></div>
   </div>
 
-  <script>
-    const supabase = supabase.createClient(
+  <!-- SCRIPT PRINCIPAL -->
+  <script type="module">
+    const supabase = window.supabase.createClient(
       'https://ikuouxllerfjnibjtlkl.supabase.co',
       window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
     async function cargarMaquinas() {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
         alert("No estás autenticado");
