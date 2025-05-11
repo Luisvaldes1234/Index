@@ -1,3 +1,5 @@
+// dashboard.js (corregido para usar Supabase SDK y filtrar por suscripción activa)
+
 const supabase = window.supabase.createClient(
   'https://ikuouxllerfjnibjtlkl.supabase.co',
   window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -6,7 +8,7 @@ const supabase = window.supabase.createClient(
 let ventas = [];
 let maquinasActivas = [];
 
-// Esperar autenticación
+// Verificar sesión antes de continuar
 async function verificarSesion() {
   const { data: { session }, error } = await supabase.auth.getSession();
   if (!session || error) {
@@ -16,7 +18,6 @@ async function verificarSesion() {
   return session.user;
 }
 
-// Ejecutar al cargar
 (async () => {
   const user = await verificarSesion();
   if (!user) return;
@@ -27,16 +28,10 @@ async function verificarSesion() {
   document.getElementById("fechaDesde").value = inicioMes.toISOString().split("T")[0];
   document.getElementById("fechaHasta").value = ahora.toISOString().split("T")[0];
 
- const session = await supabase.auth.getSession();
-
-const { data: maquinas, error } = await supabase
-  .from("maquinas")
-  .select("serial, suscripcion_hasta");
-
-if (error || !maquinas) {
-  console.error("Error al cargar máquinas:", error);
-  return alert("Error al cargar las máquinas");
-}
+  const { data: maquinas, error } = await supabase
+    .from("maquinas")
+    .select("serial, suscripcion_hasta")
+    .eq("user_id", user.id);
 
   if (error || !maquinas) return alert("Error al cargar las máquinas");
 
@@ -110,9 +105,7 @@ async function descargarCSV() {
   const hasta = document.getElementById("fechaHasta").value;
   const filtro = document.getElementById("filtroMaquinaCSV").value;
 
-  const seleccionadas = ventas.filter(v =>
-    (!filtro || v.serial === filtro)
-  );
+  const seleccionadas = ventas.filter(v => (!filtro || v.serial === filtro));
 
   const encabezados = ["Fecha", "Hora", "Máquina", "Litros", "Precio"];
   const filas = seleccionadas.map(v => {
@@ -167,13 +160,7 @@ function renderBarChart(id, data, label, labels) {
   if (window[id]) window[id].destroy();
   window[id] = new Chart(ctx, {
     type: "bar",
-    data: {
-      labels,
-      datasets: [{ label, data }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } }
-    }
+    data: { labels, datasets: [{ label, data }] },
+    options: { responsive: true, plugins: { legend: { display: false } } }
   });
 }
