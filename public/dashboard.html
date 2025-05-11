@@ -10,7 +10,8 @@
   <!-- Environment variables - will be injected at build time -->
   <script>
     window.env = {
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlrdm91eGxsZXJqbmlidGtsbCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjk2NjkyOTM1LCJleHAiOjIwMTIyNjg5MzV9.5YqYJ16s5qF1UYf5WRG3seEgXR1yTj2TRM02qj7crZ0'
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlrdm91eGxsZXJqbmlidGtsbCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjk2NjkyOTM1LCJleHAiOjIwMTIyNjg5MzV9.5YqYJ16s5qF1UYf5WRG3seEgXR1yTj2TRM02qj7crZ0',
+      SUPABASE_URL: 'https://ikuouxllerjnibjtkll.supabase.co'
     };
   </script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
@@ -61,6 +62,7 @@
     <a href="/reportes.html" class="hover:underline">Reportes</a>
     <a href="/subscripcion.html" class="hover:underline">Subscripción</a>
     <a href="/maquinas.html" class="hover:underline">Mis Máquinas</a>
+    <a href="#" id="btnLogout" class="hover:underline ml-auto">Cerrar Sesión</a>
   </nav>
   
   <div class="container mx-auto px-4 py-6 space-y-8">
@@ -126,6 +128,20 @@
     </div>
   </div>
 
+  <!-- Debug Info Modal -->
+  <div id="debugModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
+      <h3 class="text-lg font-bold mb-2">Información de Depuración</h3>
+      <pre id="debugMessage" class="bg-gray-100 dark:bg-gray-700 p-3 rounded text-xs overflow-auto max-h-96 mb-4"></pre>
+      <div class="flex justify-end">
+        <button onclick="document.getElementById('debugModal').classList.add('hidden')" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Show loading indicator
     function showLoading() {
@@ -141,6 +157,14 @@
     function showError(message) {
       document.getElementById('errorMessage').textContent = message;
       document.getElementById('errorModal').classList.remove('hidden');
+      console.error(message);
+    }
+    
+    // Debug function - helpful for troubleshooting
+    function showDebug(obj) {
+      document.getElementById('debugMessage').textContent = JSON.stringify(obj, null, 2);
+      document.getElementById('debugModal').classList.remove('hidden');
+      console.log(obj);
     }
     
     // Override default alert with custom modal
