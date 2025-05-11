@@ -7,8 +7,6 @@ let ventas = [];
 // Configuración de fechas por defecto
 const hoy = new Date();
 const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-document.getElementById('fechaDesde').valueAsDate = inicioMes;
-document.getElementById('fechaHasta').valueAsDate = hoy;
 
 // Inicialización segura de Supabase
 function inicializarSupabase() {
@@ -407,4 +405,87 @@ function descargarCSV() {
   }
   
   // Preparar encabezados
-  const encabe
+  const encabezados = [
+    'ID', 'Fecha', 'Hora', 'Máquina', 'Ubicación', 
+    'Producto', 'Unidades', 'Importe', 'Método de Pago'
+  ];
+  
+  // Preparar filas
+  const filas = ventasFiltradas.map(venta => {
+    const fecha = new Date(venta.fecha);
+    const fechaFormateada = fecha.toLocaleDateString();
+    const horaFormateada = fecha.toLocaleTimeString();
+    
+    return [
+      venta.id,
+      fechaFormateada,
+      horaFormateada,
+      venta.maquinas ? venta.maquinas.nombre : `Máquina ${venta.id_maquina}`,
+      venta.maquinas ? venta.maquinas.ubicacion : '',
+      venta.producto || '',
+      venta.unidades,
+      venta.importe,
+      venta.metodo_pago || ''
+    ];
+  });
+  
+  // Combinar todo en formato CSV
+  let contenidoCSV = encabezados.join(',') + '\n';
+  
+  filas.forEach(fila => {
+    // Escapar comas y comillas en los valores
+    const filaEscapada = fila.map(valor => {
+      const valorStr = String(valor);
+      if (valorStr.includes(',') || valorStr.includes('"')) {
+        return `"${valorStr.replace(/"/g, '""')}"`;
+      }
+      return valorStr;
+    });
+    
+    contenidoCSV += filaEscapada.join(',') + '\n';
+  });
+  
+  // Crear blob y link de descarga
+  const blob = new Blob([contenidoCSV], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'ventas_trackmyvend.csv');
+  link.style.visibility = 'hidden';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// Configurar fechas por defecto cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+  // Establecer fechas por defecto
+  if (document.getElementById('fechaDesde')) {
+    document.getElementById('fechaDesde').valueAsDate = inicioMes;
+  }
+  if (document.getElementById('fechaHasta')) {
+    document.getElementById('fechaHasta').valueAsDate = hoy;
+  }
+
+  // Configurar botón de descarga CSV
+  const btnDescargarCSV = document.getElementById('btnDescargarCSV');
+  if (btnDescargarCSV) {
+    btnDescargarCSV.addEventListener('click', descargarCSV);
+  }
+
+  // Escuchar cambios en fechas para actualizar
+  const fechaDesde = document.getElementById('fechaDesde');
+  const fechaHasta = document.getElementById('fechaHasta');
+  
+  if (fechaDesde) {
+    fechaDesde.addEventListener('change', actualizarDashboard);
+  }
+  if (fechaHasta) {
+    fechaHasta.addEventListener('change', actualizarDashboard);
+  }
+
+  // Iniciar dashboard
+  actualizarDashboard();
+});
