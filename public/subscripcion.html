@@ -30,12 +30,36 @@
     <div id="listaMaquinas" class="space-y-4"></div>
   </div>
 
-  <!-- SCRIPT PRINCIPAL -->
+  <!-- SCRIPT CORREGIDO -->
   <script>
     const supabase = window.supabase.createClient(
       'https://ikuouxllerfjnibjtlkl.supabase.co',
       window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
+
+    async function suscribirse(serial, plan) {
+      try {
+        const res = await fetch("/.netlify/functions/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ serial, plan })
+        });
+
+        const data = await res.json();
+
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert("No se pudo iniciar el proceso de suscripción.");
+        }
+      } catch (err) {
+        console.error("Error al suscribirse:", err);
+        alert("Hubo un error al intentar procesar la suscripción.");
+      }
+    }
+
+    // ✅ Esto expone la función a los botones del HTML
+    window.suscribirse = suscribirse;
 
     async function cargarMaquinas() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -84,30 +108,6 @@
         contenedor.appendChild(card);
       });
     }
-
-    async function suscribirse(serial, plan) {
-      try {
-        const res = await fetch("/.netlify/functions/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ serial, plan })
-        });
-
-        const data = await res.json();
-
-        if (data.url) {
-          window.location.href = data.url;
-        } else {
-          alert("No se pudo iniciar el proceso de suscripción.");
-        }
-      } catch (err) {
-        console.error("Error al suscribirse:", err);
-        alert("Hubo un error al intentar procesar la suscripción.");
-      }
-    }
-
-    // ✅ Hacer visible globalmente la función para los botones
-    window.suscribirse = suscribirse;
 
     cargarMaquinas();
   </script>
