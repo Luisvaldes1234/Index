@@ -19,6 +19,61 @@ function showDebug(obj) {
   console.log(obj);
 }
 
+// New function to show a login prompt
+function showLoginPrompt() {
+  const container = document.querySelector('.container.mx-auto');
+  if (!container) {
+    console.error("Container not found for login prompt");
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-auto mt-8">
+      <h3 class="text-lg font-bold mb-4">Iniciar Sesión</h3>
+      <p class="mb-4 text-gray-500 dark:text-gray-400">Por favor, inicia sesión para continuar.</p>
+      <div class="space-y-4">
+        <input type="email" id="loginEmail" placeholder="Correo electrónico" class="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+        <input type="password" id="loginPassword" placeholder="Contraseña" class="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+        <button id="loginButton" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Iniciar Sesión</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('loginButton').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    if (!email || !password) {
+      showError("Por favor, ingresa tu correo y contraseña.");
+      return;
+    }
+
+    try {
+      showLoading();
+      console.log("Attempting login with email:", email);
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      hideLoading();
+
+      if (error) {
+        console.error("Login error:", error);
+        showError("Error al iniciar sesión: " + error.message);
+        return;
+      }
+
+      console.log("Login successful, session data:", data.session);
+      usuario = data.user;
+      console.log("Usuario autenticado:", usuario.email);
+      // Force a session refresh and update the dashboard
+      await supabaseClient.auth.getSession();
+      actualizarDashboard();
+    } catch (error) {
+      hideLoading();
+      console.error("Unexpected error during login:", error);
+      showError("Error inesperado al iniciar sesión: " + (error.message || 'Desconocido'));
+    }
+  });
+}
+
 // Variables globales
 let supabaseClient;
 let usuario;
@@ -43,6 +98,7 @@ function inicializarSupabase() {
       window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
     console.log("Supabase inicializado correctamente");
+    console.log("Anon Key:", window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
     return true;
   } catch (error) {
     console.error("Error al inicializar Supabase:", error);
@@ -59,25 +115,18 @@ async function verificarSesion() {
     }
 
     const { data, error } = await supabaseClient.auth.getSession();
-    console.log("Datos de sesión recibidos:", data);
+    console.log("Datos de sesión completos:", data, "Error:", error);
+    console.log("LocalStorage token:", localStorage.getItem('supabase.auth.token'));
 
     if (error) {
       console.error("Error al verificar sesión:", error);
       showError("Error al verificar tu sesión: " + error.message);
-      setTimeout(() => {
-        window.location.href = '/login.html';
-      }, 3000);
       return false;
     }
 
     if (!data.session) {
-      console.log("No hay sesión activa - redirigiendo");
-      const localStorageData = localStorage.getItem('supabase.auth.token');
-      console.log("Datos en localStorage:", localStorageData ? "Presentes" : "Ausentes");
-      showError("No hay sesión activa. Redirigiendo al login...");
-      setTimeout(() => {
-        window.location.href = '/login.html';
-      }, 3000);
+      console.log("No hay sesión activa - mostrando formulario de login");
+      showLoginPrompt();
       return false;
     }
 
@@ -96,7 +145,9 @@ async function cerrarSesion() {
   try {
     const { error } = await supabaseClient.auth.signOut();
     if (error) throw error;
-    window.location.href = '/login.html';
+    console.log("Sesión cerrada, recargando página");
+    usuario = null;
+    actualizarDashboard(); // Reload to show login prompt
   } catch (error) {
     showError("Error al cerrar sesión: " + error.message);
   }
