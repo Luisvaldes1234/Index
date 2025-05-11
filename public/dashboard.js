@@ -1,4 +1,3 @@
-
 const supabase = window.supabase.createClient(
   'https://ikuouxllerfjnibjtlkl.supabase.co',
   window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -28,10 +27,14 @@ async function verificarSesion() {
   document.getElementById("fechaDesde").value = inicioMes.toISOString().split("T")[0];
   document.getElementById("fechaHasta").value = ahora.toISOString().split("T")[0];
 
-  const { data: maquinas, error } = await supabase
-    .from("maquinas")
-    .select("serial, suscripcion_hasta")
-    .eq("user_id", user.id);
+ const session = await supabase.auth.getSession();
+
+ const { data: maquinas, error } = await supabase
+  .from("maquinas")
+  .select("serial, suscripcion_hasta", { head: false })
+  .headers({
+    Authorization: `Bearer ${session.data.session.access_token}`
+  });
 
   if (error || !maquinas) return alert("Error al cargar las máquinas");
 
