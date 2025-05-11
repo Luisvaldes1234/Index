@@ -32,7 +32,6 @@ function inicializarSupabase() {
   }
 }
 
-// Verificar la sesión del usuario
 async function verificarSesion() {
   try {
     // Primero asegurarse que Supabase está inicializado
@@ -42,9 +41,11 @@ async function verificarSesion() {
 
     const { data, error } = await supabaseClient.auth.getSession();
     
+    // Añadir más información de depuración
+    console.log("Datos de sesión recibidos:", data);
+    
     if (error) {
       console.error("Error al verificar sesión:", error);
-      // No redireccionamos inmediatamente, mostramos el error primero
       showError("Error al verificar tu sesión: " + error.message);
       setTimeout(() => {
         window.location.href = '/login.html';
@@ -53,14 +54,38 @@ async function verificarSesion() {
     }
     
     if (!data.session) {
-      console.log("No hay sesión activa");
-      // Mostramos un mensaje antes de redirigir
+      console.log("No hay sesión activa - redirigiendo");
+      
+      // Verificar si hay datos en el almacenamiento local
+      const localStorageData = localStorage.getItem('supabase.auth.token');
+      console.log("Datos en localStorage:", localStorageData ? "Presentes" : "Ausentes");
+      
       showError("No hay sesión activa. Redirigiendo al login...");
       setTimeout(() => {
         window.location.href = '/login.html';
       }, 3000);
       return false;
     }
+    
+    usuario = data.session.user;
+    console.log("Usuario autenticado:", usuario.email);
+    
+    // Configurar botón de logout
+    const btnLogout = document.getElementById('btnLogout');
+    if (btnLogout) {
+      btnLogout.addEventListener('click', async function(e) {
+        e.preventDefault();
+        await cerrarSesion();
+      });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error inesperado al verificar sesión:", error);
+    showError("Error inesperado al verificar la sesión: " + (error.message || 'Desconocido'));
+    return false;
+  }
+}
     
     usuario = data.session.user;
     console.log("Usuario autenticado:", usuario.email);
