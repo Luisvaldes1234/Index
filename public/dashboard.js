@@ -7,15 +7,21 @@ let ventas = [];
 let maquinasActivas = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return alert("No autenticado");
+  const { data: { session }, error } = await supabase.auth.getSession();
 
-  const { data: maquinas, error } = await supabase
+  if (!session || error) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  const user = session.user;
+
+  const { data: maquinas, error: errorMaquinas } = await supabase
     .from("maquinas")
     .select("serial, suscripcion_hasta")
     .eq("user_id", user.id);
 
-  if (error) return alert("Error al cargar máquinas");
+  if (errorMaquinas) return alert("Error al cargar máquinas");
 
   maquinasActivas = maquinas
     .filter(m => m.suscripcion_hasta && new Date(m.suscripcion_hasta) > new Date())
@@ -48,6 +54,7 @@ async function cargarVentas() {
   actualizarGraficas();
   actualizarCSVSelector();
 }
+
 function actualizarResumen() {
   const resumen = {
     totalLitros: 0,
@@ -112,6 +119,7 @@ async function descargarCSV() {
   a.click();
   URL.revokeObjectURL(url);
 }
+
 function actualizarGraficas() {
   const porHora = Array(24).fill(0);
   const porDia = {};
@@ -140,7 +148,7 @@ function actualizarGraficas() {
 
 function renderBarChart(id, data, label, labels) {
   const ctx = document.getElementById(id).getContext("2d");
-  if (window[id]) window[id].destroy(); // Eliminar si ya existe
+  if (window[id]) window[id].destroy();
   window[id] = new Chart(ctx, {
     type: "bar",
     data: {
@@ -153,4 +161,3 @@ function renderBarChart(id, data, label, labels) {
     }
   });
 }
-
