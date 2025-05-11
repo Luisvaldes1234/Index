@@ -6,6 +6,13 @@
   <title>Subscripción - TrackMyVend</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+  <!-- Inyección segura desde Netlify -->
+  <script>
+    window.env = {
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
+    };
+  </script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
 
@@ -26,7 +33,7 @@
   <script>
     const supabase = supabase.createClient(
       'https://ikuouxllerfjnibjtlkl.supabase.co',
-      'NEXT_PUBLIC_SUPABASE_ANON_KEY' // Esta se inyecta automáticamente desde Netlify si configuraste el entorno
+      window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
     async function cargarMaquinas() {
