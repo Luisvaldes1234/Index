@@ -1,21 +1,60 @@
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
-<script>
-  window.env = {
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: "{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
-  };
-</script>
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard - TrackMyVend</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- Load scripts with proper order -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <!-- Environment variables - this must be set correctly before using -->
+  <script>
+    window.env = {
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlrdm91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODYwOTA5ODYsImV4cCI6MjAwMTY2Njk4Nn0.JZAqPXpEGVcpKYdlkI-4U0TS4qEFBFAHIBHTGrpFNHo"
+    };
+  </script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    /* Add loading animation */
+    .loading-spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: #09f;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .dark .loading-spinner {
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-left-color: #09f;
+    }
+    
+    /* Fix chart sizing */
+    canvas {
+      width: 100% !important;
+      height: 300px !important;
+    }
+    
+    /* Improve responsiveness */
+    @media (max-width: 640px) {
+      .date-filter {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .date-filter > * {
+        margin-bottom: 0.5rem;
+      }
+    }
+  </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
-
   <!-- NAV -->
   <nav class="bg-gray-900 text-white px-4 py-3 shadow-md flex gap-6 text-sm md:text-base">
     <a href="/dashboard.html" class="hover:underline font-semibold">Dashboard</a>
@@ -23,51 +62,100 @@
     <a href="/subscripcion.html" class="hover:underline">Subscripción</a>
     <a href="/maquinas.html" class="hover:underline">Mis Máquinas</a>
   </nav>
-
+  
   <div class="container mx-auto px-4 py-6 space-y-8">
-
+    <!-- Loading indicator that shows before data is loaded -->
+    <div id="loading" class="flex justify-center py-8">
+      <div class="loading-spinner"></div>
+    </div>
+    
+    <!-- FILTROS Y EXPORTACIÓN -->
+    <div class="mb-6 space-y-4">
+      <div class="flex gap-4 items-center flex-wrap date-filter">
+        <label class="text-sm font-medium">Desde:</label>
+        <input type="date" id="fechaDesde" class="px-3 py-1 border rounded dark:bg-gray-800 dark:border-gray-700" />
+        <label class="text-sm font-medium">Hasta:</label>
+        <input type="date" id="fechaHasta" class="px-3 py-1 border rounded dark:bg-gray-800 dark:border-gray-700" />
+        <label class="text-sm font-medium">Máquina:</label>
+        <select id="filtroMaquinaCSV" class="px-3 py-1 border rounded dark:bg-gray-800 dark:border-gray-700">
+          <option value="">Todas</option>
+        </select>
+        <button onclick="descargarCSV()" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition">
+          Descargar CSV
+        </button>
+      </div>
+    </div>
+    
     <!-- TARJETAS RESUMEN -->
-    <div id="resumen" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4"></div>
-
+    <div id="resumen" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <!-- Data will be populated here -->
+    </div>
+    
     <!-- GRAFICAS -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div>
-        <h2 class="text-xl font-bold mb-2">Tendencia de ventas por hora</h2>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">Tendencia de ventas por hora</h2>
         <canvas id="graficaHoras"></canvas>
       </div>
-      <div>
-        <h2 class="text-xl font-bold mb-2">Ventas por día</h2>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">Ventas por día</h2>
         <canvas id="graficaDias"></canvas>
       </div>
-      <div>
-        <h2 class="text-xl font-bold mb-2">Volumen vendido</h2>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">Volumen vendido</h2>
         <canvas id="graficaVolumen"></canvas>
       </div>
-      <div>
-        <h2 class="text-xl font-bold mb-2">Rendimiento por máquina</h2>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">Rendimiento por máquina</h2>
         <canvas id="graficaMaquinas"></canvas>
       </div>
     </div>
-
-    <!-- TABLA DETALLADA -->
-  <!-- FILTROS Y EXPORTACIÓN -->
-<div class="mb-6 space-y-4">
-  <div class="flex gap-4 items-center flex-wrap">
-    <label class="text-sm">Desde:</label>
-    <input type="date" id="fechaDesde" class="px-3 py-1 border rounded" />
-
-    <label class="text-sm">Hasta:</label>
-    <input type="date" id="fechaHasta" class="px-3 py-1 border rounded" />
-
-    <label class="text-sm">Máquina:</label>
-    <select id="filtroMaquinaCSV" class="px-3 py-1 border rounded">
-      <option value="">Todas</option>
-    </select>
-
-    <button onclick="descargarCSV()" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">Descargar CSV</button>
   </div>
-</div>
+  
+  <!-- Error Modal -->
+  <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
+      <h3 class="text-lg font-bold mb-2">Error</h3>
+      <p id="errorMessage" class="mb-4">Mensaje de error</p>
+      <div class="flex justify-end">
+        <button onclick="document.getElementById('errorModal').classList.add('hidden')" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
 
+  <script>
+    // Show loading indicator
+    function showLoading() {
+      document.getElementById('loading').classList.remove('hidden');
+    }
+    
+    // Hide loading indicator
+    function hideLoading() {
+      document.getElementById('loading').classList.add('hidden');
+    }
+    
+    // Show error modal with message
+    function showError(message) {
+      document.getElementById('errorMessage').textContent = message;
+      document.getElementById('errorModal').classList.remove('hidden');
+    }
+    
+    // Override default alert with custom modal
+    window.originalAlert = window.alert;
+    window.alert = function(message) {
+      showError(message);
+    };
+    
+    // Hide loading when page is fully loaded
+    window.addEventListener('load', function() {
+      hideLoading();
+    });
+  </script>
+  
+  <!-- Load your dashboard script last -->
   <script src="dashboard.js"></script>
 </body>
 </html>
