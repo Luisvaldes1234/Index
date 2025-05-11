@@ -31,7 +31,7 @@
   </div>
 
   <!-- SCRIPT PRINCIPAL -->
-  <script type="module">
+  <script>
     const supabase = window.supabase.createClient(
       'https://ikuouxllerfjnibjtlkl.supabase.co',
       window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -105,6 +105,9 @@
         alert("Hubo un error al intentar procesar la suscripción.");
       }
     }
+
+    // ✅ Hacer visible globalmente la función para los botones
+    window.suscribirse = suscribirse;
 
     cargarMaquinas();
   </script>
