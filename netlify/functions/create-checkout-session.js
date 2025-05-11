@@ -18,12 +18,13 @@ exports.handler = async (event) => {
       };
     }
 
-const prices = {
-  mensual: 'price_1RMoRrLPG9Lo6pOsUodPtxXN',
-  trimestral: 'price_1RMoWiLPG9Lo6pOs4jojGv0q',
-  semestral: 'price_1RMoX9LPG9Lo6pOspcvGjXsQ',
-  anual: 'price_1RMoaQLPG9Lo6pOsCkJY3hh5', // ✅ Actualizado
-};
+    const prices = {
+      mensual: 'price_1RMoRrLPG9Lo6pOsUodPtxXN',
+      trimestral: 'price_1RMoWiLPG9Lo6pOs4jojGv0q',
+      semestral: 'price_1RMoX9LPG9Lo6pOspcvGjXsQ',
+      anual: 'price_1RMoaQLPG9Lo6pOsCkJY3hh5',
+    };
+
     const priceId = prices[plan];
 
     if (!priceId) {
@@ -46,7 +47,7 @@ const prices = {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ id: session.id }),
+      body: JSON.stringify({ url: session.url }), // ✅ Esta línea es clave
     };
   } catch (err) {
     console.error('Error:', err);
