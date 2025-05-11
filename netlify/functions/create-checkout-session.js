@@ -19,9 +19,9 @@ exports.handler = async (event) => {
     }
 
 const prices = {
-  mensual: 'price_1RMomvLPG9Lo6pOsLg1beI2v',
-  trimestral: 'price_1RMop1LPG9Lo6pOsrbWLnUVD',
-  semestral: 'price_1RMopTLPG9Lo6pOsLrftl7LN',
+  mensual: 'price_1RMoRrLPG9Lo6pOsUodPtxXN',
+  trimestral: 'price_1RMoWiLPG9Lo6pOs4jojGv0q',
+  semestral: 'price_1RMoX9LPG9Lo6pOspcvGjXsQ',
   anual: 'price_1RMoaQLPG9Lo6pOsCkJY3hh5', // ✅ Actualizado
 };
     const priceId = prices[plan];
