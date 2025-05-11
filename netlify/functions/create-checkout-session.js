@@ -18,13 +18,12 @@ exports.handler = async (event) => {
       };
     }
 
-    const prices = {
-      mensual: 'price_1RMomvLPG9Lo6pOsLg1beI2v',
-      trimestral: 'price_1RMop1LPG9Lo6pOsrbWLnUVD',
-      semestral: 'price_1RMopTLPG9Lo6pOsLrftl7LN',
-      anual: 'price_1RMopkLPG9Lo6pOsm6U0lh2G',
-    };
-
+const prices = {
+  mensual: 'price_1RMomvLPG9Lo6pOsLg1beI2v',
+  trimestral: 'price_1RMop1LPG9Lo6pOsrbWLnUVD',
+  semestral: 'price_1RMopTLPG9Lo6pOsLrftl7LN',
+  anual: 'price_1RMoaQLPG9Lo6pOsCkJY3hh5', // ✅ Actualizado
+};
     const priceId = prices[plan];
 
     if (!priceId) {
