@@ -180,6 +180,21 @@
   </script>
   
   <!-- Load your dashboard script last -->
-  <script src="dashboard.js"></script>
+  <script src="./dashboard.js" defer></script>
+<script>
+  // Verificar que dashboard.js se cargó correctamente
+  window.addEventListener('load', function() {
+    console.log("Página completamente cargada");
+    
+    // Verificar si las funciones de dashboard están disponibles
+    if (typeof verificarSesion === 'undefined') {
+      console.error("ERROR: No se ha cargado dashboard.js correctamente");
+      showError("Error: No se pudo cargar el script principal. Por favor, recarga la página.");
+    } else {
+      console.log("dashboard.js cargado correctamente");
+    }
+  });
+</script>
+
 </body>
 </html>
