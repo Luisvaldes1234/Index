@@ -36,6 +36,4 @@
     },
     "main": "next.config.js"
 }
-"scripts": {
-  "build": "node scripts/inject-env.js"
-}
+
