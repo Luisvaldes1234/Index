@@ -1,13 +1,7 @@
 [build]
   command = "npm run build"
-  publish = ".next"
-  functions = "netlify/functions"
-  command = "npm run build"
   publish = "public"
-
+  functions = "netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
-
-[[plugins]]
-package = "@netlify/plugin-inline-functions-env"
