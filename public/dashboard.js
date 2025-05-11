@@ -29,15 +29,14 @@ async function verificarSesion() {
 
  const session = await supabase.auth.getSession();
 
-const res = await fetch("https://ikuouxllerfjnibjtlkl.supabase.co/rest/v1/maquinas?select=serial,suscripcion_hasta", {
-  headers: {
-    apikey: window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    Authorization: `Bearer ${session.data.session.access_token}`
-  }
-});
+const { data: maquinas, error } = await supabase
+  .from("maquinas")
+  .select("serial, suscripcion_hasta");
 
-if (!res.ok) return alert("Error al cargar las máquinas");
-const maquinas = await res.json();
+if (error || !maquinas) {
+  console.error("Error al cargar máquinas:", error);
+  return alert("Error al cargar las máquinas");
+}
 
   if (error || !maquinas) return alert("Error al cargar las máquinas");
 
