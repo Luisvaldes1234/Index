@@ -100,16 +100,14 @@ function showLoginPrompt() {
 
       // Verify session persistence
       const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
-      if (sessionError) {
-        console.error("Error refreshing session:", sessionError);
-        showError("Error al refrescar la sesión: " + sessionError.message);
+      if (sessionError || !sessionData.session) {
+        console.error("Error refreshing session:", sessionError || "No session found");
+        showError("Error al refrescar la sesión: " + (sessionError?.message || "No se encontró la sesión"));
         hideLoading();
         return;
       }
 
       console.log("Session after login:", sessionData);
-      console.log("LocalStorage token:", localStorage.getItem('supabase.auth.token'));
-
       hideLoading();
       actualizarDashboard();
     } catch (error) {
@@ -132,6 +130,11 @@ const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
 
 // Inicialización segura de Supabase
 function inicializarSupabase() {
+  if (supabaseClient) {
+    console.log("Supabase client already initialized");
+    return true;
+  }
+
   if (!window.env) {
     console.error("window.env is not defined");
     showError("Error: Configuración del entorno no encontrada.");
@@ -169,24 +172,29 @@ async function verificarSesion() {
     }
 
     console.log("Fetching session...");
-    const { data, error } = await supabaseClient.auth.getSession();
-    console.log("Session data:", data);
-    console.log("Session error:", error);
-    console.log("LocalStorage token:", localStorage.getItem('supabase.auth.token'));
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+    console.log("Session data:", sessionData);
+    console.log("Session error:", sessionError);
 
-    if (error) {
-      console.error("Error verifying session:", error);
-      showError("Error al verificar tu sesión: " + error.message);
+    if (sessionError) {
+      console.error("Error verifying session:", sessionError);
+      showError("Error al verificar tu sesión: " + sessionError.message);
       return false;
     }
 
-    if (!data.session) {
-      console.log("No active session - showing login prompt");
-      showLoginPrompt();
-      return false;
+    if (!sessionData.session) {
+      // Additional check using getUser to confirm authentication state
+      const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+      if (userError || !userData.user) {
+        console.log("No active session - showing login prompt");
+        showLoginPrompt();
+        return false;
+      }
+      usuario = userData.user;
+    } else {
+      usuario = sessionData.session.user;
     }
 
-    usuario = data.session.user;
     console.log("User authenticated:", usuario.email);
     return true;
   } catch (error) {
@@ -207,8 +215,6 @@ async function cerrarSesion() {
     }
     console.log("Session closed, reloading page");
     usuario = null;
-    localStorage.removeItem('supabase.auth.token');
-    console.log("LocalStorage after logout:", localStorage.getItem('supabase.auth.token'));
     actualizarDashboard(); // Reload to show login prompt
   } catch (error) {
     console.error("Error closing session:", error);
