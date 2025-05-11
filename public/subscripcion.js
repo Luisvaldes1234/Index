@@ -1,5 +1,10 @@
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-const supabaseKey = localStorage.getItem('supabase_token'); // Reemplaza con tu método real de autenticación
+const supabaseKey = window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseKey) {
+  console.error("Supabase anon key no está disponible. Verifica tu configuración en Netlify.");
+}
+
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 async function cargarMaquinas() {
