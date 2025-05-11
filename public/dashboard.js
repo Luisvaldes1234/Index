@@ -1,399 +1,410 @@
-// dashboard.js (fixed to properly handle Supabase authentication and data fetching)
-
-// Initialize Supabase client with proper error handling
+// Variables globales
 let supabase;
-try {
-  // Get the key from environment or directly (safer approach in production would be environment variables)
-  const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-  const supabaseKey = window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!supabaseKey) {
+let usuario;
+let maquinas = [];
+let ventas = [];
+
+// Configuración de fechas por defecto
+const hoy = new Date();
+const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+document.getElementById('fechaDesde').valueAsDate = inicioMes;
+document.getElementById('fechaHasta').valueAsDate = hoy;
+
+// Inicialización segura de Supabase
+function inicializarSupabase() {
+  // Verificar que window.env existe y tiene la clave
+  if (!window.env || !window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.error("Missing Supabase API key");
-    alert("Error de configuración: Falta la clave API de Supabase");
-  } else {
-    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    showError("Error: No se ha encontrado la clave API de Supabase. Por favor, contacte al soporte técnico.");
+    return false;
   }
-} catch (error) {
-  console.error("Error initializing Supabase:", error);
-  alert("Error al inicializar la conexión con la base de datos");
+
+  try {
+    // Crear cliente de Supabase
+    supabase = supabase.createClient(
+      'https://ikuouxllerjnibjtkll.supabase.co',
+      window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+    return true;
+  } catch (error) {
+    console.error("Error al inicializar Supabase:", error);
+    showError("Error al conectar con la base de datos. Por favor, intente más tarde.");
+    return false;
+  }
 }
 
-let ventas = [];
-let maquinasActivas = [];
-
-// Verify session before continuing
+// Verificar la sesión del usuario
 async function verificarSesion() {
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    // Primero asegurarse que Supabase está inicializado
+    if (!inicializarSupabase()) {
+      return false;
+    }
+
+    const { data, error } = await supabase.auth.getSession();
     
     if (error) {
-      console.error("Error verificando sesión:", error);
-      alert("Error de autenticación: " + error.message);
-      window.location.href = "/login.html";
-      return null;
+      console.error("Error al verificar sesión:", error);
+      window.location.href = '/login.html';
+      return false;
     }
     
-    if (!session) {
+    if (!data.session) {
       console.log("No hay sesión activa");
-      window.location.href = "/login.html";
-      return null;
+      window.location.href = '/login.html';
+      return false;
     }
     
-    return session.user;
+    usuario = data.session.user;
+    console.log("Usuario autenticado:", usuario.email);
+    return true;
   } catch (error) {
     console.error("Error inesperado al verificar sesión:", error);
-    alert("Error inesperado al verificar la sesión");
-    window.location.href = "/login.html";
-    return null;
+    showError("Error inesperado al verificar la sesión");
+    return false;
   }
 }
 
-// Main initialization function
-async function inicializarDashboard() {
+// Obtener datos de las máquinas
+async function obtenerMaquinas() {
   try {
-    const user = await verificarSesion();
-    if (!user) return;
-
-    // Set default dates to current month
-    const ahora = new Date();
-    const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
-    
-    const fechaDesdeEl = document.getElementById("fechaDesde");
-    const fechaHastaEl = document.getElementById("fechaHasta");
-    
-    if (fechaDesdeEl && fechaHastaEl) {
-      fechaDesdeEl.value = inicioMes.toISOString().split("T")[0];
-      fechaHastaEl.value = ahora.toISOString().split("T")[0];
-      
-      // Add event listeners to refresh data when dates change
-      fechaDesdeEl.addEventListener("change", cargarVentas);
-      fechaHastaEl.addEventListener("change", cargarVentas);
-    }
-
-    // Fetch active machines with subscription
-    const { data: maquinas, error } = await supabase
-      .from("maquinas")
-      .select("serial, suscripcion_hasta")
-      .eq("user_id", user.id);
-
-    if (error) {
-      console.error("Error al cargar máquinas:", error);
-      return alert("Error al cargar las máquinas: " + error.message);
-    }
-
-    if (!maquinas || maquinas.length === 0) {
-      document.getElementById("resumen").innerHTML = `
-        <div class="col-span-full p-4 bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100 shadow rounded">
-          No tienes máquinas activas. Dirígete a la sección "Mis Máquinas" para registrar una nueva.
-        </div>
-      `;
-      return;
-    }
-
-    // Filter active machines
-    maquinasActivas = maquinas
-      .filter(m => m.suscripcion_hasta && new Date(m.suscripcion_hasta) > new Date())
-      .map(m => m.serial);
-
-    if (maquinasActivas.length === 0) {
-      document.getElementById("resumen").innerHTML = `
-        <div class="col-span-full p-4 bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100 shadow rounded">
-          No tienes máquinas con suscripción activa. Dirígete a la sección "Suscripción" para renovar.
-        </div>
-      `;
-    }
-
-    await cargarVentas();
-  } catch (error) {
-    console.error("Error en inicialización:", error);
-    alert("Error al inicializar el dashboard: " + error.message);
-  }
-}
-
-async function cargarVentas() {
-  try {
-    const fechaDesdeEl = document.getElementById("fechaDesde");
-    const fechaHastaEl = document.getElementById("fechaHasta");
-    
-    if (!fechaDesdeEl || !fechaHastaEl) {
-      return alert("Error: No se encontraron los elementos de fecha");
-    }
-    
-    const desde = fechaDesdeEl.value;
-    const hasta = fechaHastaEl.value;
-
-    if (!desde || !hasta) {
-      return alert("Por favor, selecciona un rango de fechas válido");
-    }
-
-    // Show loading state
-    document.getElementById("resumen").innerHTML = `
-      <div class="col-span-full p-4 bg-white dark:bg-gray-800 shadow rounded">
-        Cargando datos...
-      </div>
-    `;
-
-    // Format dates properly for the query
-    const fechaDesde = new Date(desde);
-    fechaDesde.setHours(0, 0, 0, 0);
-    
-    const fechaHasta = new Date(hasta);
-    fechaHasta.setHours(23, 59, 59, 999);
-
     const { data, error } = await supabase
-      .from("ventas")
-      .select("*")
-      .gte("created_at", fechaDesde.toISOString())
-      .lte("created_at", fechaHasta.toISOString());
-
-    if (error) {
-      console.error("Error al cargar ventas:", error);
-      return alert("Error al cargar ventas: " + error.message);
-    }
-
-    // Filter by active machines
-    ventas = data.filter(v => maquinasActivas.includes(v.serial));
-
-    actualizarResumen();
-    actualizarGraficas();
-    actualizarCSVSelector();
+      .from('maquinas')
+      .select('*')
+      .eq('id_usuario', usuario.id);
+    
+    if (error) throw error;
+    
+    maquinas = data;
+    console.log("Máquinas obtenidas:", maquinas.length);
+    
+    // Llenar el selector de máquinas
+    const selectMaquina = document.getElementById('filtroMaquinaCSV');
+    selectMaquina.innerHTML = '<option value="">Todas</option>';
+    
+    maquinas.forEach(maquina => {
+      const option = document.createElement('option');
+      option.value = maquina.id;
+      option.textContent = maquina.nombre;
+      selectMaquina.appendChild(option);
+    });
+    
+    return true;
   } catch (error) {
-    console.error("Error al cargar ventas:", error);
-    alert("Error al cargar datos de ventas: " + error.message);
+    console.error("Error al obtener máquinas:", error);
+    showError("Error al cargar las máquinas");
+    return false;
   }
 }
 
-function actualizarResumen() {
-  const resumen = {
-    totalLitros: 0,
-    totalVentas: 0,
-    ticketPromedio: 0,
-    maquinas: new Set(),
-    ultimaVenta: null
-  };
-
-  if (ventas.length === 0) {
-    document.getElementById("resumen").innerHTML = `
-      <div class="col-span-full p-4 bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100 shadow rounded">
-        No hay ventas en el periodo seleccionado.
-      </div>
-    `;
-    return;
+// Obtener datos de ventas
+async function obtenerVentas() {
+  try {
+    const fechaDesde = document.getElementById('fechaDesde').value;
+    const fechaHasta = document.getElementById('fechaHasta').value;
+    
+    // Añadir un día a fechaHasta para incluir el día seleccionado completo
+    const fechaHastaObj = new Date(fechaHasta);
+    fechaHastaObj.setDate(fechaHastaObj.getDate() + 1);
+    const fechaHastaAjustada = fechaHastaObj.toISOString().split('T')[0];
+    
+    let query = supabase
+      .from('ventas')
+      .select(`
+        *,
+        maquinas (
+          nombre,
+          ubicacion
+        )
+      `)
+      .eq('id_usuario', usuario.id)
+      .gte('fecha', fechaDesde)
+      .lt('fecha', fechaHastaAjustada)
+      .order('fecha', { ascending: false });
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    
+    ventas = data;
+    console.log("Ventas obtenidas:", ventas.length);
+    
+    return true;
+  } catch (error) {
+    console.error("Error al obtener ventas:", error);
+    showError("Error al cargar los datos de ventas");
+    return false;
   }
+}
 
-  ventas.forEach(v => {
-    resumen.totalLitros += v.litros || 0;
-    resumen.totalVentas += v.precio_total || 0;
-    if (v.serial) resumen.maquinas.add(v.serial);
-    if (!resumen.ultimaVenta || new Date(v.created_at) > new Date(resumen.ultimaVenta)) {
-      resumen.ultimaVenta = v.created_at;
+// Actualizar el dashboard
+async function actualizarDashboard() {
+  showLoading();
+  
+  if (await verificarSesion()) {
+    if (await obtenerMaquinas()) {
+      if (await obtenerVentas()) {
+        actualizarTarjetasResumen();
+        actualizarGraficas();
+      }
     }
-  });
+  }
+  
+  hideLoading();
+}
 
-  resumen.ticketPromedio = ventas.length
-    ? resumen.totalVentas / ventas.length
-    : 0;
-
-  document.getElementById("resumen").innerHTML = `
-    <div class="p-4 bg-white dark:bg-gray-800 shadow rounded">💧 <strong>${resumen.totalLitros.toFixed(1)}</strong> litros vendidos</div>
-    <div class="p-4 bg-white dark:bg-gray-800 shadow rounded">💰 $<strong>${resumen.totalVentas.toFixed(2)}</strong> en ventas</div>
-    <div class="p-4 bg-white dark:bg-gray-800 shadow rounded">🎟️ Ticket promedio: $<strong>${resumen.ticketPromedio.toFixed(2)}</strong></div>
-    <div class="p-4 bg-white dark:bg-gray-800 shadow rounded">🖥️ Máquinas activas: <strong>${resumen.maquinas.size}</strong></div>
-    <div class="p-4 bg-white dark:bg-gray-800 shadow rounded">📆 Última venta: <strong>${resumen.ultimaVenta ? new Date(resumen.ultimaVenta).toLocaleString("es-MX", { timeZone: "America/Mexico_City" }) : 'N/A'}</strong></div>
+// Actualizar tarjetas de resumen
+function actualizarTarjetasResumen() {
+  // Calcular métricas
+  const totalVentas = ventas.reduce((sum, venta) => sum + venta.importe, 0);
+  const totalUnidades = ventas.reduce((sum, venta) => sum + venta.unidades, 0);
+  const ventasUnicas = new Set(ventas.map(v => v.id)).size;
+  const promedioPorVenta = ventasUnicas > 0 ? totalVentas / ventasUnicas : 0;
+  
+  // Calcular ventas por día
+  const fechaInicio = new Date(document.getElementById('fechaDesde').value);
+  const fechaFin = new Date(document.getElementById('fechaHasta').value);
+  const diasPeriodo = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
+  const promedioVentasDiarias = diasPeriodo > 0 ? totalVentas / diasPeriodo : 0;
+  
+  // Actualizar HTML
+  document.getElementById('resumen').innerHTML = `
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+      <h3 class="text-xl font-bold">$${totalVentas.toFixed(2)}</h3>
+      <p class="text-gray-500 dark:text-gray-400">Ventas totales</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+      <h3 class="text-xl font-bold">${totalUnidades}</h3>
+      <p class="text-gray-500 dark:text-gray-400">Unidades vendidas</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+      <h3 class="text-xl font-bold">${ventasUnicas}</h3>
+      <p class="text-gray-500 dark:text-gray-400">Transacciones</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+      <h3 class="text-xl font-bold">$${promedioPorVenta.toFixed(2)}</h3>
+      <p class="text-gray-500 dark:text-gray-400">Promedio por venta</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+      <h3 class="text-xl font-bold">$${promedioVentasDiarias.toFixed(2)}</h3>
+      <p class="text-gray-500 dark:text-gray-400">Promedio diario</p>
+    </div>
   `;
 }
 
-function actualizarCSVSelector() {
-  const select = document.getElementById("filtroMaquinaCSV");
-  if (!select) return;
+// Actualizar gráficas
+function actualizarGraficas() {
+  actualizarGraficaHoras();
+  actualizarGraficaDias();
+  actualizarGraficaVolumen();
+  actualizarGraficaMaquinas();
+}
+
+// Gráfica de ventas por hora
+function actualizarGraficaHoras() {
+  // Agrupar ventas por hora
+  const ventasPorHora = Array(24).fill(0);
   
-  select.innerHTML = `<option value="">Todas</option>`;
-  maquinasActivas.forEach(serial => {
-    select.innerHTML += `<option value="${serial}">${serial}</option>`;
+  ventas.forEach(venta => {
+    const fecha = new Date(venta.fecha);
+    const hora = fecha.getHours();
+    ventasPorHora[hora] += venta.importe;
+  });
+  
+  // Etiquetas para las horas
+  const etiquetas = Array(24).fill().map((_, i) => `${i}:00`);
+  
+  // Crear o actualizar gráfica
+  const ctx = document.getElementById('graficaHoras').getContext('2d');
+  
+  if (window.graficaHorasChart) {
+    window.graficaHorasChart.destroy();
+  }
+  
+  window.graficaHorasChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: etiquetas,
+      datasets: [{
+        label: 'Ventas ($)',
+        data: ventasPorHora,
+        borderColor: '#4c51bf',
+        backgroundColor: 'rgba(76, 81, 191, 0.1)',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
   });
 }
 
-async function descargarCSV() {
-  try {
-    const fechaDesdeEl = document.getElementById("fechaDesde");
-    const fechaHastaEl = document.getElementById("fechaHasta");
-    const filtroEl = document.getElementById("filtroMaquinaCSV");
-    
-    if (!fechaDesdeEl || !fechaHastaEl || !filtroEl) {
-      return alert("Error: No se encontraron los elementos de filtro");
+// Gráfica de ventas por día
+function actualizarGraficaDias() {
+  // Agrupar ventas por día
+  const ventasPorDia = {};
+  
+  ventas.forEach(venta => {
+    const fecha = venta.fecha.split('T')[0];
+    if (!ventasPorDia[fecha]) {
+      ventasPorDia[fecha] = 0;
     }
-    
-    const desde = fechaDesdeEl.value;
-    const hasta = fechaHastaEl.value;
-    const filtro = filtroEl.value;
-
-    if (ventas.length === 0) {
-      return alert("No hay datos para exportar");
-    }
-
-    const seleccionadas = ventas.filter(v => (!filtro || v.serial === filtro));
-    
-    if (seleccionadas.length === 0) {
-      return alert("No hay ventas que correspondan a los filtros seleccionados");
-    }
-
-    const encabezados = ["Fecha", "Hora", "Máquina", "Litros", "Precio"];
-    const filas = seleccionadas.map(v => {
-      const fecha = new Date(v.created_at);
-      return [
-        fecha.toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" }),
-        fecha.toLocaleTimeString("es-MX", { timeZone: "America/Mexico_City" }),
-        v.serial,
-        v.litros,
-        v.precio_total.toFixed(2)
-      ];
-    });
-
-    const csv = encabezados.join(",") + "\n" + filas.map(f => f.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `ventas_${desde}_a_${hasta}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("Error al descargar CSV:", error);
-    alert("Error al descargar CSV: " + error.message);
+    ventasPorDia[fecha] += venta.importe;
+  });
+  
+  // Convertir a arrays para la gráfica
+  const fechas = Object.keys(ventasPorDia).sort();
+  const importes = fechas.map(fecha => ventasPorDia[fecha]);
+  
+  // Crear o actualizar gráfica
+  const ctx = document.getElementById('graficaDias').getContext('2d');
+  
+  if (window.graficaDiasChart) {
+    window.graficaDiasChart.destroy();
   }
-}
-
-function actualizarGraficas() {
-  try {
-    if (ventas.length === 0) {
-      // Clear charts with no data message
-      ["graficaHoras", "graficaDias", "graficaVolumen", "graficaMaquinas"].forEach(id => {
-        const canvas = document.getElementById(id);
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext("2d");
-        if (window[id]) window[id].destroy();
-        
-        ctx.font = "16px Arial";
-        ctx.fillStyle = "#718096";
-        ctx.textAlign = "center";
-        ctx.fillText("No hay datos disponibles", canvas.width / 2, canvas.height / 2);
-      });
-      return;
-    }
-
-    const porHora = Array(24).fill(0);
-    const porDia = {};
-    const porVolumen = { "5L": 0, "10L": 0, "20L": 0 };
-    const porMaquina = {};
-
-    ventas.forEach(v => {
-      if (!v.created_at) return;
-      
-      const fecha = new Date(v.created_at);
-      const hora = fecha.getHours();
-      const dia = fecha.toLocaleDateString("es-MX");
-      
-      porHora[hora]++;
-      porDia[dia] = (porDia[dia] || 0) + (v.precio_total || 0);
-
-      const litros = v.litros || 0;
-      if (litros <= 5.5) porVolumen["5L"] += litros;
-      else if (litros <= 11) porVolumen["10L"] += litros;
-      else porVolumen["20L"] += litros;
-
-      if (v.serial) {
-        porMaquina[v.serial] = (porMaquina[v.serial] || 0) + (v.precio_total || 0);
-      }
-    });
-
-    renderBarChart("graficaHoras", porHora, "Ventas por hora", [...Array(24).keys()].map(h => h + ":00"));
-    renderBarChart("graficaDias", Object.values(porDia), "Ventas por día", Object.keys(porDia));
-    renderBarChart("graficaVolumen", Object.values(porVolumen), "Volumen vendido", Object.keys(porVolumen));
-    renderBarChart("graficaMaquinas", Object.values(porMaquina), "Rendimiento por máquina", Object.keys(porMaquina));
-  } catch (error) {
-    console.error("Error al actualizar gráficas:", error);
-    alert("Error al generar gráficas: " + error.message);
-  }
-}
-
-function renderBarChart(id, data, label, labels) {
-  try {
-    const canvas = document.getElementById(id);
-    if (!canvas) {
-      console.error(`Canvas con ID ${id} no encontrado`);
-      return;
-    }
-    
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      console.error(`No se pudo obtener contexto para ${id}`);
-      return;
-    }
-    
-    // Destroy existing chart if it exists
-    if (window[id]) {
-      window[id].destroy();
-    }
-    
-    // Create color palette based on theme
-    const isDark = document.documentElement.classList.contains('dark');
-    const colors = isDark ? 
-      'rgba(59, 130, 246, 0.8)' : // Blue for dark mode
-      'rgba(37, 99, 235, 0.8)';   // Darker blue for light mode
-    
-    const textColor = isDark ? '#e2e8f0' : '#4a5568';
-    
-    window[id] = new Chart(ctx, {
-      type: "bar",
-      data: { 
-        labels, 
-        datasets: [{ 
-          label, 
-          data,
-          backgroundColor: colors,
-          borderColor: colors,
-          borderWidth: 1
-        }] 
-      },
-      options: { 
-        responsive: true, 
-        maintainAspectRatio: true,
-        plugins: { 
-          legend: { 
-            display: false,
-            labels: {
-              color: textColor
-            }
-          },
-          tooltip: {
-            enabled: true
-          }
-        },
-        scales: {
-          y: {
-            ticks: {
-              color: textColor
-            },
-            grid: {
-              color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
-            }
-          },
-          x: {
-            ticks: {
-              color: textColor
-            },
-            grid: {
-              color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
-            }
-          }
+  
+  window.graficaDiasChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: fechas,
+      datasets: [{
+        label: 'Ventas ($)',
+        data: importes,
+        backgroundColor: '#38b2ac',
+        borderColor: '#2c9b94',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
         }
       }
-    });
-  } catch (error) {
-    console.error(`Error al renderizar gráfica ${id}:`, error);
-  }
+    }
+  });
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', inicializarDashboard);
+// Gráfica de volumen vendido
+function actualizarGraficaVolumen() {
+  // Agrupar unidades por producto
+  const unidadesPorProducto = {};
+  
+  ventas.forEach(venta => {
+    const producto = venta.producto || 'Sin especificar';
+    if (!unidadesPorProducto[producto]) {
+      unidadesPorProducto[producto] = 0;
+    }
+    unidadesPorProducto[producto] += venta.unidades;
+  });
+  
+  // Convertir a arrays para la gráfica
+  const productos = Object.keys(unidadesPorProducto);
+  const unidades = productos.map(producto => unidadesPorProducto[producto]);
+  
+  // Crear o actualizar gráfica
+  const ctx = document.getElementById('graficaVolumen').getContext('2d');
+  
+  if (window.graficaVolumenChart) {
+    window.graficaVolumenChart.destroy();
+  }
+  
+  window.graficaVolumenChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: productos,
+      datasets: [{
+        data: unidades,
+        backgroundColor: [
+          '#f56565', '#ed8936', '#ecc94b', '#48bb78', 
+          '#38b2ac', '#4299e1', '#667eea', '#9f7aea',
+          '#ed64a6', '#a0aec0'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right'
+        }
+      }
+    }
+  });
+}
+
+// Gráfica de rendimiento por máquina
+function actualizarGraficaMaquinas() {
+  // Agrupar ventas por máquina
+  const ventasPorMaquina = {};
+  
+  ventas.forEach(venta => {
+    const maquinaId = venta.id_maquina;
+    const maquinaNombre = venta.maquinas ? venta.maquinas.nombre : 'Desconocida';
+    const nombreMostrar = maquinaNombre || `Máquina ${maquinaId}`;
+    
+    if (!ventasPorMaquina[nombreMostrar]) {
+      ventasPorMaquina[nombreMostrar] = 0;
+    }
+    ventasPorMaquina[nombreMostrar] += venta.importe;
+  });
+  
+  // Convertir a arrays para la gráfica
+  const maquinas = Object.keys(ventasPorMaquina);
+  const importes = maquinas.map(maquina => ventasPorMaquina[maquina]);
+  
+  // Crear o actualizar gráfica
+  const ctx = document.getElementById('graficaMaquinas').getContext('2d');
+  
+  if (window.graficaMaquinasChart) {
+    window.graficaMaquinasChart.destroy();
+  }
+  
+  window.graficaMaquinasChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: maquinas,
+      datasets: [{
+        label: 'Ventas ($)',
+        data: importes,
+        backgroundColor: '#667eea',
+        borderColor: '#5a67d8',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      scales: {
+        x: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+// Descargar datos en formato CSV
+function descargarCSV() {
+  // Filtrar por máquina si es necesario
+  const filtroMaquina = document.getElementById('filtroMaquinaCSV').value;
+  let ventasFiltradas = ventas;
+  
+  if (filtroMaquina) {
+    ventasFiltradas = ventas.filter(venta => venta.id_maquina == filtroMaquina);
+  }
+  
+  // Preparar encabezados
+  const encabe
