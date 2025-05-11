@@ -5,6 +5,7 @@ function showLoading() {
     loading.classList.remove('hidden');
   } else {
     console.error("Loading element not found");
+    showError("Error interno: Elemento de carga no encontrado.");
   }
 }
 
@@ -23,7 +24,7 @@ function showError(message) {
   if (errorMessage && errorModal) {
     errorMessage.textContent = message;
     errorModal.classList.remove('hidden');
-    console.error(message);
+    console.error("Error displayed:", message);
   } else {
     console.error("Error modal elements not found:", message);
   }
@@ -35,7 +36,7 @@ function showDebug(obj) {
   if (debugMessage && debugModal) {
     debugMessage.textContent = JSON.stringify(obj, null, 2);
     debugModal.classList.remove('hidden');
-    console.log("Debug:", obj);
+    console.log("Debug info:", obj);
   } else {
     console.error("Debug modal elements not found:", obj);
   }
@@ -46,6 +47,7 @@ function showLoginPrompt() {
   const container = document.querySelector('.container.mx-auto');
   if (!container) {
     console.error("Container not found for login prompt");
+    showError("Error interno: No se pudo cargar el formulario de inicio de sesión.");
     return;
   }
 
@@ -64,6 +66,7 @@ function showLoginPrompt() {
   const loginButton = document.getElementById('loginButton');
   if (!loginButton) {
     console.error("Login button not found after rendering prompt");
+    showError("Error interno: No se pudo cargar el botón de inicio de sesión.");
     return;
   }
 
@@ -80,32 +83,39 @@ function showLoginPrompt() {
       showLoading();
       console.log("Attempting login with email:", email);
       console.log("Supabase client initialized:", !!supabaseClient);
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      hideLoading();
+      console.log("Supabase URL:", window.env.SUPABASE_URL);
+      console.log("Anon Key (first 10 chars):", window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.substring(0, 10) + "...");
 
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) {
         console.error("Login error:", error);
         showError("Error al iniciar sesión: " + error.message);
+        hideLoading();
         return;
       }
 
       console.log("Login successful, session data:", data.session);
-      console.log("LocalStorage after login:", localStorage.getItem('supabase.auth.token'));
       usuario = data.user;
       console.log("Usuario autenticado:", usuario.email);
-      // Force session refresh and update dashboard
+
+      // Verify session persistence
       const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
       if (sessionError) {
         console.error("Error refreshing session:", sessionError);
         showError("Error al refrescar la sesión: " + sessionError.message);
+        hideLoading();
         return;
       }
-      console.log("Session after refresh:", sessionData);
+
+      console.log("Session after login:", sessionData);
+      console.log("LocalStorage token:", localStorage.getItem('supabase.auth.token'));
+
+      hideLoading();
       actualizarDashboard();
     } catch (error) {
-      hideLoading();
       console.error("Unexpected error during login:", error);
       showError("Error inesperado al iniciar sesión: " + (error.message || 'Desconocido'));
+      hideLoading();
     }
   });
 }
@@ -128,23 +138,23 @@ function inicializarSupabase() {
     return false;
   }
 
-  if (!window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error("Missing Supabase API key in window.env");
-    showError("Error: No se ha encontrado la clave API de Supabase. Por favor, contacte al soporte técnico.");
+  if (!window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.includes('{{')) {
+    console.error("Supabase API key not injected:", window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+    showError("Error: Clave API de Supabase no configurada correctamente. Contacte al soporte técnico.");
     return false;
   }
 
   try {
     console.log("Initializing Supabase with URL:", window.env.SUPABASE_URL);
-    console.log("Anon Key:", window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+    console.log("Anon Key (first 10 chars):", window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.substring(0, 10) + "...");
     supabaseClient = supabase.createClient(
       window.env.SUPABASE_URL || 'https://ikuouxllerjnibjtkll.supabase.co',
       window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
-    console.log("Supabase inicializado correctamente");
+    console.log("Supabase initialized successfully");
     return true;
   } catch (error) {
-    console.error("Error al inicializar Supabase:", error);
+    console.error("Error initializing Supabase:", error);
     showError("Error al conectar con la base de datos: " + (error.message || 'Desconocido'));
     return false;
   }
@@ -160,27 +170,27 @@ async function verificarSesion() {
 
     console.log("Fetching session...");
     const { data, error } = await supabaseClient.auth.getSession();
-    console.log("Datos de sesión completos:", data);
-    console.log("Error en getSession:", error);
+    console.log("Session data:", data);
+    console.log("Session error:", error);
     console.log("LocalStorage token:", localStorage.getItem('supabase.auth.token'));
 
     if (error) {
-      console.error("Error al verificar sesión:", error);
+      console.error("Error verifying session:", error);
       showError("Error al verificar tu sesión: " + error.message);
       return false;
     }
 
     if (!data.session) {
-      console.log("No hay sesión activa - mostrando formulario de login");
+      console.log("No active session - showing login prompt");
       showLoginPrompt();
       return false;
     }
 
     usuario = data.session.user;
-    console.log("Usuario autenticado:", usuario.email);
+    console.log("User authenticated:", usuario.email);
     return true;
   } catch (error) {
-    console.error("Error inesperado al verificar sesión:", error);
+    console.error("Unexpected error verifying session:", error);
     showError("Error inesperado al verificar la sesión: " + (error.message || 'Desconocido'));
     return false;
   }
@@ -189,15 +199,19 @@ async function verificarSesion() {
 // Cerrar sesión de usuario
 async function cerrarSesion() {
   try {
+    console.log("Attempting to sign out...");
     const { error } = await supabaseClient.auth.signOut();
-    if (error) throw error;
-    console.log("Sesión cerrada, recargando página");
+    if (error) {
+      console.error("Sign out error:", error);
+      throw error;
+    }
+    console.log("Session closed, reloading page");
     usuario = null;
     localStorage.removeItem('supabase.auth.token');
     console.log("LocalStorage after logout:", localStorage.getItem('supabase.auth.token'));
     actualizarDashboard(); // Reload to show login prompt
   } catch (error) {
-    console.error("Error al cerrar sesión:", error);
+    console.error("Error closing session:", error);
     showError("Error al cerrar sesión: " + error.message);
   }
 }
@@ -206,7 +220,8 @@ async function cerrarSesion() {
 async function obtenerMaquinas() {
   try {
     if (!usuario || !usuario.id) {
-      console.error("No hay usuario autenticado");
+      console.error("No authenticated user");
+      showError("No hay usuario autenticado para obtener máquinas.");
       return false;
     }
 
@@ -222,7 +237,7 @@ async function obtenerMaquinas() {
     }
 
     maquinas = data || [];
-    console.log("Máquinas obtenidas:", maquinas.length);
+    console.log("Machines retrieved:", maquinas.length);
 
     const selectMaquina = document.getElementById('filtroMaquinaCSV');
     if (selectMaquina) {
@@ -242,7 +257,7 @@ async function obtenerMaquinas() {
 
     return true;
   } catch (error) {
-    console.error("Error al obtener máquinas:", error);
+    console.error("Error fetching machines:", error);
     showError("Error al cargar las máquinas: " + error.message);
     return false;
   }
@@ -252,7 +267,8 @@ async function obtenerMaquinas() {
 async function obtenerVentas() {
   try {
     if (!usuario || !usuario.id) {
-      console.error("No hay usuario autenticado");
+      console.error("No authenticated user");
+      showError("No hay usuario autenticado para obtener ventas.");
       return false;
     }
 
@@ -268,7 +284,7 @@ async function obtenerVentas() {
     fechaHastaObj.setDate(fechaHastaObj.getDate() + 1);
     const fechaHastaAjustada = fechaHastaObj.toISOString().split('T')[0];
 
-    console.log(`Obteniendo ventas desde ${fechaDesde} hasta ${fechaHastaAjustada}`);
+    console.log(`Fetching sales from ${fechaDesde} to ${fechaHastaAjustada}`);
 
     let query = supabaseClient
       .from('ventas')
@@ -292,7 +308,7 @@ async function obtenerVentas() {
     }
 
     ventas = data || [];
-    console.log("Ventas obtenidas:", ventas.length);
+    console.log("Sales retrieved:", ventas.length);
 
     if (ventas.length === 0) {
       document.getElementById('resumen').innerHTML = `
@@ -305,7 +321,7 @@ async function obtenerVentas() {
 
     return true;
   } catch (error) {
-    console.error("Error al obtener ventas:", error);
+    console.error("Error fetching sales:", error);
     showError("Error al cargar los datos de ventas: " + error.message);
     return false;
   }
@@ -316,20 +332,25 @@ async function actualizarDashboard() {
   showLoading();
 
   try {
+    console.log("Updating dashboard...");
     const sesionValida = await verificarSesion();
     if (!sesionValida) {
+      console.log("Session not valid, stopping dashboard update");
       hideLoading();
       return;
     }
 
+    console.log("Session valid, proceeding with data fetch");
     const maquinasObtenidas = await obtenerMaquinas();
     if (!maquinasObtenidas) {
+      console.log("Failed to fetch machines");
       hideLoading();
       return;
     }
 
     const ventasObtenidas = await obtenerVentas();
     if (!ventasObtenidas) {
+      console.log("Failed to fetch sales");
       hideLoading();
       return;
     }
@@ -337,9 +358,11 @@ async function actualizarDashboard() {
     if (ventas.length > 0) {
       actualizarTarjetasResumen();
       actualizarGraficas();
+    } else {
+      console.log("No sales data to display");
     }
   } catch (error) {
-    console.error("Error al actualizar dashboard:", error);
+    console.error("Error updating dashboard:", error);
     showError("Error al actualizar el dashboard: " + (error.message || "Desconocido"));
   } finally {
     hideLoading();
@@ -382,7 +405,7 @@ function actualizarTarjetasResumen() {
       </div>
     `;
   } catch (error) {
-    console.error("Error al actualizar tarjetas de resumen:", error);
+    console.error("Error updating summary cards:", error);
     showError("Error al actualizar las métricas: " + error.message);
   }
 }
@@ -395,7 +418,7 @@ function actualizarGraficas() {
     actualizarGraficaVolumen();
     actualizarGraficaMaquinas();
   } catch (error) {
-    console.error("Error al actualizar gráficas:", error);
+    console.error("Error updating charts:", error);
     showError("Error al actualizar las gráficas: " + error.message);
   }
 }
@@ -403,22 +426,6 @@ function actualizarGraficas() {
 // Gráfica de ventas por hora
 function actualizarGraficaHoras() {
   try {
-    const ventasPorHora = Array(24).fill(0);
-
-    ventas.forEach(venta => {
-      if (!venta.fecha) return;
-
-      try {
-        const fecha = new Date(venta.fecha);
-        const hora = fecha.getHours();
-        ventasPorHora[hora] += venta.importe || 0;
-      } catch (e) {
-        console.warn("Error al procesar fecha:", venta.fecha, e);
-      }
-    });
-
-    const etiquetas = Array(24).fill().map((_, i) => `${i}:00`);
-
     const canvas = document.getElementById('graficaHoras');
     if (!canvas) {
       console.error("Canvas 'graficaHoras' not found");
@@ -428,4 +435,357 @@ function actualizarGraficaHoras() {
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       console.error("Failed to get 2D context for 'graficaHoras'");
-     
+      return;
+    }
+
+    if (window.graficaHorasChart) {
+      window.graficaHorasChart.destroy();
+    }
+
+    const ventasPorHora = Array(24).fill(0);
+    ventas.forEach(venta => {
+      if (!venta.fecha) return;
+      try {
+        const fecha = new Date(venta.fecha);
+        const hora = fecha.getHours();
+        ventasPorHora[hora] += venta.importe || 0;
+      } catch (e) {
+        console.warn("Error processing date:", venta.fecha, e);
+      }
+    });
+
+    const etiquetas = Array(24).fill().map((_, i) => `${i}:00`);
+
+    window.graficaHorasChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: etiquetas,
+        datasets: [{
+          label: 'Ventas ($)',
+          data: ventasPorHora,
+          borderColor: '#4c51bf',
+          backgroundColor: 'rgba(76, 81, 191, 0.1)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Error in hourly sales chart:", error);
+  }
+}
+
+// Gráfica de ventas por día
+function actualizarGraficaDias() {
+  try {
+    const canvas = document.getElementById('graficaDias');
+    if (!canvas) {
+      console.error("Canvas 'graficaDias' not found");
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error("Failed to get 2D context for 'graficaDias'");
+      return;
+    }
+
+    if (window.graficaDiasChart) {
+      window.graficaDiasChart.destroy();
+    }
+
+    const ventasPorDia = {};
+    ventas.forEach(venta => {
+      if (!venta.fecha) return;
+      try {
+        const fecha = venta.fecha.split('T')[0];
+        ventasPorDia[fecha] = (ventasPorDia[fecha] || 0) + (venta.importe || 0);
+      } catch (e) {
+        console.warn("Error processing date for daily chart:", venta.fecha, e);
+      }
+    });
+
+    const fechas = Object.keys(ventasPorDia).sort();
+    const importes = fechas.map(fecha => ventasPorDia[fecha]);
+
+    window.graficaDiasChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: fechas,
+        datasets: [{
+          label: 'Ventas ($)',
+          data: importes,
+          backgroundColor: '#38b2ac',
+          borderColor: '#2c9b94',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Error in daily sales chart:", error);
+  }
+}
+
+// Gráfica de volumen vendido
+function actualizarGraficaVolumen() {
+  try {
+    const canvas = document.getElementById('graficaVolumen');
+    if (!canvas) {
+      console.error("Canvas 'graficaVolumen' not found");
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error("Failed to get 2D context for 'graficaVolumen'");
+      return;
+    }
+
+    if (window.graficaVolumenChart) {
+      window.graficaVolumenChart.destroy();
+    }
+
+    const unidadesPorProducto = {};
+    ventas.forEach(venta => {
+      const producto = venta.producto || 'Sin especificar';
+      unidadesPorProducto[producto] = (unidadesPorProducto[producto] || 0) + (venta.unidades || 0);
+    });
+
+    const productos = Object.keys(unidadesPorProducto);
+    const unidades = productos.map(producto => unidadesPorProducto[producto]);
+
+    if (productos.length === 0) {
+      const parentElement = canvas.parentElement;
+      if (parentElement) {
+        const noDataMsg = document.createElement('div');
+        noDataMsg.className = 'text-center py-16 text-gray-500 dark:text-gray-400';
+        noDataMsg.innerHTML = 'No hay datos disponibles para este período';
+        canvas.style.display = 'none';
+        parentElement.appendChild(noDataMsg);
+      }
+      return;
+    }
+
+    const parentElement = canvas.parentElement;
+    const existingMsg = parentElement?.querySelector('.text-center.py-16');
+    if (existingMsg) parentElement.removeChild(existingMsg);
+    canvas.style.display = 'block';
+
+    window.graficaVolumenChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: productos,
+        datasets: [{
+          data: unidades,
+          backgroundColor: [
+            '#f56565', '#ed8936', '#ecc94b', '#48bb78',
+            '#38b2ac', '#4299e1', '#667eea', '#9f7aea',
+            '#ed64a6', '#a0aec0'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right'
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Error in sales volume chart:", error);
+  }
+}
+
+// Gráfica de rendimiento por máquina
+function actualizarGraficaMaquinas() {
+  try {
+    const canvas = document.getElementById('graficaMaquinas');
+    if (!canvas) {
+      console.error("Canvas 'graficaMaquinas' not found");
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error("Failed to get 2D context for 'graficaMaquinas'");
+      return;
+    }
+
+    if (window.graficaMaquinasChart) {
+      window.graficaMaquinasChart.destroy();
+    }
+
+    const ventasPorMaquina = {};
+    ventas.forEach(venta => {
+      const maquinaId = venta.id_maquina;
+      const maquinaNombre = venta.maquinas?.nombre || null;
+      const nombreMostrar = maquinaNombre || `Máquina ${maquinaId}`;
+      ventasPorMaquina[nombreMostrar] = (ventasPorMaquina[nombreMostrar] || 0) + (venta.importe || 0);
+    });
+
+    const maquinas = Object.keys(ventasPorMaquina);
+    const importes = maquinas.map(maquina => ventasPorMaquina[maquina]);
+
+    if (maquinas.length === 0) {
+      const parentElement = canvas.parentElement;
+      if (parentElement) {
+        const noDataMsg = document.createElement('div');
+        noDataMsg.className = 'text-center py-16 text-gray-500 dark:text-gray-400';
+        noDataMsg.innerHTML = 'No hay datos disponibles para este período';
+        canvas.style.display = 'none';
+        parentElement.appendChild(noDataMsg);
+      }
+      return;
+    }
+
+    const parentElement = canvas.parentElement;
+    const existingMsg = parentElement?.querySelector('.text-center.py-16');
+    if (existingMsg) parentElement.removeChild(existingMsg);
+    canvas.style.display = 'block';
+
+    window.graficaMaquinasChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: maquinas,
+        datasets: [{
+          label: 'Ventas ($)',
+          data: importes,
+          backgroundColor: '#4299e1',
+          borderColor: '#3182ce',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        scales: {
+          x: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Error in machine performance chart:", error);
+  }
+}
+
+// Generar CSV de ventas
+function generarCSV() {
+  try {
+    if (!ventas || ventas.length === 0) {
+      showError("No hay datos para exportar");
+      return;
+    }
+
+    const filtroMaquina = document.getElementById('filtroMaquinaCSV').value;
+    let ventasFiltradas = ventas;
+
+    if (filtroMaquina) {
+      ventasFiltradas = ventas.filter(venta => venta.id_maquina == filtroMaquina);
+    }
+
+    if (ventasFiltradas.length === 0) {
+      showError("No hay datos para exportar con los filtros seleccionados");
+      return;
+    }
+
+    const cabeceras = ['Fecha', 'Hora', 'Máquina', 'Ubicación', 'Producto', 'Unidades', 'Importe'];
+
+    const filas = ventasFiltradas.map(venta => {
+      const fecha = new Date(venta.fecha);
+      const fechaFormateada = fecha.toLocaleDateString();
+      const horaFormateada = fecha.toLocaleTimeString();
+      return [
+        fechaFormateada,
+        horaFormateada,
+        venta.maquinas?.nombre || `Máquina ${venta.id_maquina}`,
+        venta.maquinas?.ubicacion || 'No especificada',
+        venta.producto || 'No especificado',
+        venta.unidades || 0,
+        venta.importe || 0
+      ];
+    });
+
+    const csvContent = [
+      cabeceras.join(','),
+      ...filas.map(fila => fila.map(valor => `"${valor}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const fechaActual = new Date().toISOString().split('T')[0];
+    const nombreArchivo = `ventas_${fechaActual}.csv`;
+
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = nombreArchivo;
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+    URL.revokeObjectURL(url);
+
+    console.log("CSV generated and downloaded");
+  } catch (error) {
+    console.error("Error generating CSV:", error);
+    showError("Error al generar el archivo CSV: " + error.message);
+  }
+}
+
+// Inicializar event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM fully loaded, initializing dashboard...");
+  const fechaDesde = document.getElementById('fechaDesde');
+  const fechaHasta = document.getElementById('fechaHasta');
+  const btnLogout = document.getElementById('btnLogout');
+  const btnDescargarCSV = document.getElementById('btnDescargarCSV');
+
+  if (fechaDesde && fechaHasta) {
+    fechaDesde.value = inicioMes.toISOString().split('T')[0];
+    fechaHasta.value = hoy.toISOString().split('T')[0];
+    fechaDesde.addEventListener('change', actualizarDashboard);
+    fechaHasta.addEventListener('change', actualizarDashboard);
+  } else {
+    console.error("Date inputs not found");
+  }
+
+  if (btnLogout) {
+    btnLogout.addEventListener('click', async function(e) {
+      e.preventDefault();
+      await cerrarSesion();
+    });
+  } else {
+    console.error("Logout button not found");
+  }
+
+  if (btnDescargarCSV) {
+    btnDescargarCSV.addEventListener('click', generarCSV);
+  } else {
+    console.error("Download CSV button not found");
+  }
+
+  actualizarDashboard();
+});
