@@ -1,3 +1,4 @@
+
 const supabase = window.supabase.createClient(
   'https://ikuouxllerfjnibjtlkl.supabase.co',
   window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -6,50 +7,55 @@ const supabase = window.supabase.createClient(
 let ventas = [];
 let maquinasActivas = [];
 
-document.addEventListener("DOMContentLoaded", async () => {
+// Esperar autenticación
+async function verificarSesion() {
   const { data: { session }, error } = await supabase.auth.getSession();
-
   if (!session || error) {
     window.location.href = "/login.html";
-    return;
+    return null;
   }
+  return session.user;
+}
 
-  const user = session.user;
+// Ejecutar al cargar
+(async () => {
+  const user = await verificarSesion();
+  if (!user) return;
 
-  const { data: maquinas, error: errorMaquinas } = await supabase
+  // Establecer fechas por defecto al mes actual
+  const ahora = new Date();
+  const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+  document.getElementById("fechaDesde").value = inicioMes.toISOString().split("T")[0];
+  document.getElementById("fechaHasta").value = ahora.toISOString().split("T")[0];
+
+  const { data: maquinas, error } = await supabase
     .from("maquinas")
     .select("serial, suscripcion_hasta")
     .eq("user_id", user.id);
 
-  if (errorMaquinas) return alert("Error al cargar máquinas");
+  if (error || !maquinas) return alert("Error al cargar las máquinas");
 
   maquinasActivas = maquinas
     .filter(m => m.suscripcion_hasta && new Date(m.suscripcion_hasta) > new Date())
     .map(m => m.serial);
 
-  maquinas
-    .filter(m => !maquinasActivas.includes(m.serial))
-    .forEach(m => console.warn("Máquina oculta por suscripción vencida:", m.serial));
-
   cargarVentas();
-});
+})();
 
 async function cargarVentas() {
-  const desde = document.getElementById("fechaDesde");
-  const hasta = document.getElementById("fechaHasta");
-
-  const inicio = desde.value ? new Date(desde.value) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-  const fin = hasta.value ? new Date(hasta.value + "T23:59:59") : new Date();
+  const desde = document.getElementById("fechaDesde").value;
+  const hasta = document.getElementById("fechaHasta").value;
 
   const { data, error } = await supabase
     .from("ventas")
     .select("*")
-    .gte("created_at", inicio.toISOString())
-    .lte("created_at", fin.toISOString());
+    .gte("created_at", new Date(desde).toISOString())
+    .lte("created_at", new Date(hasta + "T23:59:59").toISOString());
 
-  if (error) return alert("Error cargando ventas");
+  if (error) return alert("Error al cargar ventas");
 
   ventas = data.filter(v => maquinasActivas.includes(v.serial));
+
   actualizarResumen();
   actualizarGraficas();
   actualizarCSVSelector();
@@ -60,13 +66,17 @@ function actualizarResumen() {
     totalLitros: 0,
     totalVentas: 0,
     ticketPromedio: 0,
-    maquinasActivas: new Set(),
+    maquinas: new Set(),
+    ultimaVenta: null
   };
 
   ventas.forEach(v => {
     resumen.totalLitros += v.litros;
     resumen.totalVentas += v.precio_total;
-    resumen.maquinasActivas.add(v.serial);
+    resumen.maquinas.add(v.serial);
+    if (!resumen.ultimaVenta || new Date(v.created_at) > new Date(resumen.ultimaVenta)) {
+      resumen.ultimaVenta = v.created_at;
+    }
   });
 
   resumen.ticketPromedio = ventas.length
@@ -77,7 +87,8 @@ function actualizarResumen() {
     <div class="p-4 bg-white dark:bg-gray-800 shadow rounded">💧 <strong>${resumen.totalLitros.toFixed(1)}</strong> litros vendidos</div>
     <div class="p-4 bg-white dark:bg-gray-800 shadow rounded">💰 $<strong>${resumen.totalVentas.toFixed(2)}</strong> en ventas</div>
     <div class="p-4 bg-white dark:bg-gray-800 shadow rounded">🎟️ Ticket promedio: $<strong>${resumen.ticketPromedio.toFixed(2)}</strong></div>
-    <div class="p-4 bg-white dark:bg-gray-800 shadow rounded">🖥️ Máquinas activas: <strong>${resumen.maquinasActivas.size}</strong></div>
+    <div class="p-4 bg-white dark:bg-gray-800 shadow rounded">🖥️ Máquinas activas: <strong>${resumen.maquinas.size}</strong></div>
+    <div class="p-4 bg-white dark:bg-gray-800 shadow rounded">📆 Última venta: <strong>${resumen.ultimaVenta ? new Date(resumen.ultimaVenta).toLocaleString("es-MX", { timeZone: "America/Mexico_City" }) : 'N/A'}</strong></div>
   `;
 }
 
