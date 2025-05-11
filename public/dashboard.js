@@ -1,25 +1,47 @@
 // Utility functions
 function showLoading() {
-  document.getElementById('loading').classList.remove('hidden');
+  const loading = document.getElementById('loading');
+  if (loading) {
+    loading.classList.remove('hidden');
+  } else {
+    console.error("Loading element not found");
+  }
 }
 
 function hideLoading() {
-  document.getElementById('loading').classList.add('hidden');
+  const loading = document.getElementById('loading');
+  if (loading) {
+    loading.classList.add('hidden');
+  } else {
+    console.error("Loading element not found");
+  }
 }
 
 function showError(message) {
-  document.getElementById('errorMessage').textContent = message;
-  document.getElementById('errorModal').classList.remove('hidden');
-  console.error(message);
+  const errorModal = document.getElementById('errorModal');
+  const errorMessage = document.getElementById('errorMessage');
+  if (errorMessage && errorModal) {
+    errorMessage.textContent = message;
+    errorModal.classList.remove('hidden');
+    console.error(message);
+  } else {
+    console.error("Error modal elements not found:", message);
+  }
 }
 
 function showDebug(obj) {
-  document.getElementById('debugMessage').textContent = JSON.stringify(obj, null, 2);
-  document.getElementById('debugModal').classList.remove('hidden');
-  console.log(obj);
+  const debugModal = document.getElementById('debugModal');
+  const debugMessage = document.getElementById('debugMessage');
+  if (debugMessage && debugModal) {
+    debugMessage.textContent = JSON.stringify(obj, null, 2);
+    debugModal.classList.remove('hidden');
+    console.log("Debug:", obj);
+  } else {
+    console.error("Debug modal elements not found:", obj);
+  }
 }
 
-// New function to show a login prompt
+// Show login prompt
 function showLoginPrompt() {
   const container = document.querySelector('.container.mx-auto');
   if (!container) {
@@ -39,7 +61,13 @@ function showLoginPrompt() {
     </div>
   `;
 
-  document.getElementById('loginButton').addEventListener('click', async () => {
+  const loginButton = document.getElementById('loginButton');
+  if (!loginButton) {
+    console.error("Login button not found after rendering prompt");
+    return;
+  }
+
+  loginButton.addEventListener('click', async () => {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
 
@@ -51,6 +79,7 @@ function showLoginPrompt() {
     try {
       showLoading();
       console.log("Attempting login with email:", email);
+      console.log("Supabase client initialized:", !!supabaseClient);
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       hideLoading();
 
@@ -61,10 +90,17 @@ function showLoginPrompt() {
       }
 
       console.log("Login successful, session data:", data.session);
+      console.log("LocalStorage after login:", localStorage.getItem('supabase.auth.token'));
       usuario = data.user;
       console.log("Usuario autenticado:", usuario.email);
-      // Force a session refresh and update the dashboard
-      await supabaseClient.auth.getSession();
+      // Force session refresh and update dashboard
+      const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+      if (sessionError) {
+        console.error("Error refreshing session:", sessionError);
+        showError("Error al refrescar la sesión: " + sessionError.message);
+        return;
+      }
+      console.log("Session after refresh:", sessionData);
       actualizarDashboard();
     } catch (error) {
       hideLoading();
@@ -86,23 +122,30 @@ const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
 
 // Inicialización segura de Supabase
 function inicializarSupabase() {
-  if (!window.env || !window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error("Missing Supabase API key");
+  if (!window.env) {
+    console.error("window.env is not defined");
+    showError("Error: Configuración del entorno no encontrada.");
+    return false;
+  }
+
+  if (!window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.error("Missing Supabase API key in window.env");
     showError("Error: No se ha encontrado la clave API de Supabase. Por favor, contacte al soporte técnico.");
     return false;
   }
 
   try {
+    console.log("Initializing Supabase with URL:", window.env.SUPABASE_URL);
+    console.log("Anon Key:", window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
     supabaseClient = supabase.createClient(
       window.env.SUPABASE_URL || 'https://ikuouxllerjnibjtkll.supabase.co',
       window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
     console.log("Supabase inicializado correctamente");
-    console.log("Anon Key:", window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
     return true;
   } catch (error) {
     console.error("Error al inicializar Supabase:", error);
-    showError("Error al conectar con la base de datos. Por favor, intente más tarde.");
+    showError("Error al conectar con la base de datos: " + (error.message || 'Desconocido'));
     return false;
   }
 }
@@ -111,11 +154,14 @@ function inicializarSupabase() {
 async function verificarSesion() {
   try {
     if (!inicializarSupabase()) {
+      console.error("Failed to initialize Supabase");
       return false;
     }
 
+    console.log("Fetching session...");
     const { data, error } = await supabaseClient.auth.getSession();
-    console.log("Datos de sesión completos:", data, "Error:", error);
+    console.log("Datos de sesión completos:", data);
+    console.log("Error en getSession:", error);
     console.log("LocalStorage token:", localStorage.getItem('supabase.auth.token'));
 
     if (error) {
@@ -147,8 +193,11 @@ async function cerrarSesion() {
     if (error) throw error;
     console.log("Sesión cerrada, recargando página");
     usuario = null;
+    localStorage.removeItem('supabase.auth.token');
+    console.log("LocalStorage after logout:", localStorage.getItem('supabase.auth.token'));
     actualizarDashboard(); // Reload to show login prompt
   } catch (error) {
+    console.error("Error al cerrar sesión:", error);
     showError("Error al cerrar sesión: " + error.message);
   }
 }
@@ -161,12 +210,14 @@ async function obtenerMaquinas() {
       return false;
     }
 
+    console.log("Fetching machines for user ID:", usuario.id);
     const { data, error } = await supabaseClient
       .from('maquinas')
       .select('*')
       .eq('id_usuario', usuario.id);
 
     if (error) {
+      console.error("Error fetching machines:", error);
       throw error;
     }
 
@@ -236,6 +287,7 @@ async function obtenerVentas() {
     const { data, error } = await query;
 
     if (error) {
+      console.error("Error fetching sales:", error);
       throw error;
     }
 
@@ -368,344 +420,12 @@ function actualizarGraficaHoras() {
     const etiquetas = Array(24).fill().map((_, i) => `${i}:00`);
 
     const canvas = document.getElementById('graficaHoras');
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    if (window.graficaHorasChart) {
-      window.graficaHorasChart.destroy();
-    }
-
-    window.graficaHorasChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: etiquetas,
-        datasets: [{
-          label: 'Ventas ($)',
-          data: ventasPorHora,
-          borderColor: '#4c51bf',
-          backgroundColor: 'rgba(76, 81, 191, 0.1)',
-          borderWidth: 2,
-          tension: 0.3,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true
-          }
-        }
-      }
-    });
-  } catch (error) {
-    console.error("Error en gráfica de horas:", error);
-  }
-}
-
-// Gráfica de ventas por día
-function actualizarGraficaDias() {
-  try {
-    const ventasPorDia = {};
-
-    ventas.forEach(venta => {
-      if (!venta.fecha) return;
-
-      try {
-        const fecha = venta.fecha.split('T')[0];
-        if (!ventasPorDia[fecha]) {
-          ventasPorDia[fecha] = 0;
-        }
-        ventasPorDia[fecha] += venta.importe || 0;
-      } catch (e) {
-        console.warn("Error al procesar fecha para gráfica de días:", venta.fecha, e);
-      }
-    });
-
-    const fechas = Object.keys(ventasPorDia).sort();
-    const importes = fechas.map(fecha => ventasPorDia[fecha]);
-
-    const canvas = document.getElementById('graficaDias');
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    if (window.graficaDiasChart) {
-      window.graficaDiasChart.destroy();
-    }
-
-    window.graficaDiasChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: fechas,
-        datasets: [{
-          label: 'Ventas ($)',
-          data: importes,
-          backgroundColor: '#38b2ac',
-          borderColor: '#2c9b94',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true
-          }
-        }
-      }
-    });
-  } catch (error) {
-    console.error("Error en gráfica de días:", error);
-  }
-}
-
-// Gráfica de volumen vendido
-function actualizarGraficaVolumen() {
-  try {
-    const unidadesPorProducto = {};
-
-    ventas.forEach(venta => {
-      const producto = venta.producto || 'Sin especificar';
-      if (!unidadesPorProducto[producto]) {
-        unidadesPorProducto[producto] = 0;
-      }
-      unidadesPorProducto[producto] += venta.unidades || 0;
-    });
-
-    const productos = Object.keys(unidadesPorProducto);
-    const unidades = productos.map(producto => unidadesPorProducto[producto]);
-
-    const canvas = document.getElementById('graficaVolumen');
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    if (window.graficaVolumenChart) {
-      window.graficaVolumenChart.destroy();
-    }
-
-    if (productos.length === 0) {
-      const parentElement = canvas.parentElement;
-      if (parentElement) {
-        const noDataMsg = document.createElement('div');
-        noDataMsg.className = 'text-center py-16 text-gray-500 dark:text-gray-400';
-        noDataMsg.innerHTML = 'No hay datos disponibles para este período';
-
-        const existingMsg = parentElement.querySelector('.text-center.py-16');
-        if (existingMsg) parentElement.removeChild(existingMsg);
-
-        canvas.style.display = 'none';
-        parentElement.appendChild(noDataMsg);
-      }
+    if (!canvas) {
+      console.error("Canvas 'graficaHoras' not found");
       return;
     }
 
-    const parentElement = canvas.parentElement;
-    const existingMsg = parentElement?.querySelector('.text-center.py-16');
-    if (existingMsg) parentElement.removeChild(existingMsg);
-    canvas.style.display = 'block';
-
-    window.graficaVolumenChart = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: productos,
-        datasets: [{
-          data: unidades,
-          backgroundColor: [
-            '#f56565', '#ed8936', '#ecc94b', '#48bb78',
-            '#38b2ac', '#4299e1', '#667eea', '#9f7aea',
-            '#ed64a6', '#a0aec0'
-          ]
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'right'
-          }
-        }
-      }
-    });
-  } catch (error) {
-    console.error("Error en gráfica de volumen:", error);
-  }
-}
-
-// Gráfica de rendimiento por máquina
-function actualizarGraficaMaquinas() {
-  try {
-    const ventasPorMaquina = {};
-
-    ventas.forEach(venta => {
-      const maquinaId = venta.id_maquina;
-      const maquinaNombre = venta.maquinas ? venta.maquinas.nombre : null;
-      const nombreMostrar = maquinaNombre || `Máquina ${maquinaId}`;
-
-      if (!ventasPorMaquina[nombreMostrar]) {
-        ventasPorMaquina[nombreMostrar] = 0;
-      }
-      ventasPorMaquina[nombreMostrar] += venta.importe || 0;
-    });
-
-    const maquinas = Object.keys(ventasPorMaquina);
-    const importes = maquinas.map(maquina => ventasPorMaquina[maquina]);
-
-    const canvas = document.getElementById('graficaMaquinas');
-    if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    if (window.graficaMaquinasChart) {
-      window.graficaMaquinasChart.destroy();
-    }
-
-    if (maquinas.length === 0) {
-      const parentElement = canvas.parentElement;
-      if (parentElement) {
-        const noDataMsg = document.createElement('div');
-        noDataMsg.className = 'text-center py-16 text-gray-500 dark:text-gray-400';
-        noDataMsg.innerHTML = 'No hay datos disponibles para este período';
-
-        const existingMsg = parentElement.querySelector('.text-center.py-16');
-        if (existingMsg) parentElement.removeChild(existingMsg);
-
-        canvas.style.display = 'none';
-        parentElement.appendChild(noDataMsg);
-      }
-      return;
-    }
-
-    const parentElement = canvas.parentElement;
-    const existingMsg = parentElement?.querySelector('.text-center.py-16');
-    if (existingMsg) parentElement.removeChild(existingMsg);
-    canvas.style.display = 'block';
-
-    window.graficaMaquinasChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: maquinas,
-        datasets: [{
-          label: 'Ventas ($)',
-          data: importes,
-          backgroundColor: '#4299e1',
-          borderColor: '#3182ce',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: 'y',
-        scales: {
-          x: {
-            beginAtZero: true
-          }
-        }
-      }
-    });
-  } catch (error) {
-    console.error("Error en gráfica de máquinas:", error);
-  }
-}
-
-// Generar CSV de ventas
-function generarCSV() {
-  try {
-    if (!ventas || ventas.length === 0) {
-      showError("No hay datos para exportar");
-      return;
-    }
-
-    const filtroMaquina = document.getElementById('filtroMaquinaCSV').value;
-    let ventasFiltradas = ventas;
-
-    if (filtroMaquina) {
-      ventasFiltradas = ventas.filter(venta => venta.id_maquina == filtroMaquina);
-    }
-
-    if (ventasFiltradas.length === 0) {
-      showError("No hay datos para exportar con los filtros seleccionados");
-      return;
-    }
-
-    const cabeceras = ['Fecha', 'Hora', 'Máquina', 'Ubicación', 'Producto', 'Unidades', 'Importe'];
-
-    const filas = ventasFiltradas.map(venta => {
-      const fecha = new Date(venta.fecha);
-      const fechaFormateada = fecha.toLocaleDateString();
-      const horaFormateada = fecha.toLocaleTimeString();
-
-      return [
-        fechaFormateada,
-        horaFormateada,
-        venta.maquinas?.nombre || `Máquina ${venta.id_maquina}`,
-        venta.maquinas?.ubicacion || 'No especificada',
-        venta.producto || 'No especificado',
-        venta.unidades || 0,
-        venta.importe || 0
-      ];
-    });
-
-    const csvContent = [
-      cabeceras.join(','),
-      ...filas.map(fila => fila.map(valor => `"${valor}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const fechaActual = new Date().toISOString().split('T')[0];
-    const nombreArchivo = `ventas_${fechaActual}.csv`;
-
-    const enlace = document.createElement('a');
-    enlace.href = url;
-    enlace.download = nombreArchivo;
-    document.body.appendChild(enlace);
-    enlace.click();
-    document.body.removeChild(enlace);
-
-    console.log("CSV generado y descargado");
-  } catch (error) {
-    console.error("Error al generar CSV:", error);
-    showError("Error al generar el archivo CSV: " + error.message);
-  }
-}
-
-// Inicializar event listeners
-document.addEventListener('DOMContentLoaded', function() {
-  console.log("Dashboard inicializándose...");
-
-  const fechaDesde = document.getElementById('fechaDesde');
-  const fechaHasta = document.getElementById('fechaHasta');
-  const btnLogout = document.getElementById('btnLogout');
-
-  if (fechaDesde && fechaHasta) {
-    fechaDesde.value = inicioMes.toISOString().split('T')[0];
-    fechaHasta.value = hoy.toISOString().split('T')[0];
-    fechaDesde.addEventListener('change', actualizarDashboard);
-    fechaHasta.addEventListener('change', actualizarDashboard);
-  }
-
-  if (btnLogout) {
-    btnLogout.addEventListener('click', async function(e) {
-      e.preventDefault();
-      await cerrarSesion();
-    });
-  }
-
-  const btnDescargarCSV = document.getElementById('btnDescargarCSV');
-  if (btnDescargarCSV) {
-    btnDescargarCSV.addEventListener('click', generarCSV);
-  }
-
-  actualizarDashboard();
-});
+    if (!ctx) {
+      console.error("Failed to get 2D context for 'graficaHoras'");
+     
