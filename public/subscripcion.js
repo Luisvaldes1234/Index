@@ -1,5 +1,5 @@
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-const supabaseKey = window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseKey) {
   console.error("Supabase anon key no está disponible. Verifica tu configuración en Netlify.");
