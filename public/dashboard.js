@@ -221,6 +221,7 @@ async function obtenerMaquinasActivas() {
     const hoyISO = hoy.toISOString().split('T')[0];
     log(`Consultando máquinas con suscripción posterior a ${hoyISO}`);
     
+    // Usar el campo correcto de la tabla: user_id (según la imagen proporcionada)
     const { data, error } = await supabaseClient
       .from('maquinas')
       .select('*')
@@ -235,21 +236,6 @@ async function obtenerMaquinasActivas() {
     maquinasActivas = data || [];
     log(`Encontradas ${maquinasActivas.length} máquinas activas`);
     
-    // También intentar obtener por el campo user_id si no se encontraron por user_id
-    if (maquinasActivas.length === 0) {
-      log('Intentando con campo user_id alternativo');
-      const { data: altData, error: altError } = await supabaseClient
-        .from('maquinas')
-        .select('*')
-        .eq('user_id', usuario.id)
-        .gt('suscripcion_hasta', hoyISO);
-        
-      if (!altError && altData && altData.length > 0) {
-        maquinasActivas = altData;
-        log(`Encontradas ${maquinasActivas.length} máquinas activas con campo alternativo`);
-      }
-    }
-    
     // Actualizar selector de máquinas
     const sel = document.getElementById('filtroMaquinaCSV');
     if (sel) {
@@ -261,6 +247,7 @@ async function obtenerMaquinasActivas() {
         return;
       }
       
+      // Usar el campo 'nombre' en lugar de 'name' según la imagen
       maquinasActivas.forEach(m => {
         sel.innerHTML += `<option value="${m.id}">${m.nombre || 'Sin nombre'}</option>`;
       });
@@ -283,7 +270,7 @@ async function obtenerVentas() {
   let query = supabaseClient
     .from('ventas')
     .select('*, maquinas(nombre, ubicacion)')
-    .eq('user_id', usuario.id)
+    .eq('id_usuario', usuario.id)
     .gte('fecha', desde)
     .lt('fecha', h.toISOString().split('T')[0]);
   const filtroMaquina = document.getElementById('filtroMaquinaCSV').value;
@@ -350,114 +337,316 @@ async function actualizarDashboard() {
 
 // Renderizar tarjetas de resumen
 function renderResumen() {
-  const total = ventas.reduce((sum, v) => sum + v.importe, 0);
-  const unidades = ventas.reduce((sum, v) => sum + v.unidades, 0);
-  const trans = new Set(ventas.map(v => v.id)).size;
-  const desde = new Date(document.getElementById('fechaDesde').value);
-  const hasta = new Date(document.getElementById('fechaHasta').value);
-  const dias = Math.max(1, Math.ceil((hasta - desde) / (1000*60*60*24)) + 1);
-  const diario = total / dias;
-  document.getElementById('resumen').innerHTML = `
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-      <h3 class="text-xl font-bold">$${total.toFixed(2)}</h3>
-      <p>Ventas Totales</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-      <h3 class="text-xl font-bold">${unidades}</h3>
-      <p>Unidades Vendidas</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-      <h3 class="text-xl font-bold">${trans}</h3>
-      <p>Transacciones</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-      <h3 class="text-xl font-bold">$${(total/trans || 0).toFixed(2)}</h3>
-      <p>Promedio por Venta</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-      <h3 class="text-xl font-bold">$${diario.toFixed(2)}</h3>
-      <p>Promedio Diario</p>
-    </div>
-  `;
+  try {
+    if (!ventas || !ventas.length) {
+      log('No hay ventas para mostrar en el resumen');
+      document.getElementById('resumen').innerHTML = `
+        <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+          <h3 class="text-xl font-bold">Sin datos</h3>
+          <p>No hay ventas en el período seleccionado</p>
+        </div>
+      `;
+      return;
+    }
+    
+    // Calcular métricas basadas en los campos disponibles
+    const total = ventas.reduce((sum, v) => sum + (v.importe || v.precio_total || 0), 0);
+    const unidades = ventas.reduce((sum, v) => sum + (v.unidades || v.litros || 1), 0);
+    const trans = new Set(ventas.map(v => v.id)).size;
+    
+    const desde = new Date(document.getElementById('fechaDesde').value);
+    const hasta = new Date(document.getElementById('fechaHasta').value);
+    const dias = Math.max(1, Math.ceil((hasta - desde) / (1000*60*60*24)) + 1);
+    const diario = total / dias;
+    
+    log(`Métricas calculadas: Total=${total}, Unidades=${unidades}, Transacciones=${trans}, Diario=${diario}`);
+    
+    const resumenEl = document.getElementById('resumen');
+    if (!resumenEl) {
+      log('Elemento resumen no encontrado en el DOM');
+      return;
+    }
+    
+    resumenEl.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h3 class="text-xl font-bold">${total.toFixed(2)}</h3>
+        <p>Ventas Totales</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h3 class="text-xl font-bold">${unidades.toFixed(2)}</h3>
+        <p>Litros Vendidos</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h3 class="text-xl font-bold">${trans}</h3>
+        <p>Transacciones</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h3 class="text-xl font-bold">${(total/trans || 0).toFixed(2)}</h3>
+        <p>Promedio por Venta</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h3 class="text-xl font-bold">${diario.toFixed(2)}</h3>
+        <p>Promedio Diario</p>
+      </div>
+    `;
+  } catch (e) {
+    console.error('Error al renderizar resumen:', e);
+    showError(`Error al mostrar resumen: ${e.message}`);
+  }
 }
 
 // Renderizar gráficas con Chart.js
 function renderGraficas() {
-  // Ventas por hora
-  const byHour = Array(24).fill(0);
-  ventas.forEach(v => {
-    const d = new Date(v.fecha);
-    byHour[d.getHours()] += v.importe;
-  });
-  const ctxH = document.getElementById('graficaHoras').getContext('2d');
-  if (window.grafH) window.grafH.destroy();
-  window.grafH = new Chart(ctxH, {
-    type: 'line',
-    data: { labels: Array.from({length:24},(_,i)=>i+':00'), datasets: [{ label:'Ventas ($)', data:byHour, fill:true, tension:0.3 }] },
-    options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
-  });
+  try {
+    if (!ventas || !ventas.length) {
+      log('No hay ventas para mostrar en las gráficas');
+      return;
+    }
+    
+    // Ventas por hora
+    const byHour = Array(24).fill(0);
+    ventas.forEach(v => {
+      const fecha = v.fecha || '';
+      if (fecha && typeof fecha === 'string') {
+        const d = new Date(fecha);
+        if (!isNaN(d.getTime())) {
+          byHour[d.getHours()] += (v.importe || v.precio_total || 0);
+        }
+      }
+    });
+    
+    const ctxH = document.getElementById('graficaHoras')?.getContext('2d');
+    if (ctxH) {
+      if (window.grafH) window.grafH.destroy();
+      window.grafH = new Chart(ctxH, {
+        type: 'line',
+        data: { 
+          labels: Array.from({length:24},(_,i)=>`${i}:00`), 
+          datasets: [{ 
+            label:'Ventas ($)', 
+            data: byHour, 
+            fill: true, 
+            tension: 0.3,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)'
+          }] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          scales: { y: { beginAtZero: true } } 
+        }
+      });
+    } else {
+      log('Elemento gráfica horas no encontrado');
+    }
 
-  // Ventas por día
-  const byDay = {};
-  ventas.forEach(v => {
-    const day = v.fecha.split('T')[0];
-    byDay[day] = (byDay[day] || 0) + v.importe;
-  });
-  const days = Object.keys(byDay).sort(), vals = days.map(d => byDay[d]);
-  const ctxD = document.getElementById('graficaDias').getContext('2d');
-  if (window.grafD) window.grafD.destroy();
-  window.grafD = new Chart(ctxD, {
-    type: 'bar',
-    data: { labels:days, datasets:[{ label:'Ventas ($)', data:vals }] },
-    options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
-  });
+    // Ventas por día
+    const byDay = {};
+    ventas.forEach(v => {
+      if (v.fecha && typeof v.fecha === 'string') {
+        const day = v.fecha.split('T')[0];
+        byDay[day] = (byDay[day] || 0) + (v.importe || v.precio_total || 0);
+      }
+    });
+    
+    const days = Object.keys(byDay).sort();
+    const vals = days.map(d => byDay[d]);
+    
+    const ctxD = document.getElementById('graficaDias')?.getContext('2d');
+    if (ctxD) {
+      if (window.grafD) window.grafD.destroy();
+      window.grafD = new Chart(ctxD, {
+        type: 'bar',
+        data: { 
+          labels: days, 
+          datasets: [{ 
+            label: 'Ventas ($)', 
+            data: vals,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          scales: { y: { beginAtZero: true } } 
+        }
+      });
+    } else {
+      log('Elemento gráfica días no encontrado');
+    }
 
-  // Volumen vendido por producto
-  const byProd = {};
-  ventas.forEach(v => {
-    const prod = v.producto || 'Sin especificar';
-    byProd[prod] = (byProd[prod] || 0) + v.unidades;
-  });
-  const prods = Object.keys(byProd), nums = prods.map(p=>byProd[p]);
-  const ctxV = document.getElementById('graficaVolumen').getContext('2d');
-  if (window.grafV) window.grafV.destroy();
-  window.grafV = new Chart(ctxV, {
-    type: 'pie',
-    data: { labels:prods, datasets:[{ data:nums }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right' } } }
-  });
+    // Volumen vendido por máquina
+    const byM = {};
+    ventas.forEach(v => {
+      // Adaptar para el campo maquinas según la estructura de la consulta join
+      // Verifica las diferentes posibilidades de la estructura de datos
+      let nombreMaquina = 'Desconocida';
+      
+      if (v.maquinas && typeof v.maquinas === 'object' && v.maquinas.nombre) {
+        nombreMaquina = v.maquinas.nombre;
+      } else if (v.id_maquina && maquinasActivas) {
+        // Buscar el nombre en la lista de máquinas activas
+        const maquina = maquinasActivas.find(m => m.id === v.id_maquina);
+        nombreMaquina = maquina ? maquina.nombre : `ID: ${v.id_maquina}`;
+      }
+      
+      byM[nombreMaquina] = (byM[nombreMaquina] || 0) + (v.importe || v.precio_total || 0);
+    });
+    
+    const ms = Object.keys(byM), ims = ms.map(m => byM[m]);
+    
+    const ctxM = document.getElementById('graficaMaquinas')?.getContext('2d');
+    if (ctxM) {
+      if (window.grafM) window.grafM.destroy();
+      window.grafM = new Chart(ctxM, {
+        type: 'bar',
+        data: { 
+          labels: ms, 
+          datasets: [{ 
+            label: 'Ventas ($)', 
+            data: ims,
+            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+            borderColor: 'rgba(153, 102, 255, 1)',
+            borderWidth: 1
+          }] 
+        },
+        options: { 
+          indexAxis: 'y', 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          scales: { x: { beginAtZero: true } } 
+        }
+      });
+    } else {
+      log('Elemento gráfica máquinas no encontrado');
+    }
 
-  // Rendimiento por máquina
-  const byM = {};
-  ventas.forEach(v => {
-    const name = v.maquinas.nombre;
-    byM[name] = (byM[name] || 0) + v.importe;
-  });
-  const ms = Object.keys(byM), ims = ms.map(m=>byM[m]);
-  const ctxM = document.getElementById('graficaMaquinas').getContext('2d');
-  if (window.grafM) window.grafM.destroy();
-  window.grafM = new Chart(ctxM, {
-    type: 'bar',
-    data: { labels:ms, datasets:[{ label:'Ventas ($)', data:ims }] },
-    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, scales:{ x:{ beginAtZero:true } } }
-  });
+    // Volumen vendido por producto o litros
+    // Adaptar para usar litros en lugar de producto si es necesario
+    const byProd = {};
+    ventas.forEach(v => {
+      const prod = v.producto || `Litros: ${v.litros || 'N/A'}`;
+      byProd[prod] = (byProd[prod] || 0) + (v.unidades || v.litros || 1);
+    });
+    
+    const prods = Object.keys(byProd), nums = prods.map(p => byProd[p]);
+    
+    const ctxV = document.getElementById('graficaVolumen')?.getContext('2d');
+    if (ctxV) {
+      if (window.grafV) window.grafV.destroy();
+      window.grafV = new Chart(ctxV, {
+        type: 'pie',
+        data: { 
+          labels: prods, 
+          datasets: [{ 
+            data: nums,
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.2)',
+              'rgba(54, 162, 235, 0.2)',
+              'rgba(255, 206, 86, 0.2)',
+              'rgba(75, 192, 192, 0.2)',
+              'rgba(153, 102, 255, 0.2)',
+            ],
+            borderColor: [
+              'rgba(255, 99, 132, 1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 206, 86, 1)',
+              'rgba(75, 192, 192, 1)',
+              'rgba(153, 102, 255, 1)',
+            ],
+            borderWidth: 1
+          }] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { legend: { position: 'right' } } 
+        }
+      });
+    } else {
+      log('Elemento gráfica volumen no encontrado');
+    }
+    
+  } catch (e) {
+    console.error('Error al renderizar gráficas:', e);
+    showError(`Error al mostrar gráficas: ${e.message}`);
+  }
 }
 
 // Generar y descargar CSV
 function descargarCSV() {
-  if (!ventas.length) return showError('Sin datos para exportar');
-  const filtro = document.getElementById('filtroMaquinaCSV').value;
-  let list = ventas;
-  if (filtro) list = list.filter(v=>v.id_maquina==filtro);
-  if (!list.length) return showError('No hay datos con ese filtro');
-  const headers = ['Fecha','Hora','Máquina','Ubicación','Producto','Unidades','Importe'];
-  const rows = list.map(v => {
-    const d = new Date(v.fecha);
-    return [d.toLocaleDateString(), d.toLocaleTimeString(), v.maquinas.nombre, v.maquinas.ubicacion, v.producto, v.unidades, v.importe]
-      .map(x=>`"${x}"`).join(',');
-  });
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], { type:'text/csv' });
+  try {
+    if (!ventas || !ventas.length) {
+      showError('Sin datos para exportar');
+      return;
+    }
+    
+    const filtro = document.getElementById('filtroMaquinaCSV')?.value;
+    let list = ventas;
+    
+    if (filtro) {
+      list = list.filter(v => v.id_maquina == filtro);
+    }
+    
+    if (!list.length) {
+      showError('No hay datos con ese filtro');
+      return;
+    }
+    
+    // Adaptar headers según los campos disponibles en las ventas
+    const headers = ['Fecha', 'Hora', 'Máquina', 'Ubicación', 'Litros', 'Importe'];
+    
+    const rows = list.map(v => {
+      const d = new Date(v.fecha);
+      let nombreMaquina = 'Desconocida';
+      let ubicacion = '-';
+      
+      // Extraer nombre de máquina correctamente según estructura de datos
+      if (v.maquinas && typeof v.maquinas === 'object') {
+        nombreMaquina = v.maquinas.nombre || 'Sin nombre';
+        ubicacion = v.maquinas.ubicacion || '-';
+      } else if (v.id_maquina && maquinasActivas) {
+        const maquina = maquinasActivas.find(m => m.id === v.id_maquina);
+        if (maquina) {
+          nombreMaquina = maquina.nombre || 'Sin nombre';
+          ubicacion = maquina.ubicacion || '-';
+        }
+      }
+      
+      return [
+        d.toLocaleDateString(), 
+        d.toLocaleTimeString(), 
+        nombreMaquina, 
+        ubicacion, 
+        v.litros || v.unidades || '1',
+        v.importe || v.precio_total || '0'
+      ].map(x => `"${x}"`).join(',');
+    });
+    
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    
+    const d0 = document.getElementById('fechaDesde')?.value || '';
+    const d1 = document.getElementById('fechaHasta')?.value || '';
+    a.download = `ventas_${d0}_a_${d1}.csv`;
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    log('CSV descargado exitosamente');
+  } catch (e) {
+    console.error('Error al descargar CSV:', e);
+    showError(`Error al generar CSV: ${e.message}`);
+  }
+} blob = new Blob([csv], { type:'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
