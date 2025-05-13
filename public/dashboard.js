@@ -1,12 +1,19 @@
-// dashboard.js
+// === Inicialización de Supabase con variables de Netlify ===
+const SUPABASE_URL = window.env?.NEXT_PUBLIC_SUPABASE_DATABASE_URL;
+const SUPABASE_KEY = window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// —————————————————————————
-// 1) Configuración global
-// —————————————————————————
-const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-const SUPABASE_KEY = window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const { createClient } = window.supabase;
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error('❌ Faltan variables de entorno de Supabase en window.env:', window.env);
+  // Aquí podrías mostrar un modal o redirigir al login
+}
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+
+// Ahora usa `supabaseClient` en lugar de `supabase` en todo tu código.
 
 let usuario = null;
 let maquinasActivas = [];
