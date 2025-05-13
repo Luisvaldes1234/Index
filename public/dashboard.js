@@ -224,7 +224,7 @@ async function obtenerMaquinasActivas() {
     const { data, error } = await supabaseClient
       .from('maquinas')
       .select('*')
-      .eq('id_usuario', usuario.id)
+      .eq('user_id', usuario.id)
       .gt('suscripcion_hasta', hoyISO);
       
     if (error) {
@@ -235,7 +235,7 @@ async function obtenerMaquinasActivas() {
     maquinasActivas = data || [];
     log(`Encontradas ${maquinasActivas.length} máquinas activas`);
     
-    // También intentar obtener por el campo user_id si no se encontraron por id_usuario
+    // También intentar obtener por el campo user_id si no se encontraron por user_id
     if (maquinasActivas.length === 0) {
       log('Intentando con campo user_id alternativo');
       const { data: altData, error: altError } = await supabaseClient
@@ -283,7 +283,7 @@ async function obtenerVentas() {
   let query = supabaseClient
     .from('ventas')
     .select('*, maquinas(nombre, ubicacion)')
-    .eq('id_usuario', usuario.id)
+    .eq('user_id', usuario.id)
     .gte('fecha', desde)
     .lt('fecha', h.toISOString().split('T')[0]);
   const filtroMaquina = document.getElementById('filtroMaquinaCSV').value;
