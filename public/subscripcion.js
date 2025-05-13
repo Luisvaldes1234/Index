@@ -1,87 +1,56 @@
+// subscripcion.js — TrackMyVend
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U'; 
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-if (!supabaseKey) {
-  console.error("Supabase anon key no está disponible. Verifica tu configuración en Netlify.");
-}
+let user = null;
 
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+// Autenticar y cargar máquinas
+(async () => {
+  const { data: { user: currentUser }, error } = await supabase.auth.getUser();
+  if (error || !currentUser) return alert("No estás autenticado");
+  user = currentUser;
+  cargarMaquinas();
+})();
 
 async function cargarMaquinas() {
-  const user = await obtenerUsuario();
-  if (!user) return alert("No autenticado");
-
   const { data: maquinas, error } = await supabase
     .from("maquinas")
-    .select("*")
+    .select("id, nombre, serial, suscripcion_hasta")
     .eq("user_id", user.id);
 
-  if (error) return alert("Error al cargar máquinas");
+  if (error || !maquinas) return alert("Error al cargar máquinas");
 
   const contenedor = document.getElementById("listaMaquinas");
   contenedor.innerHTML = "";
-
   const hoy = new Date();
 
-  maquinas.forEach(maquina => {
-    const suscripcion = maquina.suscripcion_hasta ? new Date(maquina.suscripcion_hasta) : null;
-    const activa = suscripcion && suscripcion > hoy;
+  maquinas.forEach(m => {
+    const vencimiento = m.suscripcion_hasta ? new Date(m.suscripcion_hasta) : null;
+    const diasRestantes = vencimiento ? Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24)) : 0;
+    const vencida = !vencimiento || vencimiento < hoy;
 
-    const card = document.createElement("div");
-    card.className = "p-4 bg-white dark:bg-gray-800 shadow rounded";
+    const estado = vencida
+      ? `<span class='text-red-500 font-semibold'>Vencida</span>`
+      : `<span class='text-green-500 font-semibold'>Activa</span>`;
 
-    const estado = activa
-      ? `<span class="text-green-500 font-semibold">Activa hasta ${suscripcion.toLocaleDateString()}</span>`
-      : `<span class="text-red-500 font-semibold">Inactiva</span>`;
-
-    card.innerHTML = `
-      <h2 class="text-lg font-bold">${maquina.nombre || maquina.serial}</h2>
-      <p class="text-sm text-gray-500">Serial: ${maquina.serial}</p>
-      <p class="mb-3">Estado: ${estado}</p>
-      ${!activa ? generarBotonesPago(maquina.serial) : ""}
+    const card = `
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow space-y-2">
+        <h2 class="text-lg font-bold">${m.nombre}</h2>
+        <p class="text-sm text-gray-500">Serial: ${m.serial}</p>
+        <p>Estado: ${estado}</p>
+        <p>${vencida ? `Último día activo: ${vencimiento?.toLocaleDateString('es-MX') || 'Nunca'}`
+                     : `Vence en: ${vencimiento.toLocaleDateString('es-MX')} (${diasRestantes} días restantes)`}</p>
+        <button onclick="pagarMaquina('${m.id}')" class="mt-2 bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">
+          ${vencida ? 'Pagar ahora $500' : 'Renovar $500'}
+        </button>
+      </div>
     `;
-
-    contenedor.appendChild(card);
+    contenedor.innerHTML += card;
   });
 }
 
-function generarBotonesPago(serial) {
-  const planes = [
-    { plan: 'mensual', texto: '1 mes – $499' },
-    { plan: 'trimestral', texto: '3 meses – $1,400' },
-    { plan: 'semestral', texto: '6 meses – $2,500' },
-    { plan: 'anual', texto: '12 meses – $4,500' }
-  ];
-
-  return planes.map(p =>
-    `<button onclick="iniciarPago('${serial}', '${p.plan}')" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 mr-2 mb-2">${p.texto}</button>`
-  ).join('');
+function pagarMaquina(idMaquina) {
+  alert(`Aquí iría el pago real de la máquina con ID ${idMaquina}`);
+  // Aquí deberías redireccionar a Mercado Pago u otro servicio con el ID de la máquina
 }
-
-async function iniciarPago(serial, plan) {
-  try {
-    const response = await fetch('/.netlify/functions/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ serial, plan })
-    });
-
-    const result = await response.json();
-
-    if (result?.url) {
-      window.location.href = result.url;
-    } else {
-      throw new Error("No se recibió la URL de Stripe");
-    }
-  } catch (err) {
-    console.error("Error iniciando pago:", err);
-    alert("Error iniciando el pago. Intenta de nuevo.");
-  }
-}
-
-async function obtenerUsuario() {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
-}
-
-cargarMaquinas();
