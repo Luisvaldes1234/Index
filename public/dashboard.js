@@ -5,14 +5,25 @@ let usuario;
 let maquinasActivas = [];
 let ventas = [];
 
+// URL fija de Supabase para evitar problemas con variables de entorno
+const SUPABASE_URL = 'https://ikuouxllerfjnibjtlkl.supabase.co'; 
+// Debug - Mostrar mensajes en la consola para diagnóstico
+const DEBUG = true;
+
+function log(message, data) {
+  if (DEBUG) {
+    console.log(`[DEBUG] ${message}`, data || '');
+  }
+}
+
 // Fechas por defecto
 const hoy = new Date();
 const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
 
 // Elementos UI
-const loadingEl = () => document.getElementById('loading');
-const errorModal = document.getElementById('errorModal');
-const errorMsg = document.getElementById('errorMessage');
+const loadingEl = () => document.getElementById('loading') || { classList: { remove: () => {}, add: () => {} }};
+const errorModal = document.getElementById('errorModal') || { classList: { remove: () => {}, add: () => {} }};
+const errorMsg = document.getElementById('errorMessage') || { textContent: '' };
 
 // Mostrar/Ocultar loading spinner
 function showLoading() {
@@ -24,102 +35,242 @@ function hideLoading() {
 
 // Mostrar error en modal
 function showError(msg) {
-  errorMsg.textContent = msg;
-  errorModal.classList.remove('hidden');
-  console.error(msg);
+  console.error(`[ERROR] ${msg}`);
+  
+  if (errorMsg) {
+    errorMsg.textContent = msg;
+  }
+  
+  if (errorModal) {
+    errorModal.classList.remove('hidden');
+  } else {
+    // Crear un modal de error si no existe
+    const tempModal = document.createElement('div');
+    tempModal.style.cssText = 'position:fixed;top:20px;right:20px;background:red;color:white;padding:10px;border-radius:5px;z-index:9999;';
+    tempModal.textContent = msg;
+    document.body.appendChild(tempModal);
+    setTimeout(() => tempModal.remove(), 5000);
+  }
 }
 
 // Inicializar Supabase con variables de entorno
 function inicializarSupabase() {
-  const key = window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const url = window.env.SUPABASE_URL || 'https://ikuouxllerfjnibjtlkl.supabase.co'; // URL por defecto si no está configurada
-  if (!key) {
-    showError('Variables de entorno no configuradas correctamente');
+  try {
+    // Intentar obtener la clave de las variables de entorno
+    const key = window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!key) {
+      log('No se encontró la clave anónima de Supabase en las variables de entorno');
+      // Intentar recuperar de localStorage como último recurso
+      const savedKey = localStorage.getItem('supabaseAnonKey');
+      
+      if (!savedKey) {
+        showError('No se pudo encontrar la clave de Supabase. Por favor, inicia sesión nuevamente.');
+        return false;
+      }
+      
+      log('Usando clave de Supabase guardada en localStorage');
+      supabaseClient = supabase.createClient(SUPABASE_URL, savedKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true
+        }
+      });
+    } else {
+      // Guardar la clave para uso futuro
+      localStorage.setItem('supabaseAnonKey', key);
+      log('Inicializando Supabase con clave de variables de entorno');
+      supabaseClient = supabase.createClient(SUPABASE_URL, key, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true
+        }
+      });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error al inicializar Supabase:', error);
     return false;
   }
-  supabaseClient = supabase.createClient(url, key, {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      timeout: 30 * 60 // 30 minutos en segundos
-    }
-  });
-  return true;
 }
 
 // Verificar sesión del usuario
 async function verificarSesion() {
-  if (!inicializarSupabase()) return false;
-  const { data, error } = await supabaseClient.auth.getSession();
-  
-  if (error) {
-    showError('Error al verificar sesión: ' + error.message);
-    setTimeout(() => location.href = '/login.html', 2000);
-    return false;
-  }
-  
-  // Verificar si hay una sesión guardada en localStorage
-  const savedSession = localStorage.getItem('userSession');
-  const savedTimestamp = localStorage.getItem('sessionTimestamp');
-  
-  if (!data.session) {
-    // Verificar si hay una sesión guardada y si no ha expirado (menos de 30 minutos)
-    if (savedSession && savedTimestamp) {
-      const currentTime = new Date().getTime();
-      const sessionTime = parseInt(savedTimestamp);
+  try {
+    log('Verificando sesión de usuario');
+    
+    // Primero intentar usar sesión guardada localmente
+    const localUserData = localStorage.getItem('userData');
+    const sessionTimestamp = localStorage.getItem('sessionTimestamp');
+    
+    // Si hay datos guardados y no han pasado 30 minutos
+    if (localUserData && sessionTimestamp) {
       const thirtyMinutesInMillis = 30 * 60 * 1000;
+      const currentTime = new Date().getTime();
+      const savedTime = parseInt(sessionTimestamp, 10);
       
-      if (currentTime - sessionTime < thirtyMinutesInMillis) {
-        // Recuperar datos de sesión guardados
-        try {
-          usuario = JSON.parse(savedSession);
-          return true;
-        } catch (e) {
-          console.error("Error al recuperar sesión guardada:", e);
-        }
+      if (!isNaN(savedTime) && (currentTime - savedTime) < thirtyMinutesInMillis) {
+        log('Usando sesión guardada en localStorage (menos de 30 minutos)');
+        usuario = JSON.parse(localUserData);
+        return true;
       }
     }
     
-    showError('Sesión expirada. Redirigiendo...');
-    setTimeout(() => location.href = '/login.html', 2000);
+    // Si no hay sesión local válida, verificar con Supabase
+    if (!inicializarSupabase()) {
+      log('Fallo al inicializar Supabase');
+      return false;
+    }
+    
+    // Verificar la sesión actual con Supabase
+    const { data, error } = await supabaseClient.auth.getSession();
+    
+    if (error) {
+      log('Error al verificar sesión con Supabase', error);
+      showError('Error al verificar sesión: ' + error.message);
+      setTimeout(() => location.href = '/login.html', 2000);
+      return false;
+    }
+    
+    // Si no hay sesión activa en Supabase
+    if (!data || !data.session) {
+      log('No hay sesión activa en Supabase');
+      
+      // Intentar usar el token de actualización si existe
+      const refreshToken = localStorage.getItem('supabaseRefreshToken');
+      if (refreshToken) {
+        try {
+          log('Intentando renovar sesión con refresh token');
+          const { data: refreshData, error: refreshError } = await supabaseClient.auth.refreshSession({ refresh_token: refreshToken });
+          
+          if (!refreshError && refreshData.session) {
+            log('Sesión renovada exitosamente con refresh token');
+            usuario = refreshData.session.user;
+            // Guardar la sesión renovada
+            localStorage.setItem('userData', JSON.stringify(usuario));
+            localStorage.setItem('sessionTimestamp', new Date().getTime().toString());
+            localStorage.setItem('supabaseRefreshToken', refreshData.session.refresh_token);
+            return true;
+          } else {
+            log('No se pudo renovar la sesión con refresh token', refreshError);
+          }
+        } catch (e) {
+          log('Error al renovar sesión con refresh token', e);
+        }
+      }
+      
+      // Si llegamos aquí, no hay sesión válida
+      showError('Tu sesión ha expirado. Redirigiendo al login...');
+      setTimeout(() => location.href = '/login.html', 2000);
+      return false;
+    }
+    
+    // Tenemos una sesión válida de Supabase
+    log('Sesión de Supabase válida');
+    usuario = data.session.user;
+    
+    // Guardar datos para futuras verificaciones
+    localStorage.setItem('userData', JSON.stringify(usuario));
+    localStorage.setItem('sessionTimestamp', new Date().getTime().toString());
+    
+    if (data.session.refresh_token) {
+      localStorage.setItem('supabaseRefreshToken', data.session.refresh_token);
+    }
+    
+    // Configurar botón de logout si existe
+    const logoutBtn = document.getElementById('btnLogout');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        log('Cerrando sesión');
+        // Limpiar storage local
+        localStorage.removeItem('userData');
+        localStorage.removeItem('sessionTimestamp');
+        localStorage.removeItem('supabaseRefreshToken');
+        
+        try {
+          await supabaseClient.auth.signOut();
+        } catch (e) {
+          log('Error al cerrar sesión con Supabase', e);
+        }
+        
+        location.href = '/login.html';
+      });
+    }
+    
+    return true;
+  } catch (e) {
+    console.error('Error inesperado al verificar sesión:', e);
+    showError('Error al verificar tu sesión. Por favor, intenta recargar la página.');
     return false;
   }
-  
-  // Si hay sesión activa, guardarla
-  usuario = data.session.user;
-  localStorage.setItem('userSession', JSON.stringify(usuario));
-  localStorage.setItem('sessionTimestamp', new Date().getTime().toString());
-  
-  document.getElementById('btnLogout').addEventListener('click', async () => {
-    // Limpiar sesión guardada
-    localStorage.removeItem('userSession');
-    localStorage.removeItem('sessionTimestamp');
-    await supabaseClient.auth.signOut();
-    location.href = '/login.html';
-  });
-  
-  return true;
 }
 
 // Cargar máquinas con suscripción activa
 async function obtenerMaquinasActivas() {
-  // Solo máquinas con suscripcion_hasta > hoy
-  const hoyISO = hoy.toISOString().split('T')[0];
-  const { data, error } = await supabaseClient
-    .from('maquinas')
-    .select('*')
-    .eq('id_usuario', usuario.id)
-    .gt('suscripcion_hasta', hoyISO);
-  if (error) throw error;
-  maquinasActivas = data;
-  const sel = document.getElementById('filtroMaquinaCSV');
-  sel.innerHTML = '<option value="">Todas</option>';
-  if (!maquinasActivas.length) {
-    showError('No tienes máquinas con suscripción vigente.');
+  try {
+    log('Obteniendo máquinas activas');
+    
+    // Comprobar si tenemos el usuario
+    if (!usuario || !usuario.id) {
+      log('No hay usuario para obtener máquinas');
+      return;
+    }
+    
+    // Solo máquinas con suscripcion_hasta > hoy
+    const hoyISO = hoy.toISOString().split('T')[0];
+    log(`Consultando máquinas con suscripción posterior a ${hoyISO}`);
+    
+    const { data, error } = await supabaseClient
+      .from('maquinas')
+      .select('*')
+      .eq('id_usuario', usuario.id)
+      .gt('suscripcion_hasta', hoyISO);
+      
+    if (error) {
+      log('Error al obtener máquinas activas', error);
+      throw error;
+    }
+    
+    maquinasActivas = data || [];
+    log(`Encontradas ${maquinasActivas.length} máquinas activas`);
+    
+    // También intentar obtener por el campo user_id si no se encontraron por id_usuario
+    if (maquinasActivas.length === 0) {
+      log('Intentando con campo user_id alternativo');
+      const { data: altData, error: altError } = await supabaseClient
+        .from('maquinas')
+        .select('*')
+        .eq('user_id', usuario.id)
+        .gt('suscripcion_hasta', hoyISO);
+        
+      if (!altError && altData && altData.length > 0) {
+        maquinasActivas = altData;
+        log(`Encontradas ${maquinasActivas.length} máquinas activas con campo alternativo`);
+      }
+    }
+    
+    // Actualizar selector de máquinas
+    const sel = document.getElementById('filtroMaquinaCSV');
+    if (sel) {
+      sel.innerHTML = '<option value="">Todas</option>';
+      
+      if (!maquinasActivas.length) {
+        log('No hay máquinas activas');
+        showError('No tienes máquinas con suscripción vigente.');
+        return;
+      }
+      
+      maquinasActivas.forEach(m => {
+        sel.innerHTML += `<option value="${m.id}">${m.nombre || 'Sin nombre'}</option>`;
+      });
+    } else {
+      log('No se encontró el selector de máquinas en el DOM');
+    }
+  } catch (e) {
+    console.error('Error al obtener máquinas activas:', e);
+    showError(`Error al cargar máquinas: ${e.message}`);
   }
-  maquinasActivas.forEach(m => {
-    sel.innerHTML += `<option value="${m.id}">${m.nombre}</option>`;
-  });
 }
 
 // Cargar ventas filtradas por fecha y máquina activa
@@ -152,13 +303,46 @@ async function obtenerVentas() {
 async function actualizarDashboard() {
   showLoading();
   try {
-    if (!await verificarSesion()) return;
+    log('Actualizando dashboard...');
+    
+    // Verificar sesión primero
+    const sesionValida = await verificarSesion();
+    log(`Verificación de sesión: ${sesionValida ? 'Exitosa' : 'Fallida'}`);
+    
+    if (!sesionValida) {
+      return;
+    }
+    
+    // Mostrar información del usuario para debug
+    log('Usuario actual:', usuario ? { id: usuario.id, email: usuario.email } : 'No hay usuario');
+    
+    // Obtener datos
     await obtenerMaquinasActivas();
-    await obtenerVentas();
-    renderResumen();
-    renderGraficas();
+    
+    // Intentar obtener ventas solo si hay máquinas activas
+    if (maquinasActivas && maquinasActivas.length > 0) {
+      await obtenerVentas();
+      renderResumen();
+      renderGraficas();
+    } else {
+      log('No hay máquinas activas para obtener ventas');
+      // Mostrar mensaje amigable
+      const resumenEl = document.getElementById('resumen');
+      if (resumenEl) {
+        resumenEl.innerHTML = `
+          <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+            <h3 class="text-xl font-bold">Sin datos disponibles</h3>
+            <p>No tienes máquinas con suscripción activa. Por favor, activa una suscripción.</p>
+            <a href="/subscripcion.html" class="text-blue-500 hover:underline mt-2 inline-block">Ir a Subscripciones</a>
+          </div>
+        `;
+      }
+    }
+    
+    log('Dashboard actualizado correctamente');
   } catch (e) {
-    showError(e.message);
+    console.error('Error al actualizar dashboard:', e);
+    showError(`Error al cargar datos: ${e.message}`);
   } finally {
     hideLoading();
   }
@@ -288,11 +472,46 @@ function descargarCSV() {
 
 // Listeners iniciales
 window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('fechaDesde').value = inicioMes.toISOString().split('T')[0];
-  document.getElementById('fechaHasta').value = hoy.toISOString().split('T')[0];
-  document.getElementById('fechaDesde').addEventListener('change', actualizarDashboard);
-  document.getElementById('fechaHasta').addEventListener('change', actualizarDashboard);
-  document.getElementById('filtroMaquinaCSV').addEventListener('change', actualizarDashboard);
-  document.getElementById('btnDescargarCSV').addEventListener('click', descargarCSV);
-  actualizarDashboard();
+  console.log('TrackMyVend Dashboard cargando...');
+  
+  try {
+    // Comprobar si la biblioteca Supabase está disponible
+    if (!window.supabase) {
+      console.error('Error: La biblioteca Supabase no está cargada. Asegúrate de incluir el script en tu HTML.');
+      showError('Error: Biblioteca Supabase no disponible. Recarga la página o contacta al soporte.');
+      return;
+    }
+    
+    // Configurar fechas predeterminadas
+    const fechaDesdeEl = document.getElementById('fechaDesde');
+    const fechaHastaEl = document.getElementById('fechaHasta');
+    
+    if (fechaDesdeEl) {
+      fechaDesdeEl.value = inicioMes.toISOString().split('T')[0];
+      fechaDesdeEl.addEventListener('change', actualizarDashboard);
+    }
+    
+    if (fechaHastaEl) {
+      fechaHastaEl.value = hoy.toISOString().split('T')[0];
+      fechaHastaEl.addEventListener('change', actualizarDashboard);
+    }
+    
+    // Configurar otros elementos de UI
+    const filtroMaquina = document.getElementById('filtroMaquinaCSV');
+    if (filtroMaquina) {
+      filtroMaquina.addEventListener('change', actualizarDashboard);
+    }
+    
+    const btnDescargar = document.getElementById('btnDescargarCSV');
+    if (btnDescargar) {
+      btnDescargar.addEventListener('click', descargarCSV);
+    }
+    
+    // Inicializar dashboard
+    actualizarDashboard();
+    
+  } catch (e) {
+    console.error('Error durante la inicialización:', e);
+    showError(`Error al inicializar: ${e.message}`);
+  }
 });
