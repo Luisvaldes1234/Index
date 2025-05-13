@@ -1,10 +1,7 @@
-// === Inicialización de Supabase con variables de Netlify ===
-const SUPABASE_URL = window.env?.NEXT_PUBLIC_SUPABASE_DATABASE_URL;
-const SUPABASE_KEY = window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('❌ Faltan variables de entorno de Supabase en window.env:', window.env);
-  // Aquí podrías mostrar un modal o redirigir al login
+// === CONEXIÓN A SUPABASE ===
+const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 }
 
 const supabaseClient = window.supabase.createClient(
