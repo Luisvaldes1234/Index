@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard - TrackMyVend</title>
+  <title>Dashboard - TrackMyVend</n>
 
   <!-- Dependencias -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 
-  <!-- Variables de entorno (se inyectan en build) -->
+  <!-- Inyectar variables de entorno en Netlify build -->
   <script>
     window.env = {
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: null,
-      SUPABASE_URL: null
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "${NEXT_PUBLIC_SUPABASE_ANON_KEY}",
+      SUPABASE_URL:              "${SUPABASE_URL}"
     };
   </script>
 
@@ -21,29 +21,22 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 
   <style>
-    /* Loading Spinner */
-    .loading-spinner {
-      border: 4px solid rgba(255,255,255,0.1);
-      width: 36px; height: 36px;
-      border-radius: 50%; border-left-color: #09f;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
+    /* Spinner */
+    .loading-spinner { border:4px solid rgba(255,255,255,0.1); width:36px; height:36px; border-radius:50%; border-left-color:#09f; animation:spin 1s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
     /* Canvas sizing */
-    canvas { width: 100% !important; height: 300px !important; }
-
-    /* Responsive date filters */
-    @media (max-width: 640px) {
-      .date-filter { flex-direction: column; align-items: flex-start; }
-      .date-filter > * { margin-bottom: .5rem; }
+    canvas { width:100% !important; height:300px !important; }
+    /* Responsive filters */
+    @media (max-width:640px) {
+      .date-filter { flex-direction:column; align-items:flex-start; }
+      .date-filter > * { margin-bottom:0.5rem; }
     }
   </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
 
   <!-- Navegación -->
-  <nav class="bg-gray-900 text-white px-4 py-3 shadow-md flex gap-6">
+  <nav class="bg-gray-900 text-white px-4 py-3 shadow flex gap-6">
     <a href="/dashboard.html" class="font-semibold hover:underline">Dashboard</a>
     <a href="/reportes.html" class="hover:underline">Reportes</a>
     <a href="/subscripcion.html" class="hover:underline">Subscripción</a>
@@ -53,12 +46,12 @@
 
   <div class="container mx-auto px-4 py-6 space-y-8">
 
-    <!-- Indicador de carga -->
+    <!-- Loading -->
     <div id="loading" class="flex justify-center py-8">
       <div class="loading-spinner"></div>
     </div>
 
-    <!-- Filtros y exportación -->
+    <!-- Filtros y Export -->
     <div class="mb-6">
       <div class="flex gap-4 items-center flex-wrap date-filter">
         <label>Desde:</label>
@@ -69,203 +62,46 @@
         <select id="filtroMaquinaCSV" class="px-3 py-1 border rounded dark:bg-gray-800 dark:border-gray-700">
           <option value="">Todas</option>
         </select>
-        <button id="btnDescargarCSV" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">
-          Descargar CSV
-        </button>
+        <button id="btnDescargarCSV" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">Descargar CSV</button>
       </div>
     </div>
 
-    <!-- Tarjetas resumen -->
+    <!-- Métricas resumen -->
     <div id="resumen" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4"></div>
 
     <!-- Gráficas -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <h2 class="text-xl font-bold mb-4">Tendencia de ventas por hora</h2>
+        <h2 class="text-xl font-bold mb-4">Ventas por Hora</h2>
         <canvas id="graficaHoras"></canvas>
       </div>
       <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <h2 class="text-xl font-bold mb-4">Ventas por día</h2>
+        <h2 class="text-xl font-bold mb-4">Ventas por Día</h2>
         <canvas id="graficaDias"></canvas>
       </div>
       <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <h2 class="text-xl font-bold mb-4">Volumen vendido</h2>
+        <h2 class="text-xl font-bold mb-4">Volumen Vendido</h2>
         <canvas id="graficaVolumen"></canvas>
       </div>
       <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <h2 class="text-xl font-bold mb-4">Rendimiento por máquina</h2>
+        <h2 class="text-xl font-bold mb-4">Rendimiento por Máquina</h2>
         <canvas id="graficaMaquinas"></canvas>
       </div>
     </div>
   </div>
 
-  <!-- Modal de errores -->
+  <!-- Modal de error -->
   <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow max-w-md w-full">
       <h3 class="text-lg font-bold mb-2">Error</h3>
       <p id="errorMessage" class="mb-4"></p>
       <div class="flex justify-end">
-        <button onclick="errorModal.classList.add('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Cerrar
-        </button>
+        <button onclick="document.getElementById('errorModal').classList.add('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Cerrar</button>
       </div>
     </div>
   </div>
 
-  <!-- Lógica del dashboard -->
-  <script>
-    let supabaseClient, usuario, maquinas = [], ventas = [];
-    const hoy = new Date(), inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const loadingEl = () => document.getElementById('loading');
-    const errorModal = document.getElementById('errorModal');
-    const errorMsg = document.getElementById('errorMessage');
-
-    function showLoading() { loadingEl().classList.remove('hidden'); }
-    function hideLoading() { loadingEl().classList.add('hidden'); }
-
-    function showError(msg) {
-      errorMsg.textContent = msg;
-      errorModal.classList.remove('hidden');
-      console.error(msg);
-    }
-
-    function inicializarSupabase() {
-      const key = window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      const url = window.env.SUPABASE_URL;
-      if (!key || !url) { showError('Variables de entorno no configuradas'); return false; }
-      supabaseClient = supabase.createClient(url, key);
-      return true;
-    }
-
-    async function verificarSesion() {
-      if (!inicializarSupabase()) return false;
-      const { data, error } = await supabaseClient.auth.getSession();
-      if (error) { showError('Error sesión: ' + error.message); setTimeout(() => location.href='/login.html',2000); return false; }
-      if (!data.session) { showError('Sesión expirada'); setTimeout(() => location.href='/login.html',2000); return false; }
-      usuario = data.session.user;
-      document.getElementById('btnLogout').addEventListener('click', async ()=>{
-        await supabaseClient.auth.signOut(); location.href='/login.html';
-      });
-      return true;
-    }
-
-    async function obtenerMaquinas() {
-      const { data, error } = await supabaseClient.from('maquinas').select('*').eq('id_usuario', usuario.id);
-      if (error) throw error;
-      maquinas = data;
-      const sel = document.getElementById('filtroMaquinaCSV');
-      sel.innerHTML = '<option value="">Todas</option>';
-      maquinas.forEach(m => sel.innerHTML += `<option value="${m.id}">${m.nombre}</option>`);
-    }
-
-    async function obtenerVentas() {
-      const desde = document.getElementById('fechaDesde').value;
-      const hasta = document.getElementById('fechaHasta').value;
-      if (!desde||!hasta) throw new Error('Selecciona rango de fechas');
-      const h = new Date(hasta); h.setDate(h.getDate()+1);
-      const { data, error } = await supabaseClient
-        .from('ventas')
-        .select('*, maquinas(nombre, ubicacion)')
-        .eq('id_usuario', usuario.id)
-        .gte('fecha', desde)
-        .lt('fecha', h.toISOString().split('T')[0])
-        .order('fecha',{ascending:false});
-      if (error) throw error;
-      ventas = data;
-    }
-
-    async function actualizarDashboard() {
-      showLoading();
-      try {
-        if (!await verificarSesion()) return;
-        await obtenerMaquinas();
-        await obtenerVentas();
-        actualizarTarjetas();
-        actualizarGraficas();
-      } catch(e) { showError(e.message); }
-      finally { hideLoading(); }
-    }
-
-    function actualizarTarjetas() {
-      const total = ventas.reduce((s,v)=>s+v.importe,0);
-      const unidades = ventas.reduce((s,v)=>s+v.unidades,0);
-      const trans = new Set(ventas.map(v=>v.id)).size;
-      const desde = new Date(document.getElementById('fechaDesde').value);
-      const hasta = new Date(document.getElementById('fechaHasta').value);
-      const dias = Math.max(1, Math.ceil((hasta-desde)/(1000*60*60*24))+1);
-      const diario = total/dias;
-      document.getElementById('resumen').innerHTML = `
-        <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-          <h3 class="text-xl font-bold">$${total.toFixed(2)}</h3><p>Ventas totales</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-          <h3 class="text-xl font-bold">${unidades}</h3><p>Unidades vendidas</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-          <h3 class="text-xl font-bold">${trans}</h3><p>Transacciones</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-          <h3 class="text-xl font-bold">$${(total/trans||0).toFixed(2)}</h3><p>Promedio por venta</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-          <h3 class="text-xl font-bold">$${diario.toFixed(2)}</h3><p>Promedio diario</p>
-        </div>
-      `;
-    }
-
-    function actualizarGraficas() {
-      // Tendencia hours
-      const byHour = Array(24).fill(0);
-      ventas.forEach(v => { const d=new Date(v.fecha); byHour[d.getHours()] += v.importe; });
-      const ctxH = document.getElementById('graficaHoras').getContext('2d');
-      if (window.graficaHoras) window.graficaHoras.destroy();
-      window.graficaHoras = new Chart(ctxH,{type:'line',data:{labels:Array(24).fill().map((_,i)=>i+':00'),datasets:[{label:'$',data:byHour,fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}});
-
-      // Ventas por día
-      const byDay={}; ventas.forEach(v=>{ const d=v.fecha.split('T')[0]; byDay[d]=(byDay[d]||0)+v.importe; });
-      const days=Object.keys(byDay).sort(), vals=days.map(d=>byDay[d]);
-      const ctxD=document.getElementById('graficaDias').getContext('2d');
-      if(window.graficaDias) window.graficaDias.destroy();
-      window.graficaDias=new Chart(ctxD,{type:'bar',data:{labels:days,datasets:[{label:'$',data:vals}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}});
-
-      // Volumen vendido
-      const byProd={}; ventas.forEach(v=>{ const p=v.producto||'Sin especificar'; byProd[p]=(byProd[p]||0)+v.unidades; });
-      const prods=Object.keys(byProd), nums=prods.map(p=>byProd[p]);
-      const ctxV=document.getElementById('graficaVolumen').getContext('2d');
-      if(window.graficaVol) window.graficaVol.destroy();
-      window.graficaVol=new Chart(ctxV,{type:'pie',data:{labels:prods,datasets:[{data:nums}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'}}}});
-
-      // Rendimiento máquinas
-      const byM={}; ventas.forEach(v=>{ const name=v.maquinas.nombre; byM[name]=(byM[name]||0)+v.importe; });
-      const ms=Object.keys(byM), im=ms.map(m=>byM[m]);
-      const ctxM=document.getElementById('graficaMaquinas').getContext('2d');
-      if(window.graficaMach) window.graficaMach.destroy();
-      window.graficaMach=new Chart(ctxM,{type:'bar',data:{labels:ms,datasets:[{label:'$',data:im}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{beginAtZero:true}}}});
-    }
-
-    function descargarCSV() {
-      if (!ventas.length) return showError('Sin datos');
-      const f = document.getElementById('filtroMaquinaCSV').value;
-      let list = ventas; if(f) list=list.filter(v=>v.id_maquina==f);
-      if(!list.length) return showError('Filtro sin datos');
-      const hdr=['Fecha','Hora','Máquina','Ubicación','Producto','Unidades','Importe'];
-      const rows=list.map(v=>{ const d=new Date(v.fecha); return [d.toLocaleDateString(),d.toLocaleTimeString(),v.maquinas.nombre,v.maquinas.ubicacion,v.producto,v.unidades,v.importe].map(x=>`"${x}"`).join(','); });
-      const csv=[hdr.join(','),...rows].join('\n');
-      const blob=new Blob([csv],{type:'text/csv'}), url=URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url;
-      const d0=document.getElementById('fechaDesde').value, d1=document.getElementById('fechaHasta').value;
-      a.download=`ventas_${d0}_a_${d1}.csv`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-    }
-
-    document.addEventListener('DOMContentLoaded',()=>{
-      document.getElementById('fechaDesde').value=inicioMes.toISOString().split('T')[0];
-      document.getElementById('fechaHasta').value=hoy.toISOString().split('T')[0];
-      document.getElementById('fechaDesde').addEventListener('change', actualizarDashboard);
-      document.getElementById('fechaHasta').addEventListener('change', actualizarDashboard);
-      document.getElementById('btnDescargarCSV').addEventListener('click', descargarCSV);
-      actualizarDashboard();
-    });
-  </script>
+  <!-- Script externo -->
+  <script src="dashboard.js"></script>
 </body>
 </html>
