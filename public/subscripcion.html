@@ -3,131 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard - TrackMyVend</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <title>Subscripción - TrackMyVend</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+  <!-- Inyección segura desde Netlify -->
   <script>
     window.env = {
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: '{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}',
-      SUPABASE_URL: 'https://ikuouxllerjnibjtkll.supabase.co'
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
     };
   </script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <style>
-    .loading-spinner {
-      border: 4px solid rgba(0, 0, 0, 0.1);
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border-left-color: #09f;
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .dark .loading-spinner {
-      border: 4px solid rgba(255, 255, 255, 0.1);
-      border-left-color: #09f;
-    }
-    
-    canvas {
-      width: 100% !important;
-      height: 300px !important;
-    }
-    
-    @media (max-width: 640px) {
-      .date-filter {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      
-      .date-filter > * {
-        margin-bottom: 0.5rem;
-      }
-    }
-  </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
+
+  <!-- NAV -->
   <nav class="bg-gray-900 text-white px-4 py-3 shadow-md flex gap-6 text-sm md:text-base">
-    <a href="/dashboard.html" class="hover:underline font-semibold">Dashboard</a>
+    <a href="/dashboard.html" class="hover:underline">Dashboard</a>
     <a href="/reportes.html" class="hover:underline">Reportes</a>
-    <a href="/subscripcion.html" class="hover:underline">Subscripción</a>
+    <a href="/subscripcion.html" class="hover:underline font-semibold">Subscripción</a>
     <a href="/maquinas.html" class="hover:underline">Mis Máquinas</a>
-    <a href="#" id="btnLogout" class="hover:underline ml-auto">Cerrar Sesión</a>
   </nav>
-  
-  <div class="container mx-auto px-4 py-6 space-y-8">
-    <div id="loading" class="flex justify-center py-8 hidden">
-      <div class="loading-spinner"></div>
-    </div>
-    
-    <div class="mb-6 space-y-4">
-      <div class="flex gap-4 items-center flex-wrap date-filter">
-        <label class="text-sm font-medium">Desde:</label>
-        <input type="date" id="fechaDesde" class="px-3 py-1 border rounded dark:bg-gray-800 dark:border-gray-700" />
-        <label class="text-sm font-medium">Hasta:</label>
-        <input type="date" id="fechaHasta" class="px-3 py-1 border rounded dark:bg-gray-800 dark:border-gray-700" />
-        <label class="text-sm font-medium">Máquina:</label>
-        <select id="filtroMaquinaCSV" class="px-3 py-1 border rounded dark:bg-gray-800 dark:border-gray-700">
-          <option value="">Todas</option>
-        </select>
-        <button id="btnDescargarCSV" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 transition">
-          Descargar CSV
-        </button>
-      </div>
-    </div>
-    
-    <div id="resumen" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4"></div>
-    
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <h2 class="text-xl font-bold mb-4">Tendencia de ventas por hora</h2>
-        <canvas id="graficaHoras"></canvas>
-      </div>
-      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <h2 class="text-xl font-bold mb-4">Ventas por día</h2>
-        <canvas id="graficaDias"></canvas>
-      </div>
-      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <h2 class="text-xl font-bold mb-4">Volumen vendido</h2>
-        <canvas id="graficaVolumen"></canvas>
-      </div>
-      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <h2 class="text-xl font-bold mb-4">Rendimiento por máquina</h2>
-        <canvas id="graficaMaquinas"></canvas>
-      </div>
-    </div>
-  </div>
-  
-  <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
-      <h3 class="text-lg font-bold mb-2">Error</h3>
-      <p id="errorMessage" class="mb-4">Mensaje de error</p>
-      <div class="flex justify-end">
-        <button onclick="document.getElementById('errorModal').classList.add('hidden')" 
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Cerrar
-        </button>
-      </div>
-    </div>
+
+  <!-- CONTENIDO -->
+  <div class="container mx-auto px-4 py-8 space-y-6">
+    <h1 class="text-2xl font-bold mb-6">Estado de tus suscripciones</h1>
+    <div id="listaMaquinas" class="space-y-4"></div>
   </div>
 
-  <div id="debugModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
-      <h3 class="text-lg font-bold mb-2">Información de Depuración</h3>
-      <pre id="debugMessage" class="bg-gray-100 dark:bg-gray-700 p-3 rounded text-xs overflow-auto max-h-96 mb-4"></pre>
-      <div class="flex justify-end">
-        <button onclick="document.getElementById('debugModal').classList.add('hidden')" 
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Cerrar
-        </button>
-      </div>
-    </div>
-  </div>
+  <!-- SCRIPT CORREGIDO -->
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://ikuouxllerfjnibjtlkl.supabase.co',
+      window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
 
-  <script src="/dashboard.js"></script>
+    async function suscribirse(serial, plan) {
+      try {
+        const res = await fetch("/.netlify/functions/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ serial, plan })
+        });
+
+        const data = await res.json();
+
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert("No se pudo iniciar el proceso de suscripción.");
+        }
+      } catch (err) {
+        console.error("Error al suscribirse:", err);
+        alert("Hubo un error al intentar procesar la suscripción.");
+      }
+    }
+
+    // ✅ Esto expone la función a los botones del HTML
+    window.suscribirse = suscribirse;
+
+    async function cargarMaquinas() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert("No estás autenticado");
+        return;
+      }
+
+      const { data: maquinas, error } = await supabase
+        .from("maquinas")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error al cargar máquinas:", error);
+        return;
+      }
+
+      const contenedor = document.getElementById("listaMaquinas");
+      contenedor.innerHTML = "";
+
+      maquinas.forEach((maquina) => {
+        const vigente = maquina.suscripcion_hasta && new Date(maquina.suscripcion_hasta) > new Date();
+        const card = document.createElement("div");
+        card.className = "bg-white dark:bg-gray-800 p-4 rounded shadow";
+
+        card.innerHTML = `
+          <h3 class="text-lg font-bold mb-2">${maquina.nombre || "Sin nombre"}</h3>
+          <p class="mb-2">Serial: ${maquina.serial}</p>
+          <p class="mb-4">
+            Suscripción: ${
+              vigente
+                ? `<span class="text-green-500 font-semibold">Activa hasta ${new Date(maquina.suscripcion_hasta).toLocaleDateString()}</span>`
+                : `<span class="text-red-500 font-semibold">Inactiva</span>`
+            }
+          </p>
+          <div class="space-x-2">
+            <button onclick="suscribirse('${maquina.serial}', 'mensual')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Mensual</button>
+            <button onclick="suscribirse('${maquina.serial}', 'trimestral')" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Trimestral</button>
+            <button onclick="suscribirse('${maquina.serial}', 'semestral')" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">Semestral</button>
+            <button onclick="suscribirse('${maquina.serial}', 'anual')" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Anual</button>
+          </div>
+        `;
+
+        contenedor.appendChild(card);
+      });
+    }
+
+    cargarMaquinas();
+  </script>
 </body>
 </html>
