@@ -23,7 +23,7 @@ function hideLoading() {
 }
 
 // Mostrar error en modal
-def function showError(msg) {
+function showError(msg) {
   errorMsg.textContent = msg;
   errorModal.classList.remove('hidden');
   console.error(msg);
@@ -84,7 +84,8 @@ async function obtenerMaquinasActivas() {
   });
 }
 
-// Cargar ventas filtradas por fecha y máquina activa\async function obtenerVentas() {
+// Cargar ventas filtradas por fecha y máquina activa
+async function obtenerVentas() {
   const desde = document.getElementById('fechaDesde').value;
   const hasta = document.getElementById('fechaHasta').value;
   if (!desde || !hasta) throw new Error('Selecciona rango de fechas');
