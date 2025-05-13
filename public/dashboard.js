@@ -48,11 +48,11 @@ async function initSession() {
 // —————————————————————————
 async function obtenerMaquinasActivas() {
   const hoyISO = new Date().toISOString().split('T')[0];
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('maquinas')
-    .select('id,nombre')
-    .eq('user_id', usuario.id)
-    .gt('suscripcion_hasta', hoyISO);
+    .select('id, nombre')
+    .eq   ('user_id', usuario.id)        // ← FILTRA POR user_id
+    .gt   ('suscripcion_hasta', hoyISO);
 
   if (error) {
     showError('Error al cargar máquinas: ' + error.message);
@@ -61,7 +61,7 @@ async function obtenerMaquinasActivas() {
     maquinasActivas = data || [];
   }
 
-  // Actualizar select
+  // Llenar el <select>
   const select = document.getElementById('filtroMaquinaCSV');
   select.innerHTML = '<option value="">Todas</option>';
   maquinasActivas.forEach(m => {
@@ -69,35 +69,32 @@ async function obtenerMaquinasActivas() {
   });
 }
 
-// —————————————————————————
-// 5) Carga de Ventas
-// —————————————————————————
+// === Obtener ventas filtradas ===
 async function obtenerVentas() {
-  // Evitar fetch si no hay máquinas
-  if (maquinasActivas.length === 0) {
+  // Si no hay máquinas activas, salimos
+  if (!maquinasActivas.length) {
     ventas = [];
     return;
   }
 
-  const desdeVal = document.getElementById('fechaDesde').value;
-  const hastaVal = document.getElementById('fechaHasta').value;
-  if (!desdeVal || !hastaVal) {
-    ventas = [];
-    return;
-  }
-  const desde = new Date(desdeVal);
-  const hasta = new Date(hastaVal + 'T23:59:59');
+  const desde = document.getElementById('fechaDesde').value;
+  const hasta = document.getElementById('fechaHasta').value;
+  const h = new Date(hasta);
+  h.setDate(h.getDate() + 1);
 
-  let query = supabase
+  let query = supabaseClient
     .from('ventas')
-    .select('*, maquinas(nombre)')
-    .eq('user_id', usuario.id)
-    .gte('fecha', desde.toISOString())
-    .lte('fecha', hasta.toISOString());
+    .select(`
+      *,
+      maquinas!inner(nombre)  /* opcional: si tienes relación definida */
+    `)
+    .eq   ('user_id', usuario.id)       // ← y AQUÍ TAMBIÉN POR user_id
+    .gte  ('fecha', desde)
+    .lt   ('fecha', h.toISOString().split('T')[0]);
 
-  const filtroMaquina = document.getElementById('filtroMaquinaCSV').value;
-  if (filtroMaquina) {
-    query = query.eq('id_maquina', filtroMaquina);
+  const filtro = document.getElementById('filtroMaquinaCSV').value;
+  if (filtro) {
+    query = query.eq('id_maquina', filtro);
   } else {
     const ids = maquinasActivas.map(m => m.id);
     query = query.in('id_maquina', ids);
@@ -108,10 +105,10 @@ async function obtenerVentas() {
     showError('Error al cargar ventas: ' + error.message);
     ventas = [];
   } else {
-    ventas = data.map(v => ({
+    ventas = (data || []).map(v => ({
       ...v,
-      importe: v.importe ?? 0,
-      unidades: v.unidades ?? 0,
+      importe: v.precio_total ?? 0,
+      unidades: v.litros       ?? 0,
       fechaHora: new Date(v.fecha)
     }));
   }
