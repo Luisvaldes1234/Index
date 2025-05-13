@@ -32,12 +32,18 @@ function showError(msg) {
 // Inicializar Supabase con variables de entorno
 function inicializarSupabase() {
   const key = window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const url = window.env.SUPABASE_URL;
-  if (!key || !url) {
-    showError('Variables de entorno no configuradas');
+  const url = window.env.SUPABASE_URL || 'https://ikuouxllerfjnibjtlkl.supabase.co'; // URL por defecto si no está configurada
+  if (!key) {
+    showError('Variables de entorno no configuradas correctamente');
     return false;
   }
-  supabaseClient = supabase.createClient(url, key);
+  supabaseClient = supabase.createClient(url, key, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      timeout: 30 * 60 // 30 minutos en segundos
+    }
+  });
   return true;
 }
 
@@ -45,21 +51,53 @@ function inicializarSupabase() {
 async function verificarSesion() {
   if (!inicializarSupabase()) return false;
   const { data, error } = await supabaseClient.auth.getSession();
+  
   if (error) {
     showError('Error al verificar sesión: ' + error.message);
     setTimeout(() => location.href = '/login.html', 2000);
     return false;
   }
+  
+  // Verificar si hay una sesión guardada en localStorage
+  const savedSession = localStorage.getItem('userSession');
+  const savedTimestamp = localStorage.getItem('sessionTimestamp');
+  
   if (!data.session) {
+    // Verificar si hay una sesión guardada y si no ha expirado (menos de 30 minutos)
+    if (savedSession && savedTimestamp) {
+      const currentTime = new Date().getTime();
+      const sessionTime = parseInt(savedTimestamp);
+      const thirtyMinutesInMillis = 30 * 60 * 1000;
+      
+      if (currentTime - sessionTime < thirtyMinutesInMillis) {
+        // Recuperar datos de sesión guardados
+        try {
+          usuario = JSON.parse(savedSession);
+          return true;
+        } catch (e) {
+          console.error("Error al recuperar sesión guardada:", e);
+        }
+      }
+    }
+    
     showError('Sesión expirada. Redirigiendo...');
     setTimeout(() => location.href = '/login.html', 2000);
     return false;
   }
+  
+  // Si hay sesión activa, guardarla
   usuario = data.session.user;
+  localStorage.setItem('userSession', JSON.stringify(usuario));
+  localStorage.setItem('sessionTimestamp', new Date().getTime().toString());
+  
   document.getElementById('btnLogout').addEventListener('click', async () => {
+    // Limpiar sesión guardada
+    localStorage.removeItem('userSession');
+    localStorage.removeItem('sessionTimestamp');
     await supabaseClient.auth.signOut();
     location.href = '/login.html';
   });
+  
   return true;
 }
 
