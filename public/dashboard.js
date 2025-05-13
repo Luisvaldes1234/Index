@@ -3,7 +3,7 @@
 // —————————————————————————
 // 1) Configuración global
 // —————————————————————————
-const SUPABASE_URL = window.env.SUPABASE_URL;
+const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
 const SUPABASE_KEY = window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
