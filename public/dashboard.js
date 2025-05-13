@@ -1,7 +1,7 @@
-// === CONEXIÓN A SUPABASE ===
+// === 1) CONEXIÓN A SUPABASE ===
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // Ahora usa `supabaseClient` en lugar de `supabase` en todo tu código.
 
@@ -29,7 +29,7 @@ function showError(msg) {
 // 3) Autenticación
 // —————————————————————————
 async function initSession() {
-  const { data, error } = await supabase.auth.getSession();
+  const { data, error } = await supabaseClient.auth.getSession();
   if (error || !data.session) {
     window.location.href = '/login.html';
     return false;
@@ -37,7 +37,7 @@ async function initSession() {
   usuario = data.session.user;
   // Logout
   document.getElementById('btnLogout').addEventListener('click', async () => {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     window.location.href = '/login.html';
   });
   return true;
@@ -51,8 +51,8 @@ async function obtenerMaquinasActivas() {
   const { data, error } = await supabaseClient
     .from('maquinas')
     .select('id, nombre')
-    .eq   ('user_id', usuario.id)        // ← FILTRA POR user_id
-    .gt   ('suscripcion_hasta', hoyISO);
+    .eq('user_id', usuario.id)
+    .gt('suscripcion_hasta', hoyISO);
 
   if (error) {
     showError('Error al cargar máquinas: ' + error.message);
@@ -69,7 +69,9 @@ async function obtenerMaquinasActivas() {
   });
 }
 
-// === Obtener ventas filtradas ===
+// —————————————————————————
+// 5) Obtener Ventas
+// —————————————————————————
 async function obtenerVentas() {
   // Si no hay máquinas activas, salimos
   if (!maquinasActivas.length) {
@@ -84,13 +86,10 @@ async function obtenerVentas() {
 
   let query = supabaseClient
     .from('ventas')
-    .select(`
-      *,
-      maquinas!inner(nombre)  /* opcional: si tienes relación definida */
-    `)
-    .eq   ('user_id', usuario.id)       // ← y AQUÍ TAMBIÉN POR user_id
-    .gte  ('fecha', desde)
-    .lt   ('fecha', h.toISOString().split('T')[0]);
+    .select('*')
+    .eq('user_id', usuario.id)
+    .gte('fecha', desde)
+    .lt('fecha', h.toISOString().split('T')[0]);
 
   const filtro = document.getElementById('filtroMaquinaCSV').value;
   if (filtro) {
@@ -119,8 +118,8 @@ async function obtenerVentas() {
 // —————————————————————————
 function renderResumen() {
   const cont = document.getElementById('resumen');
-  // Sin máquinas → mensaje
-  if (maquinasActivas.length === 0) {
+  // Sin máquinas
+  if (!maquinasActivas.length) {
     cont.innerHTML = `
       <div class="col-span-full bg-white dark:bg-gray-800 p-6 rounded shadow text-center">
         <h3 class="text-xl font-bold">No tienes máquinas activas</h3>
@@ -128,8 +127,7 @@ function renderResumen() {
       </div>`;
     return;
   }
-
-  // Sin ventas → mensaje
+  // Sin ventas
   if (!ventas.length) {
     cont.innerHTML = `
       <div class="col-span-full bg-white dark:bg-gray-800 p-6 rounded shadow text-center">
@@ -139,16 +137,14 @@ function renderResumen() {
     return;
   }
 
-  // Cálculos
   const total = ventas.reduce((s, v) => s + v.importe, 0);
   const unidades = ventas.reduce((s, v) => s + v.unidades, 0);
   const trans = ventas.length;
-  const desdeDate = new Date(document.getElementById('fechaDesde').value);
-  const hastaDate = new Date(document.getElementById('fechaHasta').value);
-  const dias = Math.max(1, Math.ceil((hastaDate - desdeDate)/(1000*60*60*24)) + 1);
+  const desde = new Date(document.getElementById('fechaDesde').value);
+  const hasta = new Date(document.getElementById('fechaHasta').value);
+  const dias = Math.max(1, Math.ceil((hasta - desde)/(1000*60*60*24)) + 1);
   const diario = total / dias;
 
-  // HTML
   cont.innerHTML = `
     <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
       <h3 class="text-xl font-bold">$${total.toFixed(2)}</h3><p>Ventas Totales</p>
@@ -168,7 +164,7 @@ function renderResumen() {
 }
 
 // —————————————————————————
-// 7) Renderizar Gráficas
+// 7) Gráficas
 // —————————————————————————
 let chartHoras, chartDias, chartVolumen, chartMaquinas;
 
@@ -193,8 +189,8 @@ function renderGraficaDias() {
     mapa[d] = (mapa[d]||0) + v.importe;
   });
   const labels = Object.keys(mapa).sort();
-  const data = labels.map(d=>mapa[d]);
-  const ctx = document.getElementById('graficaDias').getContext('2d');
+  const data  = labels.map(d=>mapa[d]);
+  const ctx   = document.getElementById('graficaDias').getContext('2d');
   if (chartDias) chartDias.destroy();
   chartDias = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'Ventas Diarias', data }] } });
 }
@@ -202,12 +198,11 @@ function renderGraficaDias() {
 function renderGraficaVolumen() {
   const mapa = {};
   ventas.forEach(v => {
-    const key = v.id_maquina;
-    mapa[key] = (mapa[key]||0) + v.unidades;
+    mapa[v.id_maquina] = (mapa[v.id_maquina]||0) + v.unidades;
   });
   const labels = Object.keys(mapa);
-  const data = labels.map(l=>mapa[l]);
-  const ctx = document.getElementById('graficaVolumen').getContext('2d');
+  const data   = labels.map(l=>mapa[l]);
+  const ctx    = document.getElementById('graficaVolumen').getContext('2d');
   if (chartVolumen) chartVolumen.destroy();
   chartVolumen = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label:'Litros', data }] } });
 }
@@ -215,12 +210,11 @@ function renderGraficaVolumen() {
 function renderGraficaMaquinas() {
   const mapa = {};
   ventas.forEach(v => {
-    const key = v.id_maquina;
-    mapa[key] = (mapa[key]||0) + v.importe;
+    mapa[v.id_maquina] = (mapa[v.id_maquina]||0) + v.importe;
   });
   const labels = Object.keys(mapa);
-  const data = labels.map(l=>mapa[l]);
-  const ctx = document.getElementById('graficaMaquinas').getContext('2d');
+  const data   = labels.map(l=>mapa[l]);
+  const ctx    = document.getElementById('graficaMaquinas').getContext('2d');
   if (chartMaquinas) chartMaquinas.destroy();
   chartMaquinas = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label:'Ventas', data }] } });
 }
