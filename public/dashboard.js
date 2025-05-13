@@ -205,6 +205,7 @@ async function verificarSesion() {
     return false;
   }
 }
+
 // Cargar máquinas con suscripción activa
 async function obtenerMaquinasActivas() {
   try {
@@ -258,7 +259,6 @@ async function obtenerMaquinasActivas() {
     showError(`Error al cargar máquinas: ${e.message}`);
   }
 }
-
 // Cargar ventas filtradas por fecha y máquina activa
 async function obtenerVentas() {
   try {
@@ -274,38 +274,53 @@ async function obtenerVentas() {
     const h = new Date(hasta);
     h.setDate(h.getDate() + 1);
     
-    // Usar user_id en lugar de id_usuario según estructura de la DB
-    let query = supabaseClient
+    // Método 1: Obtener ventas y después obtener máquinas correspondientes
+    let { data: ventasData, error: ventasError } = await supabaseClient
       .from('ventas')
-      .select('*, maquinas:id_maquina(nombre, ubicacion)')
+      .select('*')
       .eq('user_id', usuario.id)
       .gte('fecha', desde)
       .lt('fecha', h.toISOString().split('T')[0]);
     
+    if (ventasError) {
+      throw ventasError;
+    }
+    
+    // Aplicar filtro de máquina si está seleccionado
     const filtroMaquina = document.getElementById('filtroMaquinaCSV')?.value;
-    if (filtroMaquina) {
-      query = query.eq('id_maquina', filtroMaquina);
-    } else {
-      // Si no se selecciona máquina, filtrar solo máquinas activas
-      const ids = maquinasActivas.map(m => m.id);
-      if (ids.length > 0) {
-        query = query.in('id_maquina', ids);
+    if (filtroMaquina && maquinasActivas.length > 0) {
+      const maquinaSeleccionada = maquinasActivas.find(m => m.id.toString() === filtroMaquina);
+      if (maquinaSeleccionada) {
+        log(`Filtrando por máquina: ${maquinaSeleccionada.nombre} (${maquinaSeleccionada.serial})`);
+        ventasData = ventasData.filter(v => v.serial === maquinaSeleccionada.serial);
       }
+    } else if (maquinasActivas.length > 0) {
+      // Si no se selecciona máquina específica, filtrar por máquinas activas
+      const seriales = maquinasActivas.map(m => m.serial);
+      ventasData = ventasData.filter(v => seriales.includes(v.serial));
     }
     
-    const { data, error } = await query.order('fecha', { ascending: false });
-    if (error) throw error;
-    
-    ventas = data || [];
-    
-    // Si el campo 'importe' no existe, intentar usar 'precio_total'
-    if (ventas.length > 0 && ventas[0].precio_total !== undefined && ventas[0].importe === undefined) {
-      ventas = ventas.map(v => ({
+    // Obtener información de máquinas para cada venta
+    ventas = ventasData.map(v => {
+      const maquina = maquinasActivas.find(m => m.serial === v.serial);
+      return {
         ...v,
-        importe: v.precio_total,
-        unidades: v.unidades || v.litros || 1
-      }));
-    }
+        maquinas: maquina ? {
+          id: maquina.id,
+          nombre: maquina.nombre,
+          ubicacion: maquina.ubicacion || ''
+        } : null
+      };
+    });
+    
+    // Si el campo 'importe' no existe, usar 'precio_total'
+    ventas = ventas.map(v => ({
+      ...v,
+      importe: v.importe || v.precio_total || 0,
+      unidades: v.unidades || v.litros || 1
+    }));
+    
+    log(`Obtenidas ${ventas.length} ventas después de filtrar`);
   } catch (e) {
     console.error('Error al obtener ventas:', e);
     showError(`Error al cargar ventas: ${e.message}`);
@@ -370,8 +385,8 @@ function renderResumen() {
       return;
     }
     
-    const total = ventas.reduce((sum, v) => sum + (v.importe || v.precio_total || 0), 0);
-    const unidades = ventas.reduce((sum, v) => sum + (v.unidades || v.litros || 1), 0);
+    const total = ventas.reduce((sum, v) => sum + (v.importe || 0), 0);
+    const unidades = ventas.reduce((sum, v) => sum + (v.litros || 1), 0);
     const trans = new Set(ventas.map(v => v.id)).size;
     
     const desde = new Date(document.getElementById('fechaDesde')?.value || '');
@@ -423,7 +438,7 @@ function renderGraficas() {
       if (fecha && typeof fecha === 'string') {
         const d = new Date(fecha);
         if (!isNaN(d.getTime())) {
-          byHour[d.getHours()] += (v.importe || v.precio_total || 0);
+          byHour[d.getHours()] += (v.importe || 0);
         }
       }
     });
@@ -457,7 +472,7 @@ function renderGraficas() {
     ventas.forEach(v => {
       if (v.fecha && typeof v.fecha === 'string') {
         const day = v.fecha.split('T')[0];
-        byDay[day] = (byDay[day] || 0) + (v.importe || v.precio_total || 0);
+        byDay[day] = (byDay[day] || 0) + (v.importe || 0);
       }
     });
     
@@ -487,7 +502,7 @@ function renderGraficas() {
       });
     }
 
-    // Renderizar las otras gráficas
+    // Renderizar gráficas de máquinas y productos
     renderGraficasMaquinas();
     renderGraficasProductos();
   } catch (e) {
@@ -502,13 +517,13 @@ function renderGraficasMaquinas() {
     const byM = {};
     ventas.forEach(v => {
       let nombreMaquina = 'Desconocida';
-      if (v.maquinas && typeof v.maquinas === 'object' && v.maquinas.nombre) {
-        nombreMaquina = v.maquinas.nombre;
-      } else if (v.id_maquina && maquinasActivas) {
-        const maquina = maquinasActivas.find(m => m.id === v.id_maquina);
-        nombreMaquina = maquina ? maquina.nombre : `ID: ${v.id_maquina}`;
+      if (v.maquinas && typeof v.maquinas === 'object') {
+        nombreMaquina = v.maquinas.nombre || 'Sin nombre';
+      } else if (v.serial && maquinasActivas) {
+        const maquina = maquinasActivas.find(m => m.serial === v.serial);
+        nombreMaquina = maquina ? maquina.nombre : `Serial: ${v.serial}`;
       }
-      byM[nombreMaquina] = (byM[nombreMaquina] || 0) + (v.importe || v.precio_total || 0);
+      byM[nombreMaquina] = (byM[nombreMaquina] || 0) + (v.importe || 0);
     });
     
     const ms = Object.keys(byM), ims = ms.map(m => byM[m]);
@@ -546,7 +561,7 @@ function renderGraficasProductos() {
     const byProd = {};
     ventas.forEach(v => {
       const prod = v.producto || `Litros: ${v.litros || 'N/A'}`;
-      byProd[prod] = (byProd[prod] || 0) + (v.unidades || v.litros || 1);
+      byProd[prod] = (byProd[prod] || 0) + (v.litros || 1);
     });
     
     const prods = Object.keys(byProd), nums = prods.map(p => byProd[p]);
@@ -601,7 +616,13 @@ function descargarCSV() {
     let list = ventas;
     
     if (filtro) {
-      list = list.filter(v => v.id_maquina == filtro);
+      // Filtrar por máquina seleccionada
+      list = list.filter(v => {
+        if (v.maquinas && v.maquinas.id) {
+          return v.maquinas.id.toString() === filtro;
+        }
+        return false;
+      });
     }
     
     if (!list.length) {
@@ -619,12 +640,6 @@ function descargarCSV() {
       if (v.maquinas && typeof v.maquinas === 'object') {
         nombreMaquina = v.maquinas.nombre || 'Sin nombre';
         ubicacion = v.maquinas.ubicacion || '-';
-      } else if (v.id_maquina && maquinasActivas) {
-        const maquina = maquinasActivas.find(m => m.id === v.id_maquina);
-        if (maquina) {
-          nombreMaquina = maquina.nombre || 'Sin nombre';
-          ubicacion = maquina.ubicacion || '-';
-        }
       }
       
       return [
@@ -632,8 +647,8 @@ function descargarCSV() {
         d.toLocaleTimeString(), 
         nombreMaquina, 
         ubicacion, 
-        v.litros || v.unidades || '1',
-        v.importe || v.precio_total || '0'
+        v.litros || '1',
+        v.importe || '0'
       ].map(x => `"${x}"`).join(',');
     });
     
