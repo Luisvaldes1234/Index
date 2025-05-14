@@ -90,8 +90,8 @@ sections:
       - title: 100% trazabilidad diaria
         subtitle: Reportes de ventas automáticos
         text: >+
-          > Recibe reportes con fecha, volumen y monedas insertadas. Sabrás
-          cuántos litros se vendieron, a qué hora y cuánto dinero hay.
+          > Recibe reportes con fecha y volumen  Sabrás cuántos litros se
+          vendieron, a qué hora y cuánto dinero hay.
 
         image:
           url: /images/icon2.svg
