@@ -8,7 +8,7 @@ sections:
       color: text-dark
       type: TitleBlock
     subtitle: 'Tu máquina de agua, ahora inteligente.'
-    text: "> Con\_AquaLink\_puedes conocer exactamente:\n\n\n\n*   > Cuántos litros se vendieron hoy\n\n*   > Cuánto dinero hay en la máquina\n\n*   > Cuándo se usó y con qué monedas\n\n*   > Y todo, sin tener que ir a verla\n\n\n\n\n\n\nAdemás, puedes cambiar precios y volúmenes desde una interfaz web segura.\n\nSolo los usuarios suscritos acceden al panel privado.\n"
+    text: "> Con\_Nano-Link\_puedes conocer exactamente:\n\n*   > Cuántos litros se vendieron hoy\n\n*   > Cuánto dinero hay en la máquina\n\n*   > Cuándo se usó y con qué monedas\n\n*   > Y todo, sin tener que ir a verla\n\n\n\nSolo los usuarios suscritos acceden al panel privado.\n"
     actions:
       - label: Saber mas
         altText: ''
