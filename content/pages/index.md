@@ -4,11 +4,11 @@ slug: /
 sections:
   - type: GenericSection
     title:
-      text: Aqualink
+      text: Track my vend
       color: text-dark
       type: TitleBlock
     subtitle: 'Tu máquina de agua, ahora inteligente.'
-    text: "> Con\_AquaLink\_puedes conocer exactamente:\n\n\n\n*   > Cuántos litros se vendieron hoy\n\n*   > Cuánto dinero hay en la máquina\n\n*   > Cuándo se usó y con qué monedas\n\n*   > Y todo, sin tener que ir a verla\n\n\n\n\n\n\nAdemás, puedes cambiar precios y volúmenes desde una interfaz web segura.\n\nSolo los usuarios suscritos acceden al panel privado.\n"
+    text: "> Con\_Nano-Link\_puedes conocer exactamente:\n\n*   > Cuántos litros se vendieron hoy\n\n*   > Cuánto dinero hay en la máquina\n\n*   > Cuándo se usó y con qué monedas\n\n*   > Y todo, sin tener que ir a verla\n\n\n\nSolo los usuarios suscritos acceden al panel privado.\n"
     actions:
       - label: Saber mas
         altText: ''
@@ -60,10 +60,10 @@ sections:
     items:
       - type: FeaturedItem
         title: 60% menos visitas físicas
-        subtitle: Control total desde tu celular
+        subtitle: Control total desde tu celular o Pc.
         text: >+
           > Ya no necesitas ir físicamente a la máquina para saber si se vendió
-          agua o si tienes que vaciarla. Todo está en tu panel.
+          Todo está en tu panel.
 
         actions: []
         elementId: null
@@ -90,8 +90,8 @@ sections:
       - title: 100% trazabilidad diaria
         subtitle: Reportes de ventas automáticos
         text: >+
-          > Recibe reportes con fecha, volumen y monedas insertadas. Sabrás
-          cuántos litros se vendieron, a qué hora y cuánto dinero hay.
+          > Recibe reportes con fecha y volumen  Sabrás cuántos litros se
+          vendieron, a qué hora y cuánto dinero hay.
 
         image:
           url: /images/icon2.svg
@@ -111,29 +111,6 @@ sections:
             flexDirection: row
             textAlign: left
             justifyContent: center
-        type: FeaturedItem
-      - title: Gestión flexible
-        subtitle: Cambia precios y volúmenes remotamente
-        text: >+
-          > ¿Subió el precio del agua? ¿Quieres promocionar los 10L? Cambia los
-          precios desde tu panel sin tocar la máquina.
-
-        image:
-          url: /images/icon3.svg
-          altText: Featured icon three
-          elementId: ''
-          type: ImageBlock
-        actions: []
-        colors: bg-neutralAlt-fg-dark
-        styles:
-          self:
-            padding:
-              - pt-8
-              - pl-8
-              - pb-8
-              - pr-8
-            borderRadius: x-large
-            flexDirection: row
         type: FeaturedItem
     actions:
       - label: Get started
@@ -651,15 +628,11 @@ sections:
         textAlign: center
     type: FeaturedItemsSection
   - title:
-      text: Generic Section With A Form
+      text: Contactanos
       color: text-dark
       type: TitleBlock
-    subtitle: Section with a form subtitle
-    text: |-
-      Aenean eros ipsum, interdum quis dignissim non, sollicitudin vitae nisl.
-      Aenean vel aliquet elit, at blandit ipsum. Sed eleifend felis sit amet
-      erat molestie, hendrerit malesuada justo ultrices. Nunc volutpat at erat
-      vitae interdum. Ut nec massa eget lorem blandit condimentum et at risus.
+    subtitle: Siempre al alcanze
+    text: ''
     media:
       fields:
         - name: name
@@ -697,7 +670,7 @@ sections:
       type: FormBlock
       submitButton:
         type: SubmitButtonFormControl
-        label: Submit
+        label: Enviar
         showIcon: false
         icon: arrowRight
         iconPosition: right

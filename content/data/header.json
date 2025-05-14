@@ -91,6 +91,6 @@
         }
     ],
     "variant": "logo-left-primary-nav-left",
-    "colors": "bg-light-fg-dark",
+    "colors": "bg-neutral-fg-dark",
     "type": "Header"
 }
