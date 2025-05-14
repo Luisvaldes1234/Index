@@ -35,7 +35,7 @@ sections:
       type: ImageBlock
     badge:
       label: Mexico
-      color: text-primary
+      color: text-neutral
       type: Badge
     elementId: ''
     colors: bg-light-fg-dark
