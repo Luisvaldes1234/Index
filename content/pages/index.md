@@ -4,7 +4,7 @@ slug: /
 sections:
   - type: GenericSection
     title:
-      text: Aqualink
+      text: Track my vend
       color: text-dark
       type: TitleBlock
     subtitle: 'Tu máquina de agua, ahora inteligente.'
