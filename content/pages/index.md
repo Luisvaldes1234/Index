@@ -685,7 +685,7 @@ sections:
 seo:
   metaTitle: 'Home '
   metaDescription: Landing
-  socialImage: /images/main-hero.jpg
+  socialImage: /images/abstract-background.svg
   type: Seo
 type: PageLayout
 ---
