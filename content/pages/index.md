@@ -205,7 +205,7 @@ sections:
       loop: true
       muted: true
     badge:
-      label: Key Benefits
+      label: LA ERRAMIENTA QUE TE HACIA FALTA
       color: text-primary
       styles:
         self:
