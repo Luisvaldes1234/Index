@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subscripción - TrackMyVend</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+  <!-- Inyección segura desde Netlify -->
+  <script>
+    window.env = {
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
+    };
+  </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
+
+  <!-- NAV -->
+  <nav class="bg-gray-900 text-white px-4 py-3 shadow-md flex gap-6 text-sm md:text-base">
+    <a href="/dashboard.html" class="hover:underline">Dashboard</a>
+    <a href="/reportes.html" class="hover:underline">Reportes</a>
+    <a href="/subscripcion.html" class="hover:underline font-semibold">Subscripción</a>
+    <a href="/maquinas.html" class="hover:underline">Mis Máquinas</a>
+  </nav>
+
+  <!-- CONTENIDO -->
+  <div class="container mx-auto px-4 py-8 space-y-6">
+    <h1 class="text-2xl font-bold mb-6">Estado de tus suscripciones</h1>
+    <div id="listaMaquinas" class="space-y-4"></div>
+  </div>
+
+  <!-- SCRIPT CORREGIDO -->
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://ikuouxllerfjnibjtlkl.supabase.co',
+      window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    async function suscribirse(serial, plan) {
+      try {
+        const res = await fetch("/.netlify/functions/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ serial, plan })
+        });
+
+        const data = await res.json();
+
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert("No se pudo iniciar el proceso de suscripción.");
+        }
+      } catch (err) {
+        console.error("Error al suscribirse:", err);
+        alert("Hubo un error al intentar procesar la suscripción.");
+      }
+    }
+
+    // ✅ Esto expone la función a los botones del HTML
+    window.suscribirse = suscribirse;
+
+    async function cargarMaquinas() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert("No estás autenticado");
+        return;
+      }
+
+      const { data: maquinas, error } = await supabase
+        .from("maquinas")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error al cargar máquinas:", error);
+        return;
+      }
+
+      const contenedor = document.getElementById("listaMaquinas");
+      contenedor.innerHTML = "";
+
+      maquinas.forEach((maquina) => {
+        const vigente = maquina.suscripcion_hasta && new Date(maquina.suscripcion_hasta) > new Date();
+        const card = document.createElement("div");
+        card.className = "bg-white dark:bg-gray-800 p-4 rounded shadow";
+
+        card.innerHTML = `
+          <h3 class="text-lg font-bold mb-2">${maquina.nombre || "Sin nombre"}</h3>
+          <p class="mb-2">Serial: ${maquina.serial}</p>
+          <p class="mb-4">
+            Suscripción: ${
+              vigente
+                ? `<span class="text-green-500 font-semibold">Activa hasta ${new Date(maquina.suscripcion_hasta).toLocaleDateString()}</span>`
+                : `<span class="text-red-500 font-semibold">Inactiva</span>`
+            }
+          </p>
+          <div class="space-x-2">
+            <button onclick="suscribirse('${maquina.serial}', 'mensual')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Mensual</button>
+            <button onclick="suscribirse('${maquina.serial}', 'trimestral')" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Trimestral</button>
+            <button onclick="suscribirse('${maquina.serial}', 'semestral')" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">Semestral</button>
+            <button onclick="suscribirse('${maquina.serial}', 'anual')" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Anual</button>
+          </div>
+        `;
+
+        contenedor.appendChild(card);
+      });
+    }
+
+    cargarMaquinas();
+  </script>
+</body>
+</html>

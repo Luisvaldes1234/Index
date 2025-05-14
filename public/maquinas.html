@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mis Máquinas</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
+
+  <!-- ✅ NAV HEADER -->
+  <nav class="bg-gray-900 text-white px-4 py-3 shadow-md flex gap-6 text-sm md:text-base">
+    <a href="/dashboard.html" class="hover:underline">Dashboard</a>
+    <a href="/reportes.html" class="hover:underline">Reportes</a>
+    <a href="/subscripcion.html" class="hover:underline">Subscripción</a>
+    <a href="/maquinas.html" class="hover:underline font-semibold">Mis Máquinas</a>
+  </nav>
+
+  <!-- ✅ CONTENIDO PRINCIPAL -->
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Mis Máquinas</h1>
+
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded p-6 mb-8">
+      <h2 class="text-xl font-semibold mb-4">Registrar nueva máquina</h2>
+      <form id="machineForm" class="space-y-4">
+        <div>
+          <label for="serial" class="block text-sm font-medium mb-1">Número de serie</label>
+          <input type="text" id="serial" class="w-full border rounded px-3 py-2" required>
+        </div>
+
+        <div>
+          <label for="name" class="block text-sm font-medium mb-1">Nombre de la máquina</label>
+          <input type="text" id="name" class="w-full border rounded px-3 py-2" required>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label for="litros1" class="block text-sm font-medium mb-1">Botón 1 – Litros</label>
+            <input type="number" step="any" id="litros1" class="w-full border rounded px-3 py-2">
+            <label for="precio1" class="block text-sm font-medium mt-2 mb-1">Precio</label>
+            <input type="number" step="any" id="precio1" class="w-full border rounded px-3 py-2">
+          </div>
+          <div>
+            <label for="litros2" class="block text-sm font-medium mb-1">Botón 2 – Litros</label>
+            <input type="number" step="any" id="litros2" class="w-full border rounded px-3 py-2">
+            <label for="precio2" class="block text-sm font-medium mt-2 mb-1">Precio</label>
+            <input type="number" step="any" id="precio2" class="w-full border rounded px-3 py-2">
+          </div>
+          <div>
+            <label for="litros3" class="block text-sm font-medium mb-1">Botón 3 – Litros</label>
+            <input type="number" step="any" id="litros3" class="w-full border rounded px-3 py-2">
+            <label for="precio3" class="block text-sm font-medium mt-2 mb-1">Precio</label>
+            <input type="number" step="any" id="precio3" class="w-full border rounded px-3 py-2">
+          </div>
+        </div>
+
+        <button type="submit" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Registrar</button>
+      </form>
+    </div>
+
+    <h2 class="text-xl font-semibold mb-4">Máquinas registradas</h2>
+    <div id="machineList" class="space-y-4"></div>
+  </div>
+
+  <script src="maquinas.js"></script>
+</body>
+</html>

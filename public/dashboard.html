@@ -1,160 +1,118 @@
 <!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AquaLink - Panel de ventas</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body class="bg-gray-100 min-h-screen p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Panel de ventas</h1>
-      <button
-        onclick="logout()"
-        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-      >
-        Cerrar sesión
-      </button>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - TrackMyVend</title>
+
+  <!-- Supabase & Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- Variables de entorno (Netlify) -->
+  <script>
+    window.env = {
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: '{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}',
+      SUPABASE_URL:              'https://ikuouxllercrjnibjtlkl.supabase.co'
+    };
+  </script>
+
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+  <style>
+    .loading-spinner {
+      border: 4px solid rgba(0,0,0,0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: #09f;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .dark .loading-spinner {
+      border: 4px solid rgba(255,255,255,0.1);
+      border-left-color: #09f;
+    }
+    canvas { width:100% !important; height:300px !important; }
+    @media (max-width:640px) {
+      .date-filter { flex-direction:column; align-items:flex-start; }
+      .date-filter > * { margin-bottom:.5rem; }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
+
+  <!-- Navegación -->
+  <nav class="bg-gray-900 text-white px-4 py-3 shadow flex gap-6">
+    <a href="/dashboard.html" class="font-semibold hover:underline">Dashboard</a>
+    <a href="/reportes.html" class="hover:underline">Reportes</a>
+    <a href="/subscripcion.html" class="hover:underline">Subscripción</a>
+    <a href="/maquinas.html" class="hover:underline">Mis Máquinas</a>
+    <a href="#" id="btnLogout" class="hover:underline ml-auto">Cerrar Sesión</a>
+  </nav>
+
+  <div class="container mx-auto px-4 py-6 space-y-8">
+
+    <!-- Spinner de carga -->
+    <div id="loading" class="flex justify-center py-8 hidden">
+      <div class="loading-spinner"></div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-      <div class="bg-white shadow-md rounded p-4">
-        <p class="text-gray-600">Ingresos del día</p>
-        <h2 class="text-2xl font-semibold">$<span id="ingresosDia">--</span></h2>
-      </div>
-      <div class="bg-white shadow-md rounded p-4">
-        <p class="text-gray-600">Ingresos del mes</p>
-        <h2 class="text-2xl font-semibold">$<span id="ingresosMes">--</span></h2>
-      </div>
-      <div class="bg-white shadow-md rounded p-4">
-        <p class="text-gray-600">Ingresos del año</p>
-        <h2 class="text-2xl font-semibold">$<span id="ingresosAnio">--</span></h2>
-      </div>
-    </div>
-
-    <div class="bg-white rounded shadow-md p-6 mb-8">
-      <h3 class="text-lg font-semibold mb-4">Litros vendidos (por tipo)</h3>
-      <canvas id="ventasChart" height="100"></canvas>
-    </div>
-
-    <div class="mt-8">
-      <h3 class="text-lg font-semibold mb-2">Historial reciente</h3>
-      <div class="bg-white shadow-md rounded p-4">
-        <ul id="historial" class="space-y-2 text-sm text-gray-700">
-          <li>Cargando...</li>
-        </ul>
-
-        <button
-          onclick="descargarCSV()"
-          class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Descargar reporte en CSV
+    <!-- Filtros -->
+    <div class="mb-6">
+      <div class="flex gap-4 items-center flex-wrap date-filter">
+        <label>Desde:</label>
+        <input type="date" id="fechaDesde" class="px-3 py-1 border rounded dark:bg-gray-800" />
+        <label>Hasta:</label>
+        <input type="date" id="fechaHasta" class="px-3 py-1 border rounded dark:bg-gray-800" />
+        <label>Máquina:</label>
+        <select id="filtroMaquinaCSV" class="px-3 py-1 border rounded dark:bg-gray-800">
+          <option value="">Todas</option>
+        </select>
+        <button id="btnDescargarCSV" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">
+          Descargar CSV
         </button>
       </div>
     </div>
 
-    <script>
-      const supabase = supabase.createClient(
-        'https://ikuouxllerfjnibjtlkl.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U'
-      );
+    <!-- Resumen de métricas -->
+    <div id="resumen" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4"></div>
 
-      const ctx = document.getElementById('ventasChart').getContext('2d');
-      const chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['5L', '10L', '20L'],
-          datasets: [
-            {
-              label: 'Litros vendidos',
-              data: [0, 0, 0],
-              backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
-            },
-          ],
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true },
-          },
-        },
-      });
+    <!-- Gráficas -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h2 class="text-xl font-bold mb-4">Ventas por Hora</h2>
+        <canvas id="graficaHoras"></canvas>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h2 class="text-xl font-bold mb-4">Ventas por Día</h2>
+        <canvas id="graficaDias"></canvas>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h2 class="text-xl font-bold mb-4">Volumen Vendido</h2>
+        <canvas id="graficaVolumen"></canvas>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h2 class="text-xl font-bold mb-4">Rendimiento por Máquina</h2>
+        <canvas id="graficaMaquinas"></canvas>
+      </div>
+    </div>
 
-      async function fetchDatos() {
-        const { data, error } = await supabase
-          .from('ventas')
-          .select('*')
-          .order('timestamp', { ascending: false });
+  </div>
 
-        if (error) return;
+  <!-- Modal de error -->
+  <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-md w-full">
+      <h3 class="text-lg font-bold mb-2">Error</h3>
+      <p id="errorMessage" class="mb-4"></p>
+      <button onclick="document.getElementById('errorModal').classList.add('hidden')"
+              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        Cerrar
+      </button>
+    </div>
+  </div>
 
-        const hoy = new Date().toISOString().split('T')[0];
-        const mesActual = hoy.slice(0, 7);
-        const anioActual = hoy.slice(0, 4);
-
-        let ingresosDia = 0, ingresosMes = 0, ingresosAnio = 0;
-        let litros5 = 0, litros10 = 0, litros20 = 0;
-
-        document.getElementById('historial').innerHTML = '';
-
-        data.forEach(v => {
-          const fecha = v.timestamp.split('T')[0];
-          const monto = v.monto || 0;
-
-          if (fecha === hoy) ingresosDia += monto;
-          if (fecha.startsWith(mesActual)) ingresosMes += monto;
-          if (fecha.startsWith(anioActual)) ingresosAnio += monto;
-
-          if (v.litros === 5) litros5++;
-          if (v.litros === 10) litros10++;
-          if (v.litros === 20) litros20++;
-
-          const li = document.createElement('li');
-          li.textContent = `${fecha} - ${v.litros}L - $${monto}`;
-          document.getElementById('historial').appendChild(li);
-        });
-
-        document.getElementById('ingresosDia').textContent = ingresosDia.toFixed(2);
-        document.getElementById('ingresosMes').textContent = ingresosMes.toFixed(2);
-        document.getElementById('ingresosAnio').textContent = ingresosAnio.toFixed(2);
-
-        chart.data.datasets[0].data = [litros5 * 5, litros10 * 10, litros20 * 20];
-        chart.update();
-      }
-
-      async function logout() {
-        await supabase.auth.signOut();
-        window.location.href = 'login.html';
-      }
-
-      function descargarCSV() {
-        supabase
-          .from('ventas')
-          .select('*')
-          .then(({ data, error }) => {
-            if (error) return;
-
-            let csv = 'Fecha,Litros,Monto\n';
-            data.forEach(v => {
-              const fecha = v.timestamp.split('T')[0];
-              csv += `${fecha},${v.litros},${v.monto}\n`;
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `reporte_ventas_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-          });
-      }
-
-      fetchDatos();
-    </script>
-  </body>
+  <script src="/dashboard.js"></script>
+</body>
 </html>
