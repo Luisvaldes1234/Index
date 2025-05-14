@@ -60,7 +60,7 @@ sections:
     items:
       - type: FeaturedItem
         title: 60% menos visitas físicas
-        subtitle: Control total desde tu celular
+        subtitle: Control total desde tu celular o Pc.
         text: >+
           > Ya no necesitas ir físicamente a la máquina para saber si se vendió
           agua o si tienes que vaciarla. Todo está en tu panel.
