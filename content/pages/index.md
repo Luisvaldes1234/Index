@@ -91,7 +91,7 @@ sections:
       Todo desde tu celular o computadora.
 
     media:
-      title: Title of the video
+      title: Los unicos en el mundo con este sistema
       url: /images/placeholder-video.mp4
       controls: false
       aspectRatio: '16:9'
