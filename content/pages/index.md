@@ -86,7 +86,7 @@ sections:
           - pr-7
     type: DividerSection
   - title:
-      text: Grow your business 10x faster
+      text: EL GRAN PROBLEMA QUE ENFRENTAS A TENER UN VENDING
       color: text-dark
       styles:
         self:
