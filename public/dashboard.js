@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", getUser);
 async function getUser() {
   const { data: { user: currentUser }, error } = await supabase.auth.getUser();
   if (error || !currentUser) {
-    alert("No estás autenticado.");
+    alert("No estás autenticado, inicia sesion.");
     return;
   }
   user = currentUser;
@@ -30,15 +30,15 @@ async function getUser() {
 async function cargarMaquinasParaCSV() {
   const { data: maquinas, error } = await supabase
     .from("maquinas")
-    .select("serial")
+    .select("nombre")
     .eq("user_id", user.id);
 
   const select = document.getElementById("filtroMaquinaCSV");
   if (!maquinas || error) return;
   maquinas.forEach(m => {
     const op = document.createElement("option");
-    op.value = m.serial;
-    op.textContent = m.serial;
+    op.value = m.nombre;
+    op.textContent = m.nombre;
     select.appendChild(op);
   });
 }
@@ -136,7 +136,7 @@ async function cargarGraficas() {
 
   if (error || !ventas) return;
 
-  const filtradas = ventas.filter(v => !maquina || v.serial === maquina);
+  const filtradas = ventas.filter(v => !maquina || v.nombre === maquina);
 
   renderGraficaHoras(filtradas);
   renderGraficaDias(filtradas);
@@ -203,8 +203,8 @@ function renderGraficaVolumen(ventas) {
 function renderGraficaMaquinas(ventas) {
   const mapa = {};
   ventas.forEach(v => {
-    if (!v.serial) return;
-    mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.precio_total || 0);
+    if (!v.nombre) return;
+    mapa[v.nombre] = (mapa[v.serial] || 0) + parseFloat(v.precio_total || 0);
   });
   const labels = Object.keys(mapa);
   const valores = labels.map(l => mapa[l]);
