@@ -1,10 +1,9 @@
 // === CONEXIÓN A SUPABASE ===
-const supabaseUrl = window.env.SUPABASE_URL;
-const supabaseKey = window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let user = null;
-let mapaNombres = {}; // serial -> nombre
 
 // === AUTENTICACIÓN Y CARGA INICIAL ===
 document.addEventListener("DOMContentLoaded", getUser);
@@ -27,18 +26,16 @@ async function getUser() {
   cargarGraficas();
 }
 
-// === CARGA SELECT DE MÁQUINAS Y NOMBRES ===
+// === CARGA SELECT DE MÁQUINAS ===
 async function cargarMaquinasParaCSV() {
   const { data: maquinas, error } = await supabase
     .from("maquinas")
-    .select("serial, nombre")
+    .select("serial")
     .eq("user_id", user.id);
 
-  if (!maquinas || error) return;
-
   const select = document.getElementById("filtroMaquinaCSV");
+  if (!maquinas || error) return;
   maquinas.forEach(m => {
-    mapaNombres[m.serial] = m.nombre || m.serial;
     const op = document.createElement("option");
     op.value = m.serial;
     op.textContent = m.serial;
@@ -59,16 +56,19 @@ async function cargarResumen() {
   const desdeInput = document.getElementById("fechaDesde").value;
   const hastaInput = document.getElementById("fechaHasta").value;
   const maquina = document.getElementById("filtroMaquinaCSV").value;
+
   if (!desdeInput || !hastaInput) return;
 
   const desde = new Date(desdeInput);
   const hasta = new Date(hastaInput + "T23:59:59");
 
-  const { data: ventas } = await supabase
+  const { data: ventas, error } = await supabase
     .from("ventas")
     .select("*")
     .gte("created_at", desde.toISOString())
     .lte("created_at", hasta.toISOString());
+
+  if (error || !ventas) return;
 
   const filtradas = ventas.filter(v => !maquina || v.serial === maquina);
   const hoy = new Date().toISOString().split("T")[0];
@@ -117,7 +117,7 @@ async function cargarResumen() {
   `;
 }
 
-// === GRAFICAS ===
+// === CARGA DE GRAFICAS ===
 async function cargarGraficas() {
   const desdeInput = document.getElementById("fechaDesde").value;
   const hastaInput = document.getElementById("fechaHasta").value;
@@ -128,13 +128,16 @@ async function cargarGraficas() {
   const desde = new Date(desdeInput);
   const hasta = new Date(hastaInput + "T23:59:59");
 
-  const { data: ventas } = await supabase
+  const { data: ventas, error } = await supabase
     .from("ventas")
     .select("*")
     .gte("created_at", desde.toISOString())
     .lte("created_at", hasta.toISOString());
 
+  if (error || !ventas) return;
+
   const filtradas = ventas.filter(v => !maquina || v.serial === maquina);
+
   renderGraficaHoras(filtradas);
   renderGraficaDias(filtradas);
   renderGraficaVolumen(filtradas);
@@ -184,8 +187,8 @@ function renderGraficaVolumen(ventas) {
     if (!v.serial) return;
     mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.litros || 0);
   });
-  const labels = Object.keys(mapa).map(s => mapaNombres[s] || s);
-  const valores = Object.values(mapa);
+  const labels = Object.keys(mapa);
+  const valores = labels.map(l => mapa[l]);
   const canvas = document.getElementById("graficaVolumen");
   if (window.chartVolumen) window.chartVolumen.destroy();
   window.chartVolumen = new Chart(canvas, {
@@ -203,8 +206,8 @@ function renderGraficaMaquinas(ventas) {
     if (!v.serial) return;
     mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.precio_total || 0);
   });
-  const labels = Object.keys(mapa).map(s => mapaNombres[s] || s);
-  const valores = Object.values(mapa);
+  const labels = Object.keys(mapa);
+  const valores = labels.map(l => mapa[l]);
   const canvas = document.getElementById("graficaMaquinas");
   if (window.chartMaquinas) window.chartMaquinas.destroy();
   window.chartMaquinas = new Chart(canvas, {
