@@ -11,12 +11,13 @@ document.addEventListener("DOMContentLoaded", getUser);
 async function getUser() {
   const { data: { user: currentUser }, error } = await supabase.auth.getUser();
   if (error || !currentUser) {
-    alert("No estás autenticado, inicia sesion.");
+    alert("No estás autenticado.");
     return;
   }
   user = currentUser;
   await cargarMaquinasParaCSV();
 
+  // Precarga del mes actual
   const ahora = new Date();
   const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
   document.getElementById("fechaDesde").value = inicioMes.toISOString().split("T")[0];
@@ -30,89 +31,75 @@ async function getUser() {
 async function cargarMaquinasParaCSV() {
   const { data: maquinas, error } = await supabase
     .from("maquinas")
-    .select("nombre")
+    .select("serial")
     .eq("user_id", user.id);
 
   const select = document.getElementById("filtroMaquinaCSV");
   if (!maquinas || error) return;
   maquinas.forEach(m => {
     const op = document.createElement("option");
-    op.value = m.nombre;
-    op.textContent = m.nombre;
+    op.value = m.serial;
+    op.textContent = m.serial;
     select.appendChild(op);
   });
 }
 
 // === ESCUCHAR FILTROS ===
 ["fechaDesde", "fechaHasta", "filtroMaquinaCSV"].forEach(id => {
-  document.getElementById(id).addEventListener("change", () => {
-    cargarResumen();
-    cargarGraficas();
-  });
+  document.getElementById(id).addEventListener("change", cargarGraficas);
 });
 
-// === CARGAR RESUMEN CON FILTRO ===
+// === CARGAR RESUMEN ===
 async function cargarResumen() {
-  const desdeInput = document.getElementById("fechaDesde").value;
-  const hastaInput = document.getElementById("fechaHasta").value;
-  const maquina = document.getElementById("filtroMaquinaCSV").value;
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const fechaInicio = hoy.toISOString();
+  const resumen = { litros: 0, total: 0, ultima: null, ticket: 0, activas: 0, cantidad: 0 };
 
-  if (!desdeInput || !hastaInput) return;
+  const { data: ventas } = await supabase.from("ventas").select("*").gte("created_at", fechaInicio);
+  if (ventas && ventas.length) {
+    resumen.litros = ventas.reduce((s, v) => s + parseFloat(v.litros || 0), 0);
+    resumen.total = ventas.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0);
+    resumen.ticket = resumen.total / ventas.length;
+    resumen.ultima = ventas[ventas.length - 1].created_at;
+  }
 
-  const desde = new Date(desdeInput);
-  const hasta = new Date(hastaInput + "T23:59:59");
+  const { data: maquinas } = await supabase.from("maquinas").select("last_seen").eq("user_id", user.id);
+  if (maquinas) {
+    const ahora = new Date();
+    resumen.cantidad = maquinas.length;
+    resumen.activas = maquinas.filter(m => {
+      if (!m.last_seen) return false;
+      const diff = (ahora - new Date(m.last_seen)) / 60000;
+      return diff < 10;
+    }).length;
+  }
 
-  const { data: ventas, error } = await supabase
-    .from("ventas")
-    .select("*")
-    .gte("created_at", desde.toISOString())
-    .lte("created_at", hasta.toISOString());
+  renderResumen(resumen);
+}
 
-  if (error || !ventas) return;
-
-  const filtradas = ventas.filter(v => !maquina || v.serial === maquina);
-  const hoy = new Date().toISOString().split("T")[0];
-  const ventasHoy = filtradas.filter(v => v.created_at.startsWith(hoy));
-
-  const litrosHoy = ventasHoy.reduce((s, v) => s + parseFloat(v.litros || 0), 0);
-  const totalHoy = ventasHoy.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0);
-  const totalPeriodo = filtradas.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0);
-  const ticketProm = filtradas.length ? totalPeriodo / filtradas.length : 0;
-  const ultimaVenta = filtradas.length ? filtradas[filtradas.length - 1].created_at : null;
-
-  const { data: maquinas } = await supabase.from("maquinas").select("serial, last_seen").eq("user_id", user.id);
-  const maquinasFiltradas = maquina ? maquinas.filter(m => m.serial === maquina) : maquinas;
-  const activas = maquinasFiltradas.filter(m => {
-    if (!m.last_seen) return false;
-    const diff = (new Date() - new Date(m.last_seen)) / 60000;
-    return diff < 10;
-  }).length;
-
+function renderResumen(r) {
   const contenedor = document.getElementById("resumen");
   contenedor.innerHTML = `
     <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
       <p class="text-gray-500 text-sm">Litros vendidos hoy</p>
-      <h2 class="text-2xl font-bold">${litrosHoy.toFixed(1)} L</h2>
+      <h2 class="text-2xl font-bold">${r.litros.toFixed(1)} L</h2>
     </div>
     <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
       <p class="text-gray-500 text-sm">Ventas totales hoy</p>
-      <h2 class="text-2xl font-bold">$${totalHoy.toFixed(2)}</h2>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-      <p class="text-gray-500 text-sm">Ventas totales del periodo</p>
-      <h2 class="text-2xl font-bold">$${totalPeriodo.toFixed(2)}</h2>
+      <h2 class="text-2xl font-bold">$${r.total.toFixed(2)}</h2>
     </div>
     <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
       <p class="text-gray-500 text-sm">Ticket promedio</p>
-      <h2 class="text-2xl font-bold">$${ticketProm.toFixed(2)}</h2>
+      <h2 class="text-2xl font-bold">$${r.ticket.toFixed(2)}</h2>
     </div>
     <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
       <p class="text-gray-500 text-sm">Máquinas activas</p>
-      <h2 class="text-2xl font-bold">${activas}/${maquinasFiltradas.length}</h2>
+      <h2 class="text-2xl font-bold">${r.activas}/${r.cantidad}</h2>
     </div>
     <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
       <p class="text-gray-500 text-sm">Última venta</p>
-      <h2 class="text-2xl font-bold">${ultimaVenta ? new Date(ultimaVenta).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }) : 'N/A'}</h2>
+      <h2 class="text-2xl font-bold">${r.ultima ? new Date(r.ultima).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }) : 'N/A'}</h2>
     </div>
   `;
 }
@@ -136,12 +123,12 @@ async function cargarGraficas() {
 
   if (error || !ventas) return;
 
-  const filtradas = ventas.filter(v => !maquina || v.nombre === maquina);
+  const filtradas = ventas.filter(v => !maquina || v.serial === maquina);
 
   renderGraficaHoras(filtradas);
   renderGraficaDias(filtradas);
   renderGraficaVolumen(filtradas);
-  renderGraficaMaquinas(filtradas);
+  renderGraficaMaquinas(filtradas, maquina);
 }
 
 function renderGraficaHoras(ventas) {
@@ -203,8 +190,8 @@ function renderGraficaVolumen(ventas) {
 function renderGraficaMaquinas(ventas) {
   const mapa = {};
   ventas.forEach(v => {
-    if (!v.nombre) return;
-    mapa[v.nombre] = (mapa[v.serial] || 0) + parseFloat(v.precio_total || 0);
+    if (!v.serial) return;
+    mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.precio_total || 0);
   });
   const labels = Object.keys(mapa);
   const valores = labels.map(l => mapa[l]);
