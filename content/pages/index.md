@@ -84,15 +84,10 @@ sections:
 
       >
 
-      >
-
 
       > TrackMyVend convierte cualquier vending en una máquina inteligente: mide
       litros, ventas, actividad por hora, y te avisa cuándo necesita atención.
-      Todo desde tu celular.
-
-
-
+      Todo desde tu celular o computadora.
 
     media:
       title: Title of the video
