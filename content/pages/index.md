@@ -207,7 +207,7 @@ sections:
       text: Reportes personalizados
       color: text-dark
       type: TitleBlock
-    subtitle: Be in good company
+    subtitle: 'mensuales, semanales o del periodo que tu elijas'
     text: >
       A service that provides advice and guidance to startups and small
       businesses.
