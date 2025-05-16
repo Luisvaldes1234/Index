@@ -76,11 +76,24 @@ sections:
           textAlign: center
       type: TitleBlock
     subtitle: 'TrackMyVend te muestra todo en tiempo real, desde cualquier lugar.'
-    text: |-
-      Aenean eros ipsum, interdum quis dignissim non, sollicitudin vitae nisl.
-      Aenean vel aliquet elit, at blandit ipsum. Sed eleifend felis sit amet
-      erat molestie, hendrerit malesuada justo ultrices. Nunc volutpat at erat
-      vitae interdum. Ut nec massa eget lorem blandit condimentum et at risus.
+    text: >+
+      > Si tienes una máquina expendedora, sabes lo frustrante que es no saber
+      cuántas ventas hiciste, si está funcionando o cuándo debes ir a recolectar
+      el dinero.
+
+
+      >
+
+      >
+
+
+      > TrackMyVend convierte cualquier vending en una máquina inteligente: mide
+      litros, ventas, actividad por hora, y te avisa cuándo necesita atención.
+      Todo desde tu celular.
+
+
+
+
     media:
       title: Title of the video
       url: /images/placeholder-video.mp4
