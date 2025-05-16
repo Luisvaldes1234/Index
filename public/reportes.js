@@ -22,21 +22,7 @@ function inicializarSupabase() {
   return true;
 }
 
-async function verificarSesion() {
-  if (!supabaseClient && !inicializarSupabase()) return false;
-  const { data, error } = await supabaseClient.auth.getSession();
-  if (error || !data.session) {
-    window.location.href = "/login.html";
-    return false;
-  }
-  usuario = data.session.user;
-  document.getElementById("btnLogout")
-    .addEventListener("click", async () => {
-      await supabaseClient.auth.signOut();
-      location.href = "/login.html";
-    });
-  return true;
-}
+
 
 // ———————————————————————————————————————————
 // 2) Funciones para obtener datos
