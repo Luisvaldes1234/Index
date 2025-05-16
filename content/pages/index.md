@@ -48,6 +48,13 @@ sections:
           - pl-16
           - pb-16
           - pr-16
+    backgroundImage:
+      type: BackgroundImage
+      altText: altText of the image
+      backgroundSize: auto
+      backgroundPosition: center
+      backgroundRepeat: no-repeat
+      opacity: 100
   - posts:
       - content/pages/blog/case-study-1.md
       - content/pages/blog/case-study-2.md
