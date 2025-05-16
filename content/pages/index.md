@@ -67,9 +67,7 @@ sections:
           - pr-7
     type: DividerSection
   - title:
-      text: |-
-        EL PROBLEMA DE TENER UN VENDING NO ES VENDER…
-        ES NO SABER CUÁNDO NI CUÁNTO VENDISTE
+      text: "EL PROBLEMA DE TENER UN VENDING NO ES VENDER…\_ \_ \_ \_ \_ \_ \_ \_ \_ES NO SABER CUÁNDO NI CUÁNTO VENDISTE"
       color: text-dark
       styles:
         self:
