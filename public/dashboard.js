@@ -1,6 +1,6 @@
 // === CONEXIÓN A SUPABASE ===
-const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+const supabaseUrl = window.env.SUPABASE_URL;
+const supabaseKey = window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let user = null;
