@@ -9,14 +9,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
-  <!-- Variables de entorno (Netlify) -->
-  <script>
-    window.env = {
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: '{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}',
-      SUPABASE_URL: 'https://ikuouxllercrjnibjtlkl.supabase.co'
-    };
-  </script>
-
   <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 
@@ -76,8 +68,24 @@
       </div>
     </div>
 
-    <!-- Resumen de métricas -->
-    <div id="resumen" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"></div>
+    <!-- Botones de corte -->
+    <div id="listaMaquinasCorte" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8"></div>
+
+    <!-- Tarjetas resumen -->
+    <div id="resumen" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
+      <!-- Estas tarjetas se llenan por JS -->
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Ventas esta semana</p>
+        <h2 class="text-2xl font-bold" id="ventasSemana">$0.00</h2>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Ventas este mes</p>
+        <h2 class="text-2xl font-bold" id="ventasMes">$0.00</h2>
+      </div>
+    </div>
+
+    <!-- Dinero en máquina -->
+    <div id="dineroMaquina" class="hidden mb-6"></div>
 
     <!-- Gráficas -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -112,6 +120,7 @@
     </div>
   </div>
 
+  <!-- Script principal -->
   <script src="/dashboard.js"></script>
 </body>
 </html>
