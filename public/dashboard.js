@@ -4,7 +4,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let user = null;
-
+let mapaNombreMaquina = {};
 
 document.addEventListener("DOMContentLoaded", getUser);
 
@@ -24,7 +24,6 @@ async function getUser() {
 
   cargarResumen();
   cargarGraficas();
-  mostrarDineroMaquina();
 }
 
 async function cargarMaquinasParaCSV() {
@@ -38,7 +37,16 @@ async function cargarMaquinasParaCSV() {
   select.innerHTML = "";
   contenedor.innerHTML = "";
 
+  const todas = document.createElement("option");
+  todas.value = "";
+  todas.textContent = "Todas las máquinas";
+  select.appendChild(todas);
+
+  mapaNombreMaquina = {};
+
   for (const m of maquinas) {
+    mapaNombreMaquina[m.serial] = m.nombre || m.serial;
+
     const op = document.createElement("option");
     op.value = m.serial;
     op.textContent = m.nombre || m.serial;
@@ -82,14 +90,12 @@ async function hacerCorteDeCaja(serial) {
   alert("Corte realizado");
   cargarResumen();
   cargarGraficas();
-  mostrarDineroMaquina();
   cargarMaquinasParaCSV();
 }
 
 ["fechaDesde", "fechaHasta", "filtroMaquinaCSV"].forEach(id => {
   document.getElementById(id).addEventListener("change", () => {
     cargarGraficas();
-    mostrarDineroMaquina();
   });
 });
 
@@ -143,35 +149,6 @@ function renderResumen(r) {
   `;
 }
 
-async function mostrarDineroMaquina() {
-  const serial = document.getElementById("filtroMaquinaCSV").value;
-  const contenedor = document.getElementById("dineroMaquina");
-  contenedor.innerHTML = ""; contenedor.classList.add("hidden");
-  if (!serial) return;
-
-  const { data: maquina } = await supabase.from("maquinas").select("ultimo_corte").eq("serial", serial).single();
-  const corte = maquina?.ultimo_corte || "2000-01-01T00:00:00Z";
-
-  const { data: ventas } = await supabase
-    .from("ventas")
-    .select("precio_total")
-    .eq("serial", serial)
-    .gte("created_at", corte);
-
-  const total = ventas?.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0) || 0;
-
-  let color = "bg-yellow-400 text-black";
-  if (total >= 500) color = "bg-green-500 text-white";
-  if (total >= 2000) color = "bg-red-600 text-white";
-
-  contenedor.classList.remove("hidden");
-  contenedor.innerHTML = `
-    <div class="${color} p-4 rounded shadow text-center">
-      <p class="text-sm font-semibold">Dinero en máquina desde el último corte</p>
-      <h2 class="text-3xl font-bold mt-1">$${total.toFixed(2)}</h2>
-    </div>
-  `;
-}
 async function cargarGraficas() {
   const desde = document.getElementById("fechaDesde").value;
   const hasta = document.getElementById("fechaHasta").value;
@@ -241,8 +218,8 @@ function renderGraficaVolumen(ventas) {
     mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.litros || 0);
   });
 
-  const labels = Object.keys(mapa);
-  const valores = labels.map(l => mapa[l]);
+  const labels = Object.keys(mapa).map(s => mapaNombreMaquina[s] || s);
+  const valores = Object.values(mapa);
 
   const ctx = document.getElementById("graficaVolumen");
   if (window.chartVolumen) window.chartVolumen.destroy();
@@ -261,8 +238,8 @@ function renderGraficaMaquinas(ventas) {
     mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.precio_total || 0);
   });
 
-  const labels = Object.keys(mapa);
-  const valores = labels.map(l => mapa[l]);
+  const labels = Object.keys(mapa).map(s => mapaNombreMaquina[s] || s);
+  const valores = Object.values(mapa);
 
   const ctx = document.getElementById("graficaMaquinas");
   if (window.chartMaquinas) window.chartMaquinas.destroy();
