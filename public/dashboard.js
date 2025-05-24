@@ -192,3 +192,93 @@ async function descargarCSV() {
 
 // === GRÁFICAS ===
 // (Esta sección permanece sin cambios, pero puedes avisarme si también deseas ajustarlas)
+async function cargarGraficas() {
+  const desde = document.getElementById("fechaDesde").value;
+  const hasta = document.getElementById("fechaHasta").value;
+  const serial = document.getElementById("filtroMaquinaCSV").value;
+
+  if (!desde || !hasta) return;
+
+  const desdeISO = new Date(desde).toISOString();
+  const hastaISO = new Date(hasta + "T23:59:59").toISOString();
+
+  const { data: ventas } = await supabase
+    .from("ventas")
+    .select("*")
+    .gte("created_at", desdeISO)
+    .lte("created_at", hastaISO);
+
+  const filtradas = serial ? ventas.filter(v => v.serial === serial) : ventas;
+
+  renderGraficaDias(filtradas);
+  renderGraficaHoras(filtradas);
+  renderGraficaVolumen(filtradas);
+  renderGraficaMaquinas(filtradas);
+}
+
+function renderGraficaDias(ventas) {
+  const mapa = {};
+  ventas.forEach(v => {
+    const fecha = new Date(v.created_at).toLocaleDateString("es-MX");
+    mapa[fecha] = (mapa[fecha] || 0) + (parseFloat(v.precio_total) || 0);
+  });
+  const labels = Object.keys(mapa);
+  const datos = labels.map(k => mapa[k]);
+  new Chart(document.getElementById("graficaDias"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{ label: "Ventas por Día ($)", data: datos }]
+    }
+  });
+}
+
+function renderGraficaHoras(ventas) {
+  const horas = Array(24).fill(0);
+  ventas.forEach(v => {
+    const h = new Date(v.created_at).getHours();
+    horas[h] += parseFloat(v.precio_total || 0);
+  });
+  new Chart(document.getElementById("graficaHoras"), {
+    type: "bar",
+    data: {
+      labels: horas.map((_, i) => `${i}:00`),
+      datasets: [{ label: "Ventas por Hora ($)", data: horas }]
+    }
+  });
+}
+
+function renderGraficaVolumen(ventas) {
+  const mapa = {};
+  ventas.forEach(v => {
+    const litros = parseFloat(v.litros || 0);
+    mapa[v.serial] = (mapa[v.serial] || 0) + litros;
+  });
+  const labels = Object.keys(mapa);
+  const datos = labels.map(l => mapa[l]);
+  new Chart(document.getElementById("graficaVolumen"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ label: "Volumen por Máquina (L)", data: datos }]
+    }
+  });
+}
+
+function renderGraficaMaquinas(ventas) {
+  const mapa = {};
+  ventas.forEach(v => {
+    const total = parseFloat(v.precio_total || 0);
+    mapa[v.serial] = (mapa[v.serial] || 0) + total;
+  });
+  const labels = Object.keys(mapa);
+  const datos = labels.map(l => mapa[l]);
+  new Chart(document.getElementById("graficaMaquinas"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ label: "Ventas por Máquina ($)", data: datos }]
+    }
+  });
+}
+
