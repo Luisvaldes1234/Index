@@ -5,7 +5,7 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let user = null;
 
-// === INICIO ===
+
 document.addEventListener("DOMContentLoaded", getUser);
 
 async function getUser() {
@@ -27,7 +27,6 @@ async function getUser() {
   mostrarDineroMaquina();
 }
 
-// === MÁQUINAS Y CORTE ===
 async function cargarMaquinasParaCSV() {
   const { data: maquinas } = await supabase
     .from("maquinas")
@@ -39,27 +38,38 @@ async function cargarMaquinasParaCSV() {
   select.innerHTML = "";
   contenedor.innerHTML = "";
 
-  maquinas.forEach(m => {
+  for (const m of maquinas) {
     const op = document.createElement("option");
     op.value = m.serial;
     op.textContent = m.nombre || m.serial;
     select.appendChild(op);
 
+    const { data: ventas } = await supabase
+      .from("ventas")
+      .select("precio_total")
+      .eq("serial", m.serial)
+      .gte("created_at", m.ultimo_corte || "2000-01-01T00:00:00Z");
+
+    const total = ventas?.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0) || 0;
+    let color = "bg-yellow-400 text-black";
+    if (total >= 500) color = "bg-green-500 text-white";
+    if (total >= 2000) color = "bg-red-600 text-white";
+
     const div = document.createElement("div");
-    div.className = "bg-white dark:bg-gray-800 p-3 rounded shadow flex justify-between items-center mb-2";
+    div.className = "bg-white dark:bg-gray-800 p-3 rounded shadow";
 
-    const texto = document.createElement("p");
-    texto.textContent = `💧 ${m.nombre || m.serial}`;
+    div.innerHTML = `
+      <div class="flex justify-between items-center mb-2">
+        <p>💧 ${m.nombre || m.serial}</p>
+        <button class="bg-blue-600 text-white px-3 py-1 rounded" onclick="hacerCorteDeCaja('${m.serial}')">Corte de caja</button>
+      </div>
+      <div class="${color} p-2 rounded text-center text-sm font-semibold">
+        $${total.toFixed(2)} desde último corte
+      </div>
+    `;
 
-    const boton = document.createElement("button");
-    boton.textContent = "Corte de caja";
-    boton.className = "bg-blue-600 text-white px-3 py-1 rounded";
-    boton.onclick = () => hacerCorteDeCaja(m.serial);
-
-    div.appendChild(texto);
-    div.appendChild(boton);
     contenedor.appendChild(div);
-  });
+  }
 }
 
 async function hacerCorteDeCaja(serial) {
@@ -73,9 +83,9 @@ async function hacerCorteDeCaja(serial) {
   cargarResumen();
   cargarGraficas();
   mostrarDineroMaquina();
+  cargarMaquinasParaCSV();
 }
 
-// === FILTROS ===
 ["fechaDesde", "fechaHasta", "filtroMaquinaCSV"].forEach(id => {
   document.getElementById(id).addEventListener("change", () => {
     cargarGraficas();
@@ -83,26 +93,42 @@ async function hacerCorteDeCaja(serial) {
   });
 });
 
-// === RESUMEN ===
 async function cargarResumen() {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   const resumen = { litros: 0, total: 0, ultima: null, ticket: 0, activas: 0, cantidad: 0 };
 
   const { data: maquinas } = await supabase.from("maquinas").select("serial, last_seen").eq("user_id", user.id);
-  const { data: ventas } = await supabase.from("ventas").select("*").gte("created_at", hoy.toISOString());
+  const { data: ventas } = await supabase.from("ventas").select("*");
 
   const ahora = new Date();
   resumen.cantidad = maquinas.length;
   resumen.activas = maquinas.filter(m => (new Date() - new Date(m.last_seen)) / 60000 < 10).length;
 
-  if (ventas.length) {
-    resumen.litros = ventas.reduce((s, v) => s + (parseFloat(v.litros) || 0), 0);
-    resumen.total = ventas.reduce((s, v) => s + (parseFloat(v.precio_total) || 0), 0);
-    resumen.ticket = resumen.total / ventas.length;
-    resumen.ultima = ventas[ventas.length - 1].created_at;
+  const hoyVentas = ventas.filter(v => new Date(v.created_at) >= hoy);
+
+  if (hoyVentas.length) {
+    resumen.litros = hoyVentas.reduce((s, v) => s + (parseFloat(v.litros) || 0), 0);
+    resumen.total = hoyVentas.reduce((s, v) => s + (parseFloat(v.precio_total) || 0), 0);
+    resumen.ticket = resumen.total / hoyVentas.length;
+    resumen.ultima = hoyVentas[hoyVentas.length - 1].created_at;
   }
 
   renderResumen(resumen);
+
+  const semanaInicio = new Date();
+  semanaInicio.setDate(semanaInicio.getDate() - semanaInicio.getDay());
+  semanaInicio.setHours(0, 0, 0, 0);
+  const mesInicio = new Date();
+  mesInicio.setDate(1);
+  mesInicio.setHours(0, 0, 0, 0);
+
+  const totalSemana = ventas.filter(v => new Date(v.created_at) >= semanaInicio)
+    .reduce((s, v) => s + parseFloat(v.precio_total || 0), 0);
+  const totalMes = ventas.filter(v => new Date(v.created_at) >= mesInicio)
+    .reduce((s, v) => s + parseFloat(v.precio_total || 0), 0);
+
+  document.getElementById("ventasSemana").textContent = `$${totalSemana.toFixed(2)}`;
+  document.getElementById("ventasMes").textContent = `$${totalMes.toFixed(2)}`;
 }
 
 function renderResumen(r) {
@@ -112,10 +138,11 @@ function renderResumen(r) {
     <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Ticket promedio</p><h2>$${r.ticket.toFixed(2)}</h2></div>
     <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Máquinas activas</p><h2>${r.activas}/${r.cantidad}</h2></div>
     <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Última venta</p><h2>${r.ultima ? new Date(r.ultima).toLocaleString("es-MX") : "N/A"}</h2></div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Ventas esta semana</p><h2 id="ventasSemana">$0.00</h2></div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Ventas este mes</p><h2 id="ventasMes">$0.00</h2></div>
   `;
 }
 
-// === DINERO DESDE ÚLTIMO CORTE ===
 async function mostrarDineroMaquina() {
   const serial = document.getElementById("filtroMaquinaCSV").value;
   const contenedor = document.getElementById("dineroMaquina");
@@ -145,53 +172,6 @@ async function mostrarDineroMaquina() {
     </div>
   `;
 }
-
-// === EXPORTAR CSV ===
-document.getElementById("btnDescargarCSV").addEventListener("click", descargarCSV);
-
-async function descargarCSV() {
-  const desde = document.getElementById("fechaDesde").value;
-  const hasta = document.getElementById("fechaHasta").value;
-  const serial = document.getElementById("filtroMaquinaCSV").value;
-  if (!desde || !hasta) return alert("Selecciona fechas válidas");
-
-  const hastaCompleta = new Date(hasta + "T23:59:59").toISOString();
-
-  const { data: maquinas } = await supabase.from("maquinas").select("serial, ultimo_corte").eq("user_id", user.id);
-  const cortes = Object.fromEntries(maquinas.map(m => [m.serial, m.ultimo_corte || "2000-01-01T00:00:00Z"]));
-
-  const { data: ventas } = await supabase.from("ventas").select("*").gte("created_at", desde).lte("created_at", hastaCompleta);
-
-  const filtradas = ventas.filter(v => {
-    if (serial && v.serial !== serial) return false;
-    return new Date(v.created_at) > new Date(cortes[v.serial] || "2000-01-01T00:00:00Z");
-  });
-
-  if (filtradas.length === 0) return alert("No hay ventas para exportar");
-
-  const csv = [
-    ["Fecha", "Litros", "Precio", "Botón", "Máquina"],
-    ...filtradas.map(v => [
-      new Date(v.created_at).toLocaleString("es-MX"),
-      v.litros,
-      v.precio_total,
-      v.boton,
-      v.serial
-    ])
-  ].map(r => r.join(",")).join("\n");
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `ventas_${desde}_a_${hasta}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-// === GRÁFICAS ===
-// (Esta sección permanece sin cambios, pero puedes avisarme si también deseas ajustarlas)
 async function cargarGraficas() {
   const desde = document.getElementById("fechaDesde").value;
   const hasta = document.getElementById("fechaHasta").value;
@@ -210,27 +190,10 @@ async function cargarGraficas() {
 
   const filtradas = serial ? ventas.filter(v => v.serial === serial) : ventas;
 
-  renderGraficaDias(filtradas);
   renderGraficaHoras(filtradas);
+  renderGraficaDias(filtradas);
   renderGraficaVolumen(filtradas);
   renderGraficaMaquinas(filtradas);
-}
-
-function renderGraficaDias(ventas) {
-  const mapa = {};
-  ventas.forEach(v => {
-    const fecha = new Date(v.created_at).toLocaleDateString("es-MX");
-    mapa[fecha] = (mapa[fecha] || 0) + (parseFloat(v.precio_total) || 0);
-  });
-  const labels = Object.keys(mapa);
-  const datos = labels.map(k => mapa[k]);
-  new Chart(document.getElementById("graficaDias"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{ label: "Ventas por Día ($)", data: datos }]
-    }
-  });
 }
 
 function renderGraficaHoras(ventas) {
@@ -239,11 +202,35 @@ function renderGraficaHoras(ventas) {
     const h = new Date(v.created_at).getHours();
     horas[h] += parseFloat(v.precio_total || 0);
   });
-  new Chart(document.getElementById("graficaHoras"), {
+
+  const ctx = document.getElementById("graficaHoras");
+  if (window.chartHoras) window.chartHoras.destroy();
+  window.chartHoras = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: horas.map((_, i) => `${i}:00`),
-      datasets: [{ label: "Ventas por Hora ($)", data: horas }]
+      labels: [...Array(24).keys()].map(h => `${h}:00`),
+      datasets: [{ label: "Ventas por hora ($)", data: horas, backgroundColor: "#60a5fa" }]
+    }
+  });
+}
+
+function renderGraficaDias(ventas) {
+  const mapa = {};
+  ventas.forEach(v => {
+    const fecha = new Date(v.created_at).toLocaleDateString("es-MX");
+    mapa[fecha] = (mapa[fecha] || 0) + parseFloat(v.precio_total || 0);
+  });
+
+  const labels = Object.keys(mapa);
+  const valores = labels.map(k => mapa[k]);
+
+  const ctx = document.getElementById("graficaDias");
+  if (window.chartDias) window.chartDias.destroy();
+  window.chartDias = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{ label: "Ventas por día ($)", data: valores, borderColor: "#3b82f6", backgroundColor: "#bfdbfe" }]
     }
   });
 }
@@ -251,16 +238,19 @@ function renderGraficaHoras(ventas) {
 function renderGraficaVolumen(ventas) {
   const mapa = {};
   ventas.forEach(v => {
-    const litros = parseFloat(v.litros || 0);
-    mapa[v.serial] = (mapa[v.serial] || 0) + litros;
+    mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.litros || 0);
   });
+
   const labels = Object.keys(mapa);
-  const datos = labels.map(l => mapa[l]);
-  new Chart(document.getElementById("graficaVolumen"), {
+  const valores = labels.map(l => mapa[l]);
+
+  const ctx = document.getElementById("graficaVolumen");
+  if (window.chartVolumen) window.chartVolumen.destroy();
+  window.chartVolumen = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
-      datasets: [{ label: "Volumen por Máquina (L)", data: datos }]
+      datasets: [{ label: "Litros vendidos por máquina", data: valores, backgroundColor: "#10b981" }]
     }
   });
 }
@@ -268,17 +258,19 @@ function renderGraficaVolumen(ventas) {
 function renderGraficaMaquinas(ventas) {
   const mapa = {};
   ventas.forEach(v => {
-    const total = parseFloat(v.precio_total || 0);
-    mapa[v.serial] = (mapa[v.serial] || 0) + total;
+    mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.precio_total || 0);
   });
+
   const labels = Object.keys(mapa);
-  const datos = labels.map(l => mapa[l]);
-  new Chart(document.getElementById("graficaMaquinas"), {
+  const valores = labels.map(l => mapa[l]);
+
+  const ctx = document.getElementById("graficaMaquinas");
+  if (window.chartMaquinas) window.chartMaquinas.destroy();
+  window.chartMaquinas = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
-      datasets: [{ label: "Ventas por Máquina ($)", data: datos }]
+      datasets: [{ label: "Ventas por máquina ($)", data: valores, backgroundColor: "#f59e0b" }]
     }
   });
 }
-
