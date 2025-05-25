@@ -1,91 +1,104 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reportes – TrackMyVend</title>
+  <!-- Tailwind (modo claro) -->
+  <script>
+    // Forzar modo claro por defecto
+    tailwind.config = { darkMode: false };
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
+
+<body class="bg-gray-100 text-gray-800 min-h-screen">
 
   <!-- NAVBAR -->
-  <header class="bg-white dark:bg-gray-800 shadow">
+  <header class="bg-white shadow">
     <div class="container mx-auto flex items-center justify-between px-6 py-4">
-      <div class="flex items-center space-x-8">
-        <a href="/dashboard" class="text-xl font-bold text-gray-900 dark:text-white">TrackMyVend</a>
-        <nav class="space-x-6">
-          <a href="/dashboard" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Dashboard</a>
-          <a href="/reportes" class="font-medium text-gray-900 dark:text-white">Reportes</a>
-          <a href="/subscripcion" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Subscripción</a>
-          <a href="/mis-maquinas" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Mis Máquinas</a>
-        </nav>
-      </div>
-      <button id="btnLogout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+      <a href="/dashboard" class="text-xl font-bold">TrackMyVend</a>
+      <nav class="space-x-6">
+        <a href="/dashboard" class="hover:underline">Dashboard</a>
+        <a href="/reportes" class="font-medium">Reportes</a>
+        <a href="/subscripcion" class="hover:underline">Subscripción</a>
+        <a href="/mis-maquinas" class="hover:underline">Mis Máquinas</a>
+      </nav>
+      <button id="btnLogout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
         Cerrar sesión
       </button>
     </div>
   </header>
 
   <!-- FILTROS -->
-  <section class="container mx-auto px-6 py-4 mt-6 bg-white dark:bg-gray-800 rounded-lg shadow flex flex-wrap gap-4">
+  <section class="container mx-auto px-6 py-4 mt-6 bg-white rounded-lg shadow flex flex-wrap gap-4 items-end">
     <div class="flex flex-col">
       <label for="fechaDesde" class="text-sm font-medium mb-1">Desde</label>
-      <input type="date" id="fechaDesde" class="border rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 focus:outline-none" />
+      <input type="date" id="fechaDesde"
+             class="border rounded px-3 py-2 bg-gray-50 focus:outline-none" />
     </div>
     <div class="flex flex-col">
       <label for="fechaHasta" class="text-sm font-medium mb-1">Hasta</label>
-      <input type="date" id="fechaHasta" class="border rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 focus:outline-none" />
+      <input type="date" id="fechaHasta"
+             class="border rounded px-3 py-2 bg-gray-50 focus:outline-none" />
     </div>
     <div class="flex flex-col flex-1 min-w-[200px]">
       <label for="filtroMaquina" class="text-sm font-medium mb-1">Máquina</label>
-      <select id="filtroMaquina" class="border rounded-lg px-3 py-2 bg-gray-50 dark:bg-gray-700 focus:outline-none">
+      <select id="filtroMaquina"
+              class="border rounded px-3 py-2 bg-gray-50 focus:outline-none">
         <option value="">Todas las máquinas</option>
       </select>
     </div>
-    <button id="btnAplicarFiltros" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg self-end">
+    <button id="btnAplicarFiltros"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded">
       Aplicar filtros
     </button>
   </section>
 
-  <!-- CONTENEDOR DE REPORTES -->
-  <main id="reportesContainer" class="container mx-auto px-6 py-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-    <!-- Cada tarjeta de reporte -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 flex flex-col justify-between">
+  <!-- LOADING SPINNER -->
+  <div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-16 w-16"></div>
+  </div>
+
+  <!-- LISTA DE REPORTES -->
+  <main id="reportesContainer"
+        class="container mx-auto px-6 py-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <!-- Repite esta tarjeta por cada reporte -->
+    <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between">
       <h3 class="text-lg font-semibold mb-4">Ventas Detallado</h3>
-      <button onclick="mostrarReporte('ventasDetallado')" class="mt-auto bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
+      <button onclick="mostrarReporte('ventasDetallado')"
+              class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
         Ver reporte
       </button>
     </div>
-
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 flex flex-col justify-between">
+    <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between">
       <h3 class="text-lg font-semibold mb-4">Rendimiento Máquina</h3>
-      <button onclick="mostrarReporte('rendimientoMaquina')" class="mt-auto bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
+      <button onclick="mostrarReporte('rendimientoMaquina')"
+              class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
         Ver reporte
       </button>
     </div>
-
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 flex flex-col justify-between">
+    <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between">
       <h3 class="text-lg font-semibold mb-4">Análisis de Horarios</h3>
-      <button onclick="mostrarReporte('analisisHorarios')" class="mt-auto bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
+      <button onclick="mostrarReporte('analisisHorarios')"
+              class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
         Ver reporte
       </button>
     </div>
-
-    <!-- ... y así sucesivamente para cada tipo de reporte ... -->
-
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 flex flex-col justify-between">
+    <!-- ... resto de reportes ... -->
+    <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between">
       <h3 class="text-lg font-semibold mb-4">Dashboard Ejecutivo</h3>
-      <button onclick="mostrarReporte('dashboardEjecutivo')" class="mt-auto bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
+      <button onclick="mostrarReporte('dashboardEjecutivo')"
+              class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
         Ver reporte
       </button>
     </div>
   </main>
 
-  <!-- VISTA DETALLADA (inicialmente oculta) -->
-  <section id="reporteDetallado" class="hidden container mx-auto px-6 py-6 mt-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-    <button onclick="volverALista()" class="mb-4 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+  <!-- VISTA DETALLADA -->
+  <section id="reporteDetallado" class="hidden container mx-auto px-6 py-6 mt-6 bg-white rounded-lg shadow">
+    <button onclick="volverALista()"
+            class="mb-4 text-gray-600 hover:underline">
       ← Volver a Reportes
     </button>
     <div id="contenidoReporte"></div>
@@ -93,25 +106,30 @@
 
   <!-- MODAL DE EXPORTACIÓN -->
   <div id="modalExportar" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-80">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-80">
       <h2 class="text-lg font-bold mb-4">Exportar reporte</h2>
-      <div class="flex flex-col gap-3">
-        <button onclick="exportarReporte('csv')" class="bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg">
+      <div class="flex flex-col gap-2">
+        <button onclick="exportarReporte('csv')"
+                class="bg-green-500 hover:bg-green-600 text-white py-2 rounded">
           CSV
         </button>
-        <button onclick="exportarReporte('excel')" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg">
+        <button onclick="exportarReporte('excel')"
+                class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">
           Excel
         </button>
-        <button onclick="exportarReporte('pdf')" class="bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg">
+        <button onclick="exportarReporte('pdf')"
+                class="bg-red-500 hover:bg-red-600 text-white py-2 rounded">
           PDF
         </button>
       </div>
-      <button onclick="cerrarModalExportar()" class="mt-4 text-sm text-gray-500 hover:underline">
+      <button onclick="cerrarModalExportar()"
+              class="mt-4 text-sm text-gray-500 hover:underline">
         Cancelar
       </button>
     </div>
   </div>
 
+  <!-- Tu script de reportes -->
   <script src="reportes.js"></script>
 </body>
 </html>
