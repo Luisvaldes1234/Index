@@ -13,31 +13,50 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
 
-  <!-- HEADER -->
-  <header class="bg-white dark:bg-gray-800 p-4 shadow flex justify-between items-center">
-    <h1 class="text-xl font-bold">Reportes</h1>
-    <button id="btnLogout" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
-      Cerrar sesión
-    </button>
+  <!-- BARRA DE NAVEGACIÓN GLOBAL -->
+  <header class="bg-white dark:bg-gray-800 shadow-lg">
+    <div class="container mx-auto flex items-center justify-between p-4">
+      <!-- Logo y enlaces -->
+      <div class="flex items-center space-x-8">
+        <a href="/dashboard" class="text-2xl font-bold text-gray-900 dark:text-white">
+          TrackMyVend
+        </a>
+        <nav class="space-x-4">
+          <a href="/dashboard" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+            Dashboard
+          </a>
+          <a href="/reportes" class="text-blue-600 dark:text-blue-400 font-medium">
+            Reportes
+          </a>
+          <a href="/configuracion" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+            Configuración
+          </a>
+        </nav>
+      </div>
+      <!-- Botón Cerrar Sesión -->
+      <button id="btnLogout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+        Cerrar sesión
+      </button>
+    </div>
   </header>
 
   <!-- FILTROS -->
-  <section class="p-4 bg-white dark:bg-gray-800 shadow mt-4 mx-4 rounded flex flex-wrap gap-4 items-end">
+  <section class="p-4 bg-white dark:bg-gray-800 shadow mt-6 mx-auto max-w-6xl rounded-lg flex flex-wrap gap-4 items-end">
     <div>
-      <label for="fechaDesde" class="block text-sm">Desde</label>
-      <input type="date" id="fechaDesde" class="mt-1 p-2 border rounded w-full bg-gray-50 dark:bg-gray-700" />
+      <label for="fechaDesde" class="block text-sm font-medium">Desde</label>
+      <input type="date" id="fechaDesde" class="mt-1 p-2 border rounded-lg w-full bg-gray-50 dark:bg-gray-700" />
     </div>
     <div>
-      <label for="fechaHasta" class="block text-sm">Hasta</label>
-      <input type="date" id="fechaHasta" class="mt-1 p-2 border rounded w-full bg-gray-50 dark:bg-gray-700" />
+      <label for="fechaHasta" class="block text-sm font-medium">Hasta</label>
+      <input type="date" id="fechaHasta" class="mt-1 p-2 border rounded-lg w-full bg-gray-50 dark:bg-gray-700" />
     </div>
     <div>
-      <label for="filtroMaquina" class="block text-sm">Máquina</label>
-      <select id="filtroMaquina" class="mt-1 p-2 border rounded w-full bg-gray-50 dark:bg-gray-700">
+      <label for="filtroMaquina" class="block text-sm font-medium">Máquina</label>
+      <select id="filtroMaquina" class="mt-1 p-2 border rounded-lg w-full bg-gray-50 dark:bg-gray-700">
         <option value="">Todas las máquinas</option>
       </select>
     </div>
-    <button id="btnAplicarFiltros" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+    <button id="btnAplicarFiltros" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
       Aplicar filtros
     </button>
   </section>
@@ -48,62 +67,62 @@
   </div>
 
   <!-- LISTA DE REPORTES -->
-  <main id="reportesContainer" class="p-4 mx-4 mt-4 bg-white dark:bg-gray-800 shadow rounded grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    <button class="tab bg-blue-100 dark:bg-blue-900 p-4 rounded hover:bg-blue-200" data-tab="ventasDetallado" onclick="mostrarReporte('ventasDetallado')">
-      Ventas detallado
+  <main id="reportesContainer" class="p-4 mx-auto mt-6 bg-white dark:bg-gray-800 shadow rounded-lg max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <button class="tab bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hover:bg-blue-100" data-tab="ventasDetallado" onclick="mostrarReporte('ventasDetallado')">
+      📊 Ventas Detallado
     </button>
-    <button class="tab bg-blue-100 dark:bg-blue-900 p-4 rounded hover:bg-blue-200" data-tab="rendimientoMaquina" onclick="mostrarReporte('rendimientoMaquina')">
-      Rendimiento por máquina
+    <button class="tab bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hover:bg-blue-100" data-tab="rendimientoMaquina" onclick="mostrarReporte('rendimientoMaquina')">
+      🚀 Rendimiento Máquina
     </button>
-    <button class="tab bg-blue-100 dark:bg-blue-900 p-4 rounded hover:bg-blue-200" data-tab="analisisHorarios" onclick="mostrarReporte('analisisHorarios')">
-      Análisis de horarios
+    <button class="tab bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hover:bg-blue-100" data-tab="analisisHorarios" onclick="mostrarReporte('analisisHorarios')">
+      🕒 Análisis Horarios
     </button>
-    <button class="tab bg-blue-100 dark:bg-blue-900 p-4 rounded hover:bg-blue-200" data-tab="corteCaja" onclick="mostrarReporte('corteCaja')">
-      Corte de caja
+    <button class="tab bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hover:bg-blue-100" data-tab="corteCaja" onclick="mostrarReporte('corteCaja')">
+      💰 Corte de Caja
     </button>
-    <button class="tab bg-blue-100 dark:bg-blue-900 p-4 rounded hover:bg-blue-200" data-tab="ticketPromedio" onclick="mostrarReporte('ticketPromedio')">
-      Ticket promedio
+    <button class="tab bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hover:bg-blue-100" data-tab="ticketPromedio" onclick="mostrarReporte('ticketPromedio')">
+      🎟️ Ticket Promedio
     </button>
-    <button class="tab bg-blue-100 dark:bg-blue-900 p-4 rounded hover:bg-blue-200" data-tab="proyecciones" onclick="mostrarReporte('proyecciones')">
-      Proyecciones
+    <button class="tab bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hover:bg-blue-100" data-tab="proyecciones" onclick="mostrarReporte('proyecciones')">
+      🔮 Proyecciones
     </button>
-    <button class="tab bg-blue-100 dark:bg-blue-900 p-4 rounded hover:bg-blue-200" data-tab="conectividad" onclick="mostrarReporte('conectividad')">
-      Conectividad
+    <button class="tab bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hover:bg-blue-100" data-tab="conectividad" onclick="mostrarReporte('conectividad')">
+      🌐 Conectividad
     </button>
-    <button class="tab bg-blue-100 dark:bg-blue-900 p-4 rounded hover:bg-blue-200" data-tab="mantenimientoPredictivo" onclick="mostrarReporte('mantenimientoPredictivo')">
-      Mantenimiento predictivo
+    <button class="tab bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hover:bg-blue-100" data-tab="mantenimientoPredictivo" onclick="mostrarReporte('mantenimientoPredictivo')">
+      🛠️ Mantenimiento Predictivo
     </button>
-    <button class="tab bg-blue-100 dark:bg-blue-900 p-4 rounded hover:bg-blue-200" data-tab="demandaVolumen" onclick="mostrarReporte('demandaVolumen')">
-      Demanda por volumen
+    <button class="tab bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hover:bg-blue-100" data-tab="demandaVolumen" onclick="mostrarReporte('demandaVolumen')">
+      📦 Demanda Volumen
     </button>
-    <button class="tab bg-blue-100 dark:bg-blue-900 p-4 rounded hover:bg-blue-200" data-tab="eficienciaOperativa" onclick="mostrarReporte('eficienciaOperativa')">
-      Eficiencia operativa
+    <button class="tab bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hover:bg-blue-100" data-tab="eficienciaOperativa" onclick="mostrarReporte('eficienciaOperativa')">
+      ⚙️ Eficiencia Operativa
     </button>
-    <button class="tab bg-blue-100 dark:bg-blue-900 p-4 rounded hover:bg-blue-200" data-tab="dashboardEjecutivo" onclick="mostrarReporte('dashboardEjecutivo')">
-      Dashboard ejecutivo
+    <button class="tab bg-blue-50 dark:bg-blue-900 p-4 rounded-lg hover:bg-blue-100" data-tab="dashboardEjecutivo" onclick="mostrarReporte('dashboardEjecutivo')">
+      📈 Dashboard Ejecutivo
     </button>
   </main>
 
   <!-- VISTA DETALLADA -->
-  <section id="reporteDetallado" class="hidden p-4 mx-4 mt-4 bg-white dark:bg-gray-800 shadow rounded">
-    <button onclick="volverALista()" class="mb-4 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 px-3 py-1 rounded">
-      ← Volver a lista
+  <section id="reporteDetallado" class="hidden p-4 mx-auto mt-6 bg-white dark:bg-gray-800 shadow rounded-lg max-w-6xl">
+    <button onclick="volverALista()" class="mb-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-lg">
+      ← Volver
     </button>
     <div id="contenidoReporte"></div>
   </section>
 
   <!-- MODAL DE EXPORTACIÓN -->
   <div id="modalExportar" class="hidden fixed inset-0 items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-80 mx-auto">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-80 mx-auto">
       <h2 class="text-lg font-bold mb-4">Exportar reporte</h2>
       <div class="flex flex-col gap-2">
-        <button onclick="exportarReporte('csv')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
+        <button onclick="exportarReporte('csv')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
           CSV
         </button>
-        <button onclick="exportarReporte('excel')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">
+        <button onclick="exportarReporte('excel')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
           Excel
         </button>
-        <button onclick="exportarReporte('pdf')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded">
+        <button onclick="exportarReporte('pdf')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
           PDF
         </button>
       </div>
@@ -113,7 +132,7 @@
     </div>
   </div>
 
-  <!-- TU SCRIPT DE REPORTES -->
+  <!-- Script de reportes -->
   <script src="reportes.js"></script>
 </body>
 </html>
