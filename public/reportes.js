@@ -1295,5 +1295,3 @@ function exportarCSV() {
       csv = "Datos del reporte " + nombreReporte + "\n";
       csv += JSON.stringify(datosReporte, null, 2);
   }
-  
-  
