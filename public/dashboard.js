@@ -108,7 +108,10 @@ async function cargarResumen() {
   const resumen = { litros: 0, total: 0, ultima: null, ticket: 0, activas: 0, cantidad: 0 };
 
   const { data: maquinas } = await supabase.from("maquinas").select("serial, last_seen").eq("user_id", user.id);
-  const { data: ventas } = await supabase.from("ventas").select("*");
+  const { data: ventas } = await supabase
+  .from("ventas")
+  .select("*")
+  .eq("user_id", user.id);   // ← sólo tus ventas
 
   const ahora = new Date();
   resumen.cantidad = maquinas.length;
