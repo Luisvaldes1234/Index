@@ -11,30 +11,25 @@ document.addEventListener('DOMContentLoaded', getUser);
 
 async function getUser() {
   const { data: { user: currentUser }, error } = await supabase.auth.getUser();
-  if (error || !currentUser) {
-    alert('No estás autenticado.');
-    return;
-  }
+  if (error || !currentUser) { alert('No estás autenticado.'); return; }
   user = currentUser;
 
-  // ——— Verificar suscripción activa ———
-  const { data: subs, error: errSub } = await supabase
-    .from('subscriptions')
-    .select('active')
-    .eq('user_id', user.id)
-    .single();
+  // ——— Verificar al menos una máquina con suscripción activa ———
+  const { data: maquinasSubs, error: errMs } = await supabase
+    .from('maquinas')
+    .select('serial, suscripcion_hasta')
+    .eq('user_id', user.id);
 
-  if (errSub || !subs?.active) {
-    alert('Tu suscripción ha vencido. Renueva para ver los reportes.');
-    window.location.href = '/subscripcion.html';
-    return;
+  const tieneVigente = maquinasSubs?.some(m => new Date(m.suscripcion_hasta) > new Date());
+  if (!tieneVigente) {
+    alert('No tienes ninguna suscripción activa. Renueva para acceder a los reportes.');
+    return window.location.href = '/subscripcion.html';
   }
-  // ————————————————————————————————
+  // ————————————————————————————————————————————————————————————
 
   await cargarFiltros();
   setDefaultDates();
   cargarReportes();
-
   // …
 }
 
