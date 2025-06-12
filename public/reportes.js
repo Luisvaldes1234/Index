@@ -16,16 +16,26 @@ async function getUser() {
     return;
   }
   user = currentUser;
+
+  // ——— Verificar suscripción activa ———
+  const { data: subs, error: errSub } = await supabase
+    .from('subscriptions')
+    .select('active')
+    .eq('user_id', user.id)
+    .single();
+
+  if (errSub || !subs?.active) {
+    alert('Tu suscripción ha vencido. Renueva para ver los reportes.');
+    window.location.href = '/subscripcion.html';
+    return;
+  }
+  // ————————————————————————————————
+
   await cargarFiltros();
   setDefaultDates();
   cargarReportes();
 
-  document.getElementById('btnAplicar').addEventListener('click', cargarReportes);
-  document.getElementById('btnDescargarCortes').addEventListener('click', descargarCSV);
-  document.getElementById('btnLogout').addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/login.html';
-  });
+  // …
 }
 
 // Carga la lista de máquinas en el filtro
