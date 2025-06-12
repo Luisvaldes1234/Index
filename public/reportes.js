@@ -310,3 +310,56 @@ async function cargarActividadUso(desde, hasta, serial) {
   document.getElementById('kpiIntervaloMedio').textContent = `${promedio} min`;
 }
 
+// Volumen Despachado + Utilidad
+document.getElementById('btnCalcularVolumen').addEventListener('click', async () => {
+  const costoMetro = parseFloat(document.getElementById('costoMetro').value) || 0;
+  const gastosOp  = parseFloat(document.getElementById('gastosOperativos').value) || 0;
+  const desde     = document.getElementById('desde').value;
+  const hasta     = document.getElementById('hasta').value;
+  const serial    = document.getElementById('maquinaFiltro').value;
+  const desdeISO  = new Date(desde).toISOString();
+  const hastaISO  = new Date(hasta + 'T23:59:59').toISOString();
+
+  // 1) Traer ventas con litros y precio
+  let { data: ventas } = await supabase
+    .from('ventas')
+    .select('litros, precio_total')
+    .eq('user_id', user.id)
+    .gte('created_at', desdeISO)
+    .lte('created_at', hastaISO);
+  if (serial) ventas = ventas.filter(v => v.serial === serial);
+
+  // 2) Cálculo de litros
+  const litrosTotales = ventas.reduce((sum, v) => sum + parseFloat(v.litros), 0);
+  const transCount     = ventas.length;
+  const litrosProm     = transCount ? (litrosTotales / transCount) : 0;
+
+  // 3) Distribución
+  const cnt5  = ventas.filter(v => parseFloat(v.litros) === 5).length;
+  const cnt10 = ventas.filter(v => parseFloat(v.litros) === 10).length;
+  const cnt20 = ventas.filter(v => parseFloat(v.litros) === 20).length;
+  const dist5  = transCount ? ((cnt5  / transCount) * 100).toFixed(1) : 0;
+  const dist10 = transCount ? ((cnt10 / transCount) * 100).toFixed(1) : 0;
+  const dist20 = transCount ? ((cnt20 / transCount) * 100).toFixed(1) : 0;
+
+  // 4) Cálculo de costes y utilidad
+  const costeAguaTotal = (costoMetro / 1000) * litrosTotales;
+  const totalVentas    = ventas.reduce((sum, v) => sum + parseFloat(v.precio_total), 0);
+  const utilidad       = totalVentas - (costeAguaTotal + gastosOp);
+
+  // 5) Renderizar en DOM
+  document.getElementById('kpiLitrosTotales').textContent   = `${litrosTotales.toFixed(1)} L`;
+  document.getElementById('kpiLitrosPromedio').textContent  = `${litrosProm.toFixed(1)} L`;
+  document.getElementById('kpiDistribucion').innerHTML      = `
+    <li>5 L: ${dist5} %</li>
+    <li>10 L: ${dist10} %</li>
+    <li>20 L: ${dist20} %</li>
+  `;
+  document.getElementById('volumenCostes').innerHTML = `
+    <div>Coste de agua: $${costeAguaTotal.toFixed(2)}</div>
+    <div>Gastos operativos: $${gastosOp.toFixed(2)}</div>
+    <div class="font-semibold">Utilidad estimada: $${utilidad.toFixed(2)}</div>
+  `;
+});
+
+
