@@ -64,6 +64,7 @@ async function cargarReportes() {
   if (!desde || !hasta) return;
 
   await cargarKPIs(desde, hasta, serial);
+  await cargarActividadUso(desde, hasta, serial); 
   await cargarGraficasVentas(desde, hasta, serial);
   await cargarGraficasVolumen(desde, hasta, serial);
   await cargarGraficaRanking(desde, hasta, serial);
@@ -275,3 +276,37 @@ function descargarCSV() {
   link.click();
   document.body.removeChild(link);
 }
+// 3. Actividad y Uso
+async function cargarActividadUso(desde, hasta, serial) {
+  const desdeISO = new Date(desde).toISOString();
+  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
+
+  let { data: ventas } = await supabase
+    .from('ventas')
+    .select('created_at')
+    .eq('user_id', user.id)
+    .gte('created_at', desdeISO)
+    .lte('created_at', hastaISO);
+  if (serial) ventas = ventas.filter(v => v.serial === serial);
+
+  // Número de ventas
+  document.getElementById('kpiNumVentas').textContent = ventas.length;
+
+  // Hora Pico
+  const horas = {};
+  ventas.forEach(v => {
+    const h = new Date(v.created_at).getHours();
+    horas[h] = (horas[h] || 0) + 1;
+  });
+  const pico = Object.entries(horas).sort((a,b) => b[1]-a[1])[0]?.[0] || 0;
+  document.getElementById('kpiHoraPico').textContent = `${String(pico).padStart(2,'0')}:00`;
+
+  // Intervalo Medio entre ventas (minutos)
+  const tiempos = ventas.map(v => new Date(v.created_at).getTime()).sort();
+  const diffs = tiempos.slice(1).map((t,i) => (t - tiempos[i]) / 60000);
+  const promedio = diffs.length
+    ? Math.round(diffs.reduce((a,b) => a + b, 0) / diffs.length)
+    : 0;
+  document.getElementById('kpiIntervaloMedio').textContent = `${promedio} min`;
+}
+
