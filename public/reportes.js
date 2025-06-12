@@ -11,26 +11,21 @@ document.addEventListener('DOMContentLoaded', getUser);
 
 async function getUser() {
   const { data: { user: currentUser }, error } = await supabase.auth.getUser();
-  if (error || !currentUser) { alert('No estás autenticado.'); return; }
-  user = currentUser;
-
-  // ——— Verificar al menos una máquina con suscripción activa ———
-  const { data: maquinasSubs, error: errMs } = await supabase
-    .from('maquinas')
-    .select('serial, suscripcion_hasta')
-    .eq('user_id', user.id);
-
-  const tieneVigente = maquinasSubs?.some(m => new Date(m.suscripcion_hasta) > new Date());
-  if (!tieneVigente) {
-    alert('No tienes ninguna suscripción activa. Renueva para acceder a los reportes.');
-    return window.location.href = '/subscripcion.html';
+  if (error || !currentUser) {
+    alert('No estás autenticado.');
+    return;
   }
-  // ————————————————————————————————————————————————————————————
-
+  user = currentUser;
   await cargarFiltros();
   setDefaultDates();
   cargarReportes();
-  // …
+
+  document.getElementById('btnAplicar').addEventListener('click', cargarReportes);
+  document.getElementById('btnDescargarCortes').addEventListener('click', descargarCSV);
+  document.getElementById('btnLogout').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/login.html';
+  });
 }
 
 // Carga la lista de máquinas en el filtro
@@ -366,5 +361,3 @@ document.getElementById('btnCalcularVolumen').addEventListener('click', async ()
     <div class="font-semibold">Utilidad estimada: $${utilidad.toFixed(2)}</div>
   `;
 });
-
-
