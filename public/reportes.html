@@ -106,6 +106,41 @@
     </div>
   </div>
 
+<!-- Volumen Despachado -->
+<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
+  <div class="flex flex-wrap gap-4 items-center mb-4">
+    <div>
+      <label class="block text-gray-500 text-sm">Coste por m³ (MXN)</label>
+      <input type="number" id="costoMetro" class="px-3 py-1 border rounded dark:bg-gray-700" placeholder="p.ej. 15" />
+    </div>
+    <div>
+      <label class="block text-gray-500 text-sm">Gastos operativos (MXN)</label>
+      <input type="number" id="gastosOperativos" class="px-3 py-1 border rounded dark:bg-gray-700" placeholder="p.ej. 200" />
+    </div>
+    <button id="btnCalcularVolumen" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">
+      Calcular Utilidad
+    </button>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Litros Totales</p>
+      <h2 class="text-2xl font-bold" id="kpiLitrosTotales">0 L</h2>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Litros por Transacción</p>
+      <h2 class="text-2xl font-bold" id="kpiLitrosPromedio">0 L</h2>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Distribución Volumen</p>
+      <ul id="kpiDistribucion" class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+        <li>5 L: 0 %</li>
+        <li>10 L: 0 %</li>
+        <li>20 L: 0 %</li>
+      </ul>
+    </div>
+  </div>
+  <div id="volumenCostes" class="mt-4 text-gray-800 dark:text-gray-200 text-sm space-y-1"></div>
+</div>
 
     <!-- Gráficas de tendencia -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
