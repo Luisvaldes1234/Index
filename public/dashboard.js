@@ -126,30 +126,29 @@ async function hacerCorteDeCaja(serial) {
   }
 
   // 4) Insertar registro en la tabla cortes
-  const { data: corteData, error: corteErr } = await supabase
+  const { error: corteErr } = await supabase
     .from('cortes')
     .insert({
       user_id:      user.id,
       serial:       serial,
       fecha_corte:  nuevoCorteISO,
       total_ventas: total
-    })
-    .select();    // ← esto fuerza a que la respuesta incluya los datos insertados
+    });
 
   if (corteErr) {
-    console.error('❌ Error guardando el corte:', corteErr);
-    alert('No se pudo registrar el corte de caja. Revisa la consola.');
+    console.error('Error guardando el corte:', corteErr);
+    alert('No se pudo registrar el corte de caja.');
     return;
   }
 
-  console.log('✅ Corte insertado en Supabase:', corteData);
   alert(`Corte realizado: $${total.toFixed(2)} en ventas.`);
-
+  
   // 5) Refrescar vista
   cargarResumen();
   cargarGraficas();
   cargarDistribucionVolumen();
   cargarMaquinasParaCSV();
+}
 
 async function cargarResumen() {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
