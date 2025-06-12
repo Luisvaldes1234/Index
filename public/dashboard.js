@@ -85,23 +85,70 @@ async function cargarMaquinasParaCSV() {
 async function hacerCorteDeCaja(serial) {
   if (!confirm("¿Estás seguro de hacer el corte de caja?")) return;
 
-  await supabase.from("maquinas")
-    .update({ ultimo_corte: new Date().toISOString() })
-    .eq("serial", serial);
+  // 1) Traer la fecha del último corte
+  const { data: maquina } = await supabase
+    .from('maquinas')
+    .select('ultimo_corte')
+    .eq('serial', serial)
+    .eq('user_id', user.id)
+    .single();
 
-  alert("Corte realizado");
+  const ultimaFecha = maquina.ultimo_corte || '2000-01-01T00:00:00Z';
+
+  // 2) Sumar todas las ventas desde esa fecha
+  const { data: ventas, error: ventasErr } = await supabase
+    .from('ventas')
+    .select('precio_total')
+    .eq('serial', serial)
+    .eq('user_id', user.id)
+    .gte('created_at', ultimaFecha);
+
+  if (ventasErr) {
+    console.error('Error sumando ventas:', ventasErr);
+    alert('No se pudo calcular el total de ventas.');
+    return;
+  }
+
+  const total = ventas.reduce((sum, v) => sum + parseFloat(v.precio_total), 0);
+
+  // 3) Actualizar la fecha de último corte en la tabla máquinas
+  const nuevoCorteISO = new Date().toISOString();
+  const { error: updErr } = await supabase
+    .from('maquinas')
+    .update({ ultimo_corte: nuevoCorteISO })
+    .eq('serial', serial)
+    .eq('user_id', user.id);
+
+  if (updErr) {
+    console.error('Error actualizando último corte:', updErr);
+    alert('No se pudo actualizar la fecha de corte.');
+    return;
+  }
+
+  // 4) Insertar registro en la tabla cortes
+  const { error: corteErr } = await supabase
+    .from('cortes')
+    .insert({
+      user_id:      user.id,
+      serial:       serial,
+      fecha_corte:  nuevoCorteISO,
+      total_ventas: total
+    });
+
+  if (corteErr) {
+    console.error('Error guardando el corte:', corteErr);
+    alert('No se pudo registrar el corte de caja.');
+    return;
+  }
+
+  alert(`Corte realizado: $${total.toFixed(2)} en ventas.`);
+  
+  // 5) Refrescar vista
   cargarResumen();
   cargarGraficas();
   cargarDistribucionVolumen();
   cargarMaquinasParaCSV();
 }
-
-["fechaDesde", "fechaHasta", "filtroMaquinaCSV"].forEach(id => {
-  document.getElementById(id).addEventListener("change", () => {
-    cargarGraficas();
-    cargarDistribucionVolumen();
-  });
-});
 
 async function cargarResumen() {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
