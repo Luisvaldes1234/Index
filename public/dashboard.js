@@ -54,10 +54,11 @@ async function cargarMaquinasParaCSV() {
     select.appendChild(op);
 
     const { data: ventas } = await supabase
-      .from("ventas")
-      .select("precio_total")
-      .eq("serial", m.serial)
-      .gte("created_at", m.ultimo_corte || "2000-01-01T00:00:00Z");
+        .from("ventas")
+        .select("precio_total")
+        .eq("user_id", user.id)                        // ← filtrando solo tus ventas
+        .eq("serial", m.serial)
+        .gte("created_at", m.ultimo_corte || "2000-01-01T00:00:00Z");
 
     const total = ventas?.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0) || 0;
     let color = "bg-yellow-400 text-black";
@@ -166,6 +167,7 @@ async function cargarDistribucionVolumen() {
   let query = supabase
     .from("ventas")
     .select("litros")
+    .eq("user_id", user.id)
     .gte("created_at", desdeISO)
     .lte("created_at", hastaISO);
 
@@ -289,6 +291,7 @@ async function cargarGraficas() {
   const { data: ventas } = await supabase
     .from("ventas")
     .select("*")
+    .eq("user_id", user.id)  
     .gte("created_at", desdeISO)
     .lte("created_at", hastaISO);
 
