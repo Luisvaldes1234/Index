@@ -30,10 +30,15 @@ async function getUser() {
 
 // Carga la lista de máquinas en el filtro
 async function cargarFiltros() {
+  const nowISO = new Date().toISOString();
+
+  // Sólo máquinas activas
   const { data: maquinas, error } = await supabase
     .from('maquinas')
     .select('serial, nombre')
-    .eq('user_id', user.id);
+    .eq('user_id', user.id)
+    .gt('suscripcion_hasta', nowISO);
+
   if (error) { console.error(error); return; }
 
   const select = document.getElementById('maquinaFiltro');
