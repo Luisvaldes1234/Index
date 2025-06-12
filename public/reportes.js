@@ -74,6 +74,8 @@ async function cargarReportes() {
   await cargarGraficasVolumen(desde, hasta, serial);
   await cargarGraficaRanking(desde, hasta, serial);
   await cargarTablaCortes(desde, hasta, serial);
+  await cargarEstadoSuscripciones();
+
 }
 
 // KPIs principales
@@ -366,3 +368,43 @@ document.getElementById('btnCalcularVolumen').addEventListener('click', async ()
     <div class="font-semibold">Utilidad estimada: $${utilidad.toFixed(2)}</div>
   `;
 });
+// 4. Estado de Suscripción por Máquina
+async function cargarEstadoSuscripciones() {
+  // Trae todas las máquinas del usuario, con nombre y fecha de expiración
+  const { data: maquinas, error } = await supabase
+    .from('maquinas')
+    .select('serial, nombre, suscripcion_hasta')
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error('Error cargando suscripciones:', error);
+    return;
+  }
+
+  const tbody = document.getElementById('tablaSuscripciones');
+  tbody.innerHTML = '';
+
+  const ahora = new Date();
+
+  maquinas.forEach(m => {
+    const vencimiento = new Date(m.suscripcion_hasta);
+    const estaVigente = vencimiento > ahora;
+    const estadoText  = estaVigente
+      ? 'Activa'
+      : 'Vencida';
+
+    const row = `
+      <tr>
+        <td class="px-4 py-2">${m.nombre || m.serial}</td>
+        <td class="px-4 py-2">${vencimiento.toLocaleDateString('es-MX')}</td>
+        <td class="px-4 py-2 font-semibold ${estaVigente ? 'text-green-600' : 'text-red-600'}">
+          ${estadoText}
+        </td>
+      </tr>`;
+    tbody.insertAdjacentHTML('beforeend', row);
+  });
+}
+
+// Asegúrate de llamar a esta función dentro de cargarReportes():
+// await cargarEstadoSuscripciones();
+
