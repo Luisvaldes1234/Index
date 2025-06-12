@@ -173,70 +173,31 @@ async function cargarGraficasVolumen(desde, hasta, serial) {
 }
 
 // Ranking de máquinas por ventas
-function renderGraficaMaquinas(ventas) {
-  // … tu cálculo de `mapa`, `labels` y `valores` …
+async function cargarGraficaRanking(desde, hasta, serial) {
+  const desdeISO = new Date(desde).toISOString();
+  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
 
-  const ctx = document.getElementById("graficaRankingMaquinas");
+  let { data: ventas } = await supabase
+    .from('ventas')
+    .select('serial, precio_total')
+    .eq('user_id', user.id)
+    .gte('created_at', desdeISO)
+    .lte('created_at', hastaISO);
+  if (serial) ventas = ventas.filter(v => v.serial === serial);
+
+  const mapa = {};
+  ventas.forEach(v => {
+    mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.precio_total);
+  });
+
+  const labels = Object.keys(mapa).map(s => mapaNombreMaquina[s] || s);
+  const dataPts = Object.values(mapa);
+
+  const ctx = document.getElementById('graficaRankingMaquinas');
   if (window.chartRanking) window.chartRanking.destroy();
   window.chartRanking = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: "Ventas por máquina ($)",
-        data: valores,
-        backgroundColor: labels.map((_, i) =>
-          i % 2 === 0 ? "rgba(59, 130, 246, 0.7)" : "rgba(16, 185, 129, 0.7)"
-        ),
-        borderColor: labels.map((_, i) =>
-          i % 2 === 0 ? "rgba(59, 130, 246, 1)"   : "rgba(16, 185, 129, 1)"
-        ),
-        borderWidth: 1,
-        barThickness: 40,       // controla grosor de barras
-        maxBarThickness: 50,
-        borderRadius: 4         // redondea las esquinas
-      }]
-    },
-    options: {
-      indexAxis: 'y',          // barras horizontales
-      maintainAspectRatio: false,
-      responsive: true,
-      layout: {
-        padding: { top: 16, right: 24, bottom: 16, left: 0 }
-      },
-      plugins: {
-        legend: {
-          position: 'top',
-          labels: {
-            boxWidth: 12,
-            padding: 20
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => `\$${ctx.parsed.x.toLocaleString()}`
-          }
-        }
-      },
-      scales: {
-        x: {
-          beginAtZero: true,
-          ticks: {
-            callback: v => `$${v}`,
-            stepSize: Math.ceil(Math.max(...valores) / 5)
-          },
-          grid: {
-            color: "rgba(200,200,200,0.2)"
-          }
-        },
-        y: {
-          grid: { display: false },
-          ticks: {
-            padding: 10
-          }
-        }
-      }
-    }
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Ventas por máquina ($)', data: dataPts }] }
   });
 }
 
