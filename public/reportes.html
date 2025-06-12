@@ -1,135 +1,137 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Reportes – TrackMyVend</title>
-  <!-- Tailwind (modo claro) -->
-  <script>
-    // Forzar modo claro por defecto
-    tailwind.config = { darkMode: false };
-  </script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reportes - TrackMyVend</title>
+
+  <!-- Supabase & Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+  <style>
+    .loading-spinner {
+      border: 4px solid rgba(0,0,0,0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: #09f;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .dark .loading-spinner {
+      border: 4px solid rgba(255,255,255,0.1);
+      border-left-color: #09f;
+    }
+    canvas { width:100% !important; height:300px !important; }
+    @media (max-width:640px) {
+      .date-filter { flex-direction:column; align-items:flex-start; }
+      .date-filter > * { margin-bottom:.5rem; }
+    }
+  </style>
 </head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
 
-<body class="bg-gray-100 text-gray-800 min-h-screen">
+  <!-- Navegación -->
+  <nav class="bg-gray-900 text-white px-4 py-3 shadow flex gap-6">
+    <a href="/dashboard.html" class="hover:underline">Dashboard</a>
+    <a href="/reportes.html" class="font-semibold hover:underline">Reportes</a>
+    <a href="/subscripcion.html" class="hover:underline">Subscripción</a>
+    <a href="/maquinas.html" class="hover:underline">Mis Máquinas</a>
+    <a href="#" id="btnLogout" class="hover:underline ml-auto">Cerrar Sesión</a>
+  </nav>
 
-  <!-- NAVBAR -->
-  <header class="bg-white shadow">
-    <div class="container mx-auto flex items-center justify-between px-6 py-4">
-      <a href="/dashboard" class="text-xl font-bold">TrackMyVend</a>
-      <nav class="space-x-6">
-        <a href="/dashboard" class="hover:underline">Dashboard</a>
-        <a href="/reportes" class="font-medium">Reportes</a>
-        <a href="/subscripcion" class="hover:underline">Subscripción</a>
-        <a href="/mis-maquinas" class="hover:underline">Mis Máquinas</a>
-      </nav>
-      <button id="btnLogout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
-        Cerrar sesión
-      </button>
-    </div>
-  </header>
+  <div class="container mx-auto px-4 py-6 space-y-8">
 
-  <!-- FILTROS -->
-  <section class="container mx-auto px-6 py-4 mt-6 bg-white rounded-lg shadow flex flex-wrap gap-4 items-end">
-    <div class="flex flex-col">
-      <label for="fechaDesde" class="text-sm font-medium mb-1">Desde</label>
-      <input type="date" id="fechaDesde"
-             class="border rounded px-3 py-2 bg-gray-50 focus:outline-none" />
-    </div>
-    <div class="flex flex-col">
-      <label for="fechaHasta" class="text-sm font-medium mb-1">Hasta</label>
-      <input type="date" id="fechaHasta"
-             class="border rounded px-3 py-2 bg-gray-50 focus:outline-none" />
-    </div>
-    <div class="flex flex-col flex-1 min-w-[200px]">
-      <label for="filtroMaquina" class="text-sm font-medium mb-1">Máquina</label>
-      <select id="filtroMaquina"
-              class="border rounded px-3 py-2 bg-gray-50 focus:outline-none">
-        <option value="">Todas las máquinas</option>
-      </select>
-    </div>
-    <button id="btnAplicarFiltros"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded">
-      Aplicar filtros
-    </button>
-  </section>
-
-  <!-- LOADING SPINNER -->
-  <div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-16 w-16"></div>
-  </div>
-
-  <!-- LISTA DE REPORTES -->
-  <main id="reportesContainer"
-        class="container mx-auto px-6 py-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-    <!-- Repite esta tarjeta por cada reporte -->
-    <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between">
-      <h3 class="text-lg font-semibold mb-4">Ventas Detallado</h3>
-      <button onclick="mostrarReporte('ventasDetallado')"
-              class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
-        Ver reporte
-      </button>
-    </div>
-    <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between">
-      <h3 class="text-lg font-semibold mb-4">Rendimiento Máquina</h3>
-      <button onclick="mostrarReporte('rendimientoMaquina')"
-              class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
-        Ver reporte
-      </button>
-    </div>
-    <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between">
-      <h3 class="text-lg font-semibold mb-4">Análisis de Horarios</h3>
-      <button onclick="mostrarReporte('analisisHorarios')"
-              class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
-        Ver reporte
-      </button>
-    </div>
-    <!-- ... resto de reportes ... -->
-    <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between">
-      <h3 class="text-lg font-semibold mb-4">Dashboard Ejecutivo</h3>
-      <button onclick="mostrarReporte('dashboardEjecutivo')"
-              class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
-        Ver reporte
-      </button>
-    </div>
-  </main>
-
-  <!-- VISTA DETALLADA -->
-  <section id="reporteDetallado" class="hidden container mx-auto px-6 py-6 mt-6 bg-white rounded-lg shadow">
-    <button onclick="volverALista()"
-            class="mb-4 text-gray-600 hover:underline">
-      ← Volver a Reportes
-    </button>
-    <div id="contenidoReporte"></div>
-  </section>
-
-  <!-- MODAL DE EXPORTACIÓN -->
-  <div id="modalExportar" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-80">
-      <h2 class="text-lg font-bold mb-4">Exportar reporte</h2>
-      <div class="flex flex-col gap-2">
-        <button onclick="exportarReporte('csv')"
-                class="bg-green-500 hover:bg-green-600 text-white py-2 rounded">
-          CSV
-        </button>
-        <button onclick="exportarReporte('excel')"
-                class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">
-          Excel
-        </button>
-        <button onclick="exportarReporte('pdf')"
-                class="bg-red-500 hover:bg-red-600 text-white py-2 rounded">
-          PDF
-        </button>
+    <!-- Filtros -->
+    <div class="mb-6">
+      <div class="flex gap-4 items-center flex-wrap date-filter">
+        <label>Desde:</label>
+        <input type="date" id="desde" class="px-3 py-1 border rounded dark:bg-gray-800" />
+        <label>Hasta:</label>
+        <input type="date" id="hasta" class="px-3 py-1 border rounded dark:bg-gray-800" />
+        <label>Máquina:</label>
+        <select id="maquinaFiltro" class="px-3 py-1 border rounded dark:bg-gray-800">
+          <option value="">Todas</option>
+        </select>
+        <button id="btnAplicar" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Aplicar</button>
       </div>
-      <button onclick="cerrarModalExportar()"
-              class="mt-4 text-sm text-gray-500 hover:underline">
-        Cancelar
+    </div>
+
+    <!-- KPIs Principales -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Ventas totales</p>
+        <h2 class="text-2xl font-bold" id="kpiVentasTotales">$0</h2>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Litros vendidos</p>
+        <h2 class="text-2xl font-bold" id="kpiLitros">0 L</h2>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Ticket promedio</p>
+        <h2 class="text-2xl font-bold" id="kpiTicket">$0</h2>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Transacciones</p>
+        <h2 class="text-2xl font-bold" id="kpiTransacciones">0</h2>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Cortes</p>
+        <h2 class="text-2xl font-bold" id="kpiCortes">0</h2>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Promedio diario</p>
+        <h2 class="text-2xl font-bold" id="kpiPromedioDiario">$0</h2>
+      </div>
+    </div>
+
+    <!-- Gráficas de tendencia -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h2 class="text-xl font-bold mb-4">Ventas en el tiempo</h2>
+        <canvas id="graficaVentasTiempo"></canvas>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h2 class="text-xl font-bold mb-4">Volumen en el tiempo</h2>
+        <canvas id="graficaVolumenTiempo"></canvas>
+      </div>
+    </div>
+
+    <!-- Ranking por máquina -->
+    <div class="mb-8">
+      <h2 class="text-xl font-bold mb-4">Ranking por Máquina</h2>
+      <canvas id="graficaRankingMaquinas"></canvas>
+    </div>
+
+    <!-- Historial de cortes -->
+    <div>
+      <h2 class="text-xl font-bold mb-4">Historial de Cortes</h2>
+      <table class="w-full text-left bg-white dark:bg-gray-800 rounded shadow overflow-hidden">
+        <thead class="bg-gray-200 dark:bg-gray-700">
+          <tr>
+            <th class="px-4 py-2">Fecha</th>
+            <th class="px-4 py-2">Máquina</th>
+            <th class="px-4 py-2">Total Ventas</th>
+            <th class="px-4 py-2">Litros</th>
+            <th class="px-4 py-2">Intervalo</th>
+          </tr>
+        </thead>
+        <tbody id="tablaCortes" class="divide-y divide-gray-200 dark:divide-gray-700">
+          <!-- filas generadas por JS -->
+        </tbody>
+      </table>
+      <button id="btnDescargarCortes" class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        Descargar CSV
       </button>
     </div>
+
   </div>
 
-  <!-- Tu script de reportes -->
-  <script src="reportes.js"></script>
+  <!-- Script principal para reportes -->
+  <script src="/reportes.js"></script>
 </body>
 </html>
