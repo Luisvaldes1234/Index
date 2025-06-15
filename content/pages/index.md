@@ -147,7 +147,7 @@ sections:
   - type: FeaturedItemsSection
     title:
       type: TitleBlock
-      text: Nuesra
+      text: Nuestras soluciones
       color: text-dark
       styles:
         self:
