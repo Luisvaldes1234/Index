@@ -29,7 +29,7 @@ sections:
         elementId: ''
         type: Link
     media:
-      url: /images/Screenshot 2025-05-16 at 3.16.22 AM.png
+      url: /images/Screenshot 2025-06-14 at 9.57.18 PM.png
       altText: Unblock your team boost your time to production preview
       elementId: ''
       type: ImageBlock
