@@ -92,7 +92,7 @@ sections:
 
     media:
       title: Los unicos en el mundo con este sistema
-      url: /images/placeholder-video.mp4
+      url: ''
       controls: false
       aspectRatio: '16:9'
       styles:
