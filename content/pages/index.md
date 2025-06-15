@@ -147,7 +147,7 @@ sections:
   - type: FeaturedItemsSection
     title:
       type: TitleBlock
-      text: Nuestros productos
+      text: Nuesra
       color: text-dark
       styles:
         self:
