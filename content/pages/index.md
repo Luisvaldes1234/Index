@@ -134,11 +134,7 @@ sections:
           textAlign: left
       type: TitleBlock
     subtitle: ¿Qué puedo hacer con TrackMyVend?
-    text: |-
-      Aenean eros ipsum, interdum quis dignissim non, sollicitudin vitae nisl.
-      Aenean vel aliquet elit, at blandit ipsum. Sed eleifend felis sit amet
-      erat molestie, hendrerit malesuada justo ultrices. Nunc volutpat at erat
-      vitae interdum. Ut nec massa eget lorem blandit condimentum et at risus.
+    text: "\n\n### \U0001F4A7\_\n\n### 1. Ver tus ventas en tiempo real\n\n\n\n\n\n*   Saber cuántos litros vendiste hoy, esta semana o este mes\n\n*   Ver el total de ingresos generados\n\n*   Consultar el historial completo de ventas por botón, hora y fecha\n\n*   Descargar reportes en Excel o CSV\n\n\n\n\n\n\n\n\n\n\n\n### ⚙️\_\n\n### 2. Configurar tu máquina desde cualquier lugar\n\n\n\n\n\n*   Cambiar los precios por botón remotamente\n\n*   Ajustar los litros que entrega cada botón\n\n*   Editar el nombre de la máquina para identificarla fácilmente\n\n*   Calibrar el sistema con precisión (en modelos AquaLink)\n\n\n\n\n\n\n\n\n\n\n\n### \U0001F4E1\_\n\n### 3. Monitorear el estado de tus máquinas\n\n\n\n\n\n*   Saber si están activas o desconectadas\n\n*   Ver cuándo fue la última venta y la última conexión\n\n*   Detectar fallos (por ejemplo, si no hay agua o si no se activa la válvula)\n\n\n\n\n\n\n\n\n\n\n\n### \U0001F501\_\n\n### 4. Operar sin conexión a internet\n\n\n\n\n\n*   Las máquinas siguen funcionando aunque no tengan Wi-Fi\n\n*   Guardan las ventas localmente y las suben automáticamente al reconectarse\n\n\n\n\n\n\n\n\n\n\n\n### \U0001F4E6\_\n\n### 5. Controlar múltiples máquinas desde un solo panel\n\n\n\n\n\n*   Monitorear varias ubicaciones al mismo tiempo\n\n*   Filtrar y comparar el rendimiento de cada máquina\n\n*   Ideal para negocios con crecimiento o franquicias\n\n\n\n\n\n\n\n\n\n\n\n### \U0001F6E1️\_\n\n### 6. Cuidar la experiencia del cliente\n\n\n\n\n\n*   Si la máquina no puede despachar agua, devuelve el dinero automáticamente\n\n*   Incluye funciones como pausa, enjuague, y hopper para dar cambio\n\n\n\n\n\n\n\n\n\n\n\n### \U0001F4B3\_\n\n### 7. Gestionar tu suscripción fácilmente\n\n\n\n\n\n*   Ver cuántos días le quedan a cada máquina con suscripción activa\n\n*   Renovar con un solo clic a través de Stripe\n\n*   Acceder a soporte técnico y actualizaciones automáticas\n\n\n\n\n\n\n"
     actions: []
     elementId: null
     colors: bg-light-fg-dark
