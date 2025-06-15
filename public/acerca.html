@@ -1,124 +1,179 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrackMyVend - Acerca de</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; overflow-x: hidden; }
-        /* Header (copiado del Home) */
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; backdrop-filter: blur(10px); box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
-        .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
-        .logo { font-size: 1.8rem; font-weight: bold; color: white; text-decoration: none; }
-        .nav-menu { display: flex; list-style: none; gap: 2rem; }
-        .nav-menu a { color: white; text-decoration: none; transition: all 0.3s ease; padding: 0.5rem 1rem; border-radius: 25px; }
-        .nav-menu a:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
-        /* Main */
-        main { padding: 120px 2rem 2rem; max-width: 900px; margin: 0 auto; }
-        h1 { font-size: 2.5rem; margin-bottom: 1rem; text-align: center; color: #333; }
-        section { margin-bottom: 2.5rem; }
-        section h2 { font-size: 1.75rem; margin-bottom: 0.75rem; color: #667eea; }
-        section p { color: #555; line-height: 1.8; }
-        /* Footer */
-        .footer { background: #2c3e50; color: #bdc3c7; padding: 2rem 1rem; }
-        .footer-container { max-width: 1200px; margin: 0 auto; text-align: center; }
-        .footer-container a { color: #bdc3c7; text-decoration: none; margin: 0 0.5rem; }
-        .footer-container a:hover { color: white; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrackMyVend - Acerca de</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; overflow-x: hidden; }
+    /* Header (Home style) */
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem 0;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      transition: background 0.3s ease;
+    }
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2rem;
+    }
+    .logo {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: white;
+      text-decoration: none;
+    }
+    .nav-menu {
+      display: flex;
+      list-style: none;
+      gap: 2rem;
+    }
+    .nav-menu a {
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
+    }
+    .nav-menu a:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+    }
+    /* Main content */
+    main { padding: 140px 2rem 2rem; max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 2.5rem; text-align: center; margin-bottom: 1rem; color: #333; }
+    section { margin-bottom: 2.5rem; }
+    section h2 { font-size: 1.75rem; margin-bottom: 0.75rem; color: #667eea; }
+    section p { color: #555; line-height: 1.8; }
+    section ul { margin-top: 0.5rem; list-style: disc inside; color: #555; }
+    section ul li { margin-bottom: 0.5rem; }
+    /* Footer */
+    .footer {
+      background: #2c3e50;
+      color: #bdc3c7;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+    .footer-container a { color: #bdc3c7; text-decoration: none; margin: 0 0.5rem; }
+    .footer-container a:hover { color: white; }
+  </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="nav-container">
-            <a href="index.html" class="logo">TrackMyVend</a>
-            <nav>
-                <ul class="nav-menu">
-                    <li><a href="index.html">Inicio</a></li>
-                    <li><a href="productos.html">Productos</a></li>
-                    <li><a href="beneficios.html">Beneficios</a></li>
-                    <li><a href="contacto.html">Contacto</a></li>
-                    <li><a href="login.html">¿Iniciar sesión?</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+  <!-- Header -->
+  <header class="header">
+    <div class="nav-container">
+      <a href="index.html" class="logo">TrackMyVend</a>
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="index.html">Inicio</a></li>
+          <li><a href="productos.html">Productos</a></li>
+          <li><a href="beneficios.html">Beneficios</a></li>
+          <li><a href="contacto.html">Contacto</a></li>
+          <li><a href="acerca.html" class="active">Acerca de</a></li>
+          <li><a href="login.html">¿Iniciar sesión?</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
 
-    <!-- Contenido principal -->
-    <main>
-        <h1>Acerca de TrackMyVend</h1>
-        <section>
-            <h2>Nuestra Historia</h2>
-            <p>TrackMyVend nace de nuestra propia experiencia al operar múltiples máquinas vending, sin contar con visibilidad real de su funcionamiento ni de las ventas en tiempo real. No sabíamos cuántos litros se despachaban, en qué horarios había mayor demanda ni cuáles máquinas ofrecían el mejor rendimiento, lo que hacía imposible planificar la expansión y optimizar recursos.
+  <!-- Main content -->
+  <main>
+    <h1>Acerca de TrackMyVend</h1>
 
-Por eso decidimos crear TrackMyVend: un sistema que brinda información precisa y puntual para escalar puntos de venta con total confianza y control. De esa visión surgió Link-Nano, nuestro primer módulo IoT capaz de registrar cada transacción de forma automática, remota y 100 % fiable.</p>
-        </section>
-   <section>
-  <h2>Nuestra Misión</h2>
-  <p>
-    Empoderar a los operadores de vending con datos fiables y en tiempo real, para que tomen decisiones informadas,
-    optimicen sus recursos y hagan crecer su negocio de forma sostenible. Buscamos convertir cada máquina de agua
-    en un punto de venta inteligente, ofreciendo:
-  </p>
-  <ul>
-    <li><strong>Visibilidad total:</strong> Reportes claros de litros despachados, ingresos y horarios de mayor demanda.</li>
-    <li><strong>Control remoto:</strong> Ajuste de precios y volúmenes desde cualquier dispositivo, sin desplazamientos.</li>
-    <li><strong>Escalabilidad:</strong> Herramientas que faciliten la expansión de nuevos puntos de venta con mínima inversión.</li>
-    <li><strong>Transparencia:</strong> Registro puntual y auditado de cada transacción, para eliminar pérdidas y generar confianza.</li>
-  </ul>
-</section>
-Con esta visión, ayudamos a transformar una operación de vending tradicional en un negocio moderno, eficiente y preparado para el futuro.</p>
-        <section>
-  <h2>Nuestro Equipo</h2>
-  <p>
-    Somos un equipo multidisciplinario con sede en Monterrey, Nuevo León, formado por:
-  </p>
-  <ul>
-    <li><strong>Dueños de vendings como tu </strong> con años de experiencia en campo, que entendemos los retos diarios.</li>
-    <li><strong>Ingenieros en electrónica</strong> especializados en IoT, responsables del diseño de nuestros módulos.</li>
-    <li><strong>Desarrolladores de software</strong> que construyen y mantienen la plataforma en la nube y el dashboard.</li>
-    <li><strong>Soporte técnico</strong> listo para resolver cualquier incidencia y acompañarte en la instalación.</li>
-  </ul>
-  <p>
-    Juntos combinamos conocimiento operativo y tecnológico para ofrecerte soluciones confiables, escalables y fáciles de usar.
-  </p>
-</section>
-        </section>
-     <section>
-  <h2>Ubicación y Alcance</h2>
-  <p>
-    Con sede en <strong>Monterrey, Nuevo León</strong>, TrackMyVend ofrece:
-  </p>
-  <ul>
-    <li><strong>Soporte</strong> en toda la República Mexicana y latinoamerica.</li>
-    <li><strong>Servicio técnico</strong> y mantenimiento remoto.</li>
-    <li><strong>Presencia en Latinoamérica:</strong> </li>
-    
-  </ul>
-  <p>
-    Nuestro objetivo es acompañarte donde sea que operes, garantizando conexión, actualizaciones y soporte inmediato para que tus máquinas nunca se detengan.
-  </p>
-</section>
-      <section>
-  <h2>Visión</h2>
-  <p>
-    Imaginamos un futuro donde cada litro de agua vendido esté registrado, analizado y optimizado para generar 
-    valor, eficiencia y sostenibilidad en el negocio de vending. Queremos que la tecnología de TrackMyVend sea 
-    la base de una industria conectada, transparente y preparada para los retos del mañana.
-  </p>
-</section>
-    </main>
+    <section>
+      <h2>Nuestra Historia</h2>
+      <p>
+        TrackMyVend nace de nuestra propia experiencia al operar múltiples máquinas vending, sin contar con visibilidad real de su funcionamiento ni de las ventas en tiempo real. No sabíamos cuántos litros se despachaban, en qué horarios había mayor demanda ni cuáles máquinas ofrecían el mejor rendimiento, lo que hacía imposible planificar la expansión y optimizar recursos.
+      </p>
+      <p>
+        Por eso decidimos crear TrackMyVend: un sistema que brinda información precisa y puntual para escalar puntos de venta con total confianza y control. De esa visión surgió <strong>Link-Nano</strong>, nuestro primer módulo IoT capaz de registrar cada transacción de forma automática, remota y 100 % fiable.
+      </p>
+    </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-container">
-            <p>&copy; 2025 TrackMyVend. Todos los derechos reservados.</p>
-            <div>
-                <a href="https://facebook.com">Facebook</a> |
-                <a href="https://instagram.com">Instagram</a> |
-                <a href="mailto:info@trackmyvend.com">Email</a>
-            </div>
-        </div>
-    </footer>
+    <section>
+      <h2>Nuestra Misión</h2>
+      <p>
+        Empoderar a los operadores de vending con datos fiables y en tiempo real, para que tomen decisiones informadas, optimicen sus recursos y hagan crecer su negocio de forma sostenible.
+      </p>
+      <ul>
+        <li><strong>Visibilidad total:</strong> Reportes claros de litros despachados, ingresos y horarios de mayor demanda.</li>
+        <li><strong>Control remoto:</strong> Ajuste de precios y volúmenes desde cualquier dispositivo, sin desplazamientos.</li>
+        <li><strong>Escalabilidad:</strong> Herramientas que faciliten la expansión de nuevos puntos de venta con mínima inversión.</li>
+        <li><strong>Transparencia:</strong> Registro puntual y auditado de cada transacción, para eliminar pérdidas y generar confianza.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Nuestro Equipo</h2>
+      <p>
+        Somos un equipo multidisciplinario con sede en Monterrey, Nuevo León, formado por:
+      </p>
+      <ul>
+        <li><strong>Dueños de vendings:</strong> con años de experiencia en campo, que entendemos los retos diarios.</li>
+        <li><strong>Ingenieros en electrónica:</strong> especializados en IoT, responsables del diseño de nuestros módulos.</li>
+        <li><strong>Desarrolladores de software:</strong> que construyen y mantienen la plataforma en la nube y el dashboard.</li>
+        <li><strong>Soporte técnico:</strong> listo para resolver cualquier incidencia y acompañarte en la instalación.</li>
+      </ul>
+      <p>
+        Juntos combinamos conocimiento operativo y tecnológico para ofrecerte soluciones confiables, escalables y fáciles de usar.
+      </p>
+    </section>
+
+    <section>
+      <h2>Ubicación y Alcance</h2>
+      <p>
+        Con sede en <strong>Monterrey, Nuevo León</strong>, TrackMyVend ofrece:
+      </p>
+      <ul>
+        <li><strong>Soporte e instalación</strong> en toda la República Mexicana y Latinoamérica.</li>
+        <li><strong>Servicio técnico</strong> y mantenimiento remoto 24/7.</li>
+      </ul>
+      <p>
+        Nuestro objetivo es acompañarte donde sea que operes, garantizando conexión, actualizaciones y soporte inmediato para que tus máquinas nunca se detengan.
+      </p>
+    </section>
+
+    <section>
+      <h2>Visión</h2>
+      <p>
+        Imaginamos un futuro donde cada litro de agua vendido esté registrado, analizado y optimizado para generar valor, eficiencia y sostenibilidad en el negocio de vending. Queremos que la tecnología de TrackMyVend sea la base de una industria conectada, transparente y preparada para los retos del mañana.
+      </p>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <p>&copy; 2025 TrackMyVend. Todos los derechos reservados.</p>
+      <div>
+        <a href="https://facebook.com">Facebook</a> |
+        <a href="https://instagram.com">Instagram</a> |
+        <a href="mailto:info@trackmyvend.com">Email</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll effect for header
+    window.addEventListener('scroll', function() {
+      const header = document.querySelector('.header');
+      if (window.scrollY > 100) {
+        header.style.background = 'rgba(102, 126, 234, 0.95)';
+      } else {
+        header.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      }
+    });
+  </script>
 </body>
 </html>
