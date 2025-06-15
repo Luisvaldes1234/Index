@@ -134,16 +134,7 @@ sections:
           textAlign: left
       type: TitleBlock
     subtitle: ¿Por que trackmyvend?
-    text: >+
-      ### Trackmyvend nace cuando encontramos el problema que la mayoria de
-      quienes tienen mas de una vending enfrentan en algun momento, y es el, no
-      saber que hemos vendido, cuando y he inclusive a que hora, por esto,
-      desarrollamos nuestro primer producto, Link-nano, una herramienta capaz de
-      monitorear las ventas y la actividad de nuestra vending de agua, de esta
-      manera podemos llevar controles de caja, de manera 100% transparante, e
-      inclusive entender mejor el comportamiento de nuestros usuarios, a que
-      hora consumen nuestro producto, que producto consumen mas etc.
-
+    text: "TrackMyVend nace a partir de un problema real que enfrentamos nosotros mismos —y que muchos propietarios de máquinas de agua también comparten:\n\n> *No saber con certeza cuánto hemos vendido, en qué momento, ni qué producto es el más consumido.*\n\nCuando tienes más de una máquina, este problema se agrava. Sin información clara, los cortes de caja se vuelven imprecisos, y el crecimiento del negocio se vuelve riesgoso.\n\nPara resolverlo, desarrollamos nuestro primer producto: Link-Nano, un dispositivo inteligente, compacto y fácil de instalar que convierte cualquier máquina dispensadora de agua en una máquina conectada y eficiente.\n\n## \U0001F527 ¿Qué ventajas ofrece Link-Nano?\n\n✅ Se instala en cualquier máquina ya existente, sin importar la marca o el proveedor original.\n\n✅ No requiere modificar el sistema, solo se conecta con pinzas a los botones y válvula.\n\n✅ Detecta ventas automáticamente: reconoce cuándo se presiona un botón y se activa la válvula.\n\n✅ Registra cada venta en tiempo real, incluyendo botón, litros, monto y hora.\n\n✅ Sincroniza automáticamente con la nube, usando el número de serie del dispositivo.\n\n✅ Funciona sin internet: guarda las ventas localmente y las envía cuando vuelve la conexión.\n\n✅ Configuración 100% remota desde nuestra plataforma web.\n\n✅ Compatible con nuestro sistema de suscripción premium, que te da acceso al dashboard completo.\n\n✅ Ideal para dueños de varias máquinas que buscan control, transparencia y escalabilidad.\n\nCon Link-Nano ahora podemos:\n\n*   Saber qué se vendió, cuándo y cuánto\n\n*   Tener registros 100% confiables y transparentes\n\n*   Entender mejor el comportamiento de nuestros clientes:\n\n    qué volúmenes prefieren, a qué hora consumen más, y cuáles máquinas rinden mejor\n\nAsí nació TrackMyVend:\n\nComo una herramienta hecha por operadores, para operadores.\n\nPensada para que puedas controlar y hacer crecer tu negocio, estés donde estés.\n"
     actions: []
     elementId: null
     colors: bg-light-fg-dark
