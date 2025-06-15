@@ -29,7 +29,7 @@ sections:
         elementId: ''
         type: Link
     media:
-      url: /images/Screenshot 2025-05-16 at 3.16.22 AM.png
+      url: /images/Screenshot 2025-06-14 at 9.57.18 PM.png
       altText: Unblock your team boost your time to production preview
       elementId: ''
       type: ImageBlock
@@ -56,25 +56,6 @@ sections:
       backgroundRepeat: no-repeat
       opacity: 100
       url: /images/premium_photo-1701590725721-add548ecdf61.jpeg
-  - posts:
-      - content/pages/blog/case-study-1.md
-      - content/pages/blog/case-study-2.md
-      - content/pages/blog/case-study-3.md
-    showThumbnail: true
-    showDate: true
-    showAuthor: true
-    variant: three-col-grid
-    colors: bg-light-fg-dark
-    styles:
-      self:
-        padding:
-          - pt-16
-          - pl-16
-          - pb-16
-          - pr-16
-        justifyContent: center
-    type: FeaturedPostsSection
-    hoverEffect: move-up
   - title: Divider
     colors: bg-light-fg-dark
     styles:
@@ -86,21 +67,32 @@ sections:
           - pr-7
     type: DividerSection
   - title:
-      text: EL GRAN PROBLEMA QUE ENFRENTAS A TENER UN VENDING
+      text: >-
+        EL PROBLEMA DE TENER UN VENDING NO ES
+        VENDER…                                    ES NO SABER CUÁNDO NI CUÁNTO
+        VENDISTE 
       color: text-dark
       styles:
         self:
           textAlign: center
       type: TitleBlock
-    subtitle: This is a subtitle
-    text: |-
-      Aenean eros ipsum, interdum quis dignissim non, sollicitudin vitae nisl.
-      Aenean vel aliquet elit, at blandit ipsum. Sed eleifend felis sit amet
-      erat molestie, hendrerit malesuada justo ultrices. Nunc volutpat at erat
-      vitae interdum. Ut nec massa eget lorem blandit condimentum et at risus.
+    subtitle: 'TrackMyVend te muestra todo en tiempo real, desde cualquier lugar.'
+    text: >+
+      > Si tienes una máquina expendedora, sabes lo frustrante que es no saber
+      cuántas ventas hiciste, si está funcionando o cuándo debes ir a recolectar
+      el dinero.
+
+
+      >
+
+
+      > TrackMyVend convierte cualquier vending en una máquina inteligente: mide
+      litros, ventas, actividad por hora, y te avisa cuándo necesita atención.
+      Todo desde tu celular o computadora.
+
     media:
-      title: Title of the video
-      url: /images/placeholder-video.mp4
+      title: Los unicos en el mundo con este sistema
+      url: ''
       controls: false
       aspectRatio: '16:9'
       styles:
@@ -135,39 +127,15 @@ sections:
     type: GenericSection
   - type: GenericSection
     title:
-      text: Generic section with a video
+      text: ''
       color: text-dark
       styles:
         self:
           textAlign: left
       type: TitleBlock
-    subtitle: Section with a video subtitle
-    text: |-
-      Aenean eros ipsum, interdum quis dignissim non, sollicitudin vitae nisl.
-      Aenean vel aliquet elit, at blandit ipsum. Sed eleifend felis sit amet
-      erat molestie, hendrerit malesuada justo ultrices. Nunc volutpat at erat
-      vitae interdum. Ut nec massa eget lorem blandit condimentum et at risus.
+    subtitle: ¿Por que trackmyvend?
+    text: "TrackMyVend nace a partir de un problema real que enfrentamos nosotros mismos —y que muchos propietarios de máquinas de agua también comparten:\n\n> *No saber con certeza cuánto hemos vendido, en qué momento, ni qué producto es el más consumido.*\n\nCuando tienes más de una máquina, este problema se agrava. Sin información clara, los cortes de caja se vuelven imprecisos, y el crecimiento del negocio se vuelve riesgoso.\n\nPara resolverlo, desarrollamos nuestro primer producto: Link-Nano, un dispositivo inteligente, compacto y fácil de instalar que convierte cualquier máquina dispensadora de agua en una máquina conectada y eficiente.\n\n## \U0001F527 ¿Qué ventajas ofrece Link-Nano?\n\n✅ Se instala en cualquier máquina ya existente, sin importar la marca o el proveedor original.\n\n✅ No requiere modificar el sistema.\n\n✅ Detecta ventas automáticamente.\n\n✅ Registra cada venta en tiempo real, incluyendo botón, litros, monto y hora.\n\n✅ Sincroniza automáticamente con la nube, usando el número de serie del dispositivo.\n\n✅ Funciona sin internet: guarda las ventas localmente y las envía cuando vuelve la conexión.\n\n✅ Configuración 100% remota desde nuestra plataforma web.\n\n✅ Compatible con nuestro sistema de suscripción premium, que te da acceso al dashboard completo.\n\n✅ Ideal para dueños de varias máquinas que buscan control, transparencia y escalabilidad.\n\nCon Link-Nano ahora podemos:\n\n*   Saber qué se vendió, cuándo y cuánto\n\n*   Tener registros 100% confiables y transparentes\n\n*   Entender mejor el comportamiento de nuestros clientes:\n\n    qué volúmenes prefieren, a qué hora consumen más, y cuáles máquinas rinden mejor\n\nAsí nació TrackMyVend:\n\nComo una herramienta hecha por operadores, para operadores.\n\nPensada para que puedas controlar y hacer crecer tu negocio, estés donde estés.\n"
     actions: []
-    media:
-      title: Title of the video
-      url: /images/placeholder-video.mp4
-      autoplay: true
-      loop: true
-      muted: true
-      controls: false
-      aspectRatio: '16:9'
-      styles:
-        self:
-          padding:
-            - pt-2
-            - pb-2
-            - pl-2
-            - pr-2
-          borderColor: border-dark
-          borderStyle: solid
-          borderWidth: 1
-          borderRadius: large
-      type: VideoBlock
     elementId: null
     colors: bg-light-fg-dark
     styles:
@@ -176,46 +144,83 @@ sections:
         justifyContent: center
       subtitle:
         textAlign: left
-  - title:
-      text: Siguenos en redes
-      color: text-dark
+  - type: FeaturedItemsSection
+    title:
       type: TitleBlock
-    subtitle: Increase your reach
-    text: >
-      A service that helps businesses to manage their social media accounts and
-      posts.
-    actions:
-      - label: Get started
-        url: /
-        icon: arrowRight
-        iconPosition: right
-        style: secondary
-        type: Button
-      - label: See Tutorials
-        url: /
-        showIcon: true
-        icon: arrowRight
-        iconPosition: right
-        style: primary
-        type: Link
-    media:
-      url: /images/hero2.svg
-      altText: Fun feature preview
-      type: ImageBlock
-    badge:
-      label: This is a badge
-      color: text-primary
-      type: Badge
+      text: Nuestras soluciones
+      color: text-dark
+      styles:
+        self:
+          textAlign: center
+    items:
+      - type: FeaturedItem
+        title: Link-nano
+        subtitle: ''
+        text: "\n\n### \U0001F539\_\n\n### Link-Nano\n\n\n\n\n\n\nEl módulo inteligente que convierte cualquier máquina de agua en una máquina conectada.\n\n\n\n\nLink-Nano es un dispositivo compacto y universal que se instala sin modificar tu máquina actual. Detecta automáticamente cada venta al identificar la pulsación de botones y la activación de la válvula, enviando los datos en tiempo real a la nube.\n\nFunciona incluso sin internet y se sincroniza cuando vuelve la conexión. Ideal para monitorear ventas, mejorar el control de caja y escalar tu negocio de vending con transparencia y eficiencia.\n\n\n\n\n"
+        image:
+          type: ImageBlock
+          url: /images/img-placeholder.svg
+          altText: Faux Fur Throw
+          elementId: ''
+          styles:
+            self:
+              borderRadius: medium
+              padding:
+                - pt-0
+                - pl-0
+                - pb-0
+                - pr-0
+        actions: []
+        colors: bg-light-fg-dark
+        styles:
+          self:
+            padding:
+              - pt-6
+              - pl-6
+              - pb-6
+              - pr-6
+            textAlign: left
+            borderColor: border-neutralAlt
+            borderWidth: 2
+            borderRadius: x-small
+            flexDirection: row-reverse
+            justifyContent: center
+            borderStyle: dotted
+      - type: FeaturedItem
+        title: Cotton Knit Throws
+        subtitle: $ 44.99 – $ 90
+        image:
+          type: ImageBlock
+          url: /images/img-placeholder.svg
+          altText: Cotton Knit Throws
+          elementId: ''
+          styles:
+            self:
+              borderRadius: medium
+        actions: []
+        colors: bg-light-fg-dark
+        styles:
+          self:
+            flexDirection: row
+    actions: []
+    elementId: ''
+    variant: small-list
     colors: bg-light-fg-dark
     styles:
       self:
-        alignItems: center
-    type: GenericSection
+        padding:
+          - pt-0
+          - pl-0
+          - pb-0
+          - pr-0
+        justifyContent: center
+      subtitle:
+        textAlign: center
   - title:
-      text: Consultoria dedicada a tu negocio
+      text: Reportes personalizados
       color: text-dark
       type: TitleBlock
-    subtitle: Be in good company
+    subtitle: 'mensuales, semanales o del periodo que tu elijas'
     text: >
       A service that provides advice and guidance to startups and small
       businesses.
