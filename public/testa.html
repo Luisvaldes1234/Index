@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" 
+<html lang="es" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -26,9 +26,13 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       color: #333;
+      /* Asegurar renderizado nítido */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
 
-    /* Header */
+    /* Header - BLUR REMOVIDO */
     .header {
       background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
       color: white;
@@ -37,12 +41,15 @@
       width: 100%;
       top: 0;
       z-index: 1000;
-      backdrop-filter: blur(10px);
+      /* backdrop-filter: blur(10px); ← REMOVIDO */
       box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+      /* Asegurar renderizado nítido */
+      transform: translateZ(0);
+      will-change: transform;
     }
 
     .nav-container {
-      max-width: 1400px;
+      max-width: auto;
       margin: 0 auto;
       display: flex;
       justify-content: space-between;
@@ -130,7 +137,7 @@
       to { transform: rotate(360deg); } 
     }
 
-    /* Cards styling */
+    /* Cards styling - Mejorado para nitidez */
     .modern-card {
       background: white;
       border-radius: 20px;
@@ -140,6 +147,10 @@
       border: 2px solid transparent;
       position: relative;
       overflow: hidden;
+      /* Mejoras para renderizado nítido */
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
 
     .modern-card::before {
@@ -153,7 +164,7 @@
     }
 
     .modern-card:hover {
-      transform: translateY(-5px);
+      transform: translateY(-5px) translateZ(0);
       box-shadow: 0 25px 50px rgba(0,0,0,0.15);
       border-color: #667eea;
     }
@@ -165,6 +176,7 @@
       padding: 2rem;
       margin-bottom: 2rem;
       box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      transform: translateZ(0);
     }
 
     .filter-title {
@@ -220,10 +232,11 @@
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
+      transform: translateZ(0);
     }
 
     .modern-button:hover {
-      transform: translateY(-2px);
+      transform: translateY(-2px) translateZ(0);
       box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
     }
 
@@ -242,16 +255,17 @@
       padding: 1.5rem;
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
+      transform: translateZ(0);
     }
 
     .machine-card:hover {
-      transform: translateY(-3px);
+      transform: translateY(-3px) translateZ(0);
       box-shadow: 0 15px 35px rgba(0,0,0,0.15);
     }
 
     .machine-header {
       display: flex;
-      justify-content: between;
+      justify-content: space-between;
       align-items: center;
       margin-bottom: 1rem;
     }
@@ -290,6 +304,7 @@
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
+      transform: translateZ(0);
     }
 
     .summary-card::before {
@@ -303,7 +318,7 @@
     }
 
     .summary-card:hover {
-      transform: translateY(-3px);
+      transform: translateY(-3px) translateZ(0);
       box-shadow: 0 15px 35px rgba(0,0,0,0.15);
     }
 
@@ -332,10 +347,11 @@
       text-align: center;
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
+      transform: translateZ(0);
     }
 
     .volume-card:hover {
-      transform: translateY(-3px);
+      transform: translateY(-3px) translateZ(0);
       box-shadow: 0 15px 35px rgba(0,0,0,0.15);
     }
 
@@ -359,10 +375,11 @@
       padding: 2rem;
       box-shadow: 0 15px 35px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
+      transform: translateZ(0);
     }
 
     .chart-container:hover {
-      transform: translateY(-2px);
+      transform: translateY(-2px) translateZ(0);
       box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     }
 
@@ -386,7 +403,6 @@
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(5px);
       z-index: 2000;
       display: flex;
       align-items: center;
@@ -401,13 +417,13 @@
       max-width: 500px;
       width: 100%;
       box-shadow: 0 25px 50px rgba(0,0,0,0.25);
-      transform: scale(0.9);
+      transform: scale(0.9) translateZ(0);
       opacity: 0;
       transition: all 0.3s ease;
     }
 
     .modal:not(.hidden) .modal-content {
-      transform: scale(1);
+      transform: scale(1) translateZ(0);
       opacity: 1;
     }
 
@@ -600,7 +616,7 @@
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0)';
+            entry.target.style.transform = 'translateY(0) translateZ(0)';
           }
         });
       }, observerOptions);
@@ -609,7 +625,7 @@
       setTimeout(() => {
         document.querySelectorAll('.modern-card, .machine-card, .summary-card, .chart-container').forEach(card => {
           card.style.opacity = '0';
-          card.style.transform = 'translateY(20px)';
+          card.style.transform = 'translateY(20px) translateZ(0)';
           card.style.transition = 'all 0.6s ease';
           observer.observe(card);
         });
@@ -618,11 +634,11 @@
       // Add hover effects to buttons
       document.querySelectorAll('.modern-button').forEach(button => {
         button.addEventListener('mouseenter', function() {
-          this.style.transform = 'translateY(-2px) scale(1.05)';
+          this.style.transform = 'translateY(-2px) scale(1.05) translateZ(0)';
         });
         
         button.addEventListener('mouseleave', function() {
-          this.style.transform = 'translateY(0) scale(1)';
+          this.style.transform = 'translateY(0) scale(1) translateZ(0)';
         });
       });
     });
