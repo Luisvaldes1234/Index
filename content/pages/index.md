@@ -156,18 +156,7 @@ sections:
       - type: FeaturedItem
         title: Link-nano
         subtitle: ''
-        text: >+
-          Available in a range of colors and patterns, we make it easy to pick
-          the perfect look for you.
-
-
-
-
-          Our faux fur is incredibly soft, plush and oh-so inviting. It's like
-          the real deal (but better)!
-
-
-
+        text: "\n\n### \U0001F539\_\n\n### Link-Nano\n\n\n\n\n\n\nEl módulo inteligente que convierte cualquier máquina de agua en una máquina conectada.\n\n\n\n\nLink-Nano es un dispositivo compacto y universal que se instala sin modificar tu máquina actual. Detecta automáticamente cada venta al identificar la pulsación de botones y la activación de la válvula, enviando los datos en tiempo real a la nube.\n\nFunciona incluso sin internet y se sincroniza cuando vuelve la conexión. Ideal para monitorear ventas, mejorar el control de caja y escalar tu negocio de vending con transparencia y eficiencia.\n\n\n\n\n"
         image:
           type: ImageBlock
           url: /images/img-placeholder.svg
