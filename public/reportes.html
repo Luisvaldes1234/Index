@@ -5,96 +5,204 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reportes - TrackMyVend</title>
 
-  <!-- Dependencias -->
+  <!-- Supabase & Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-
-  <!-- Variables de entorno (Netlify) -->
-  <script>
-    window.env = {
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: '{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}',
-      SUPABASE_URL: 'https://ikuouxllercrjnibjtlkl.supabase.co'
-    };
-  </script>
 
   <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 
   <style>
-    canvas { width: 100% !important; height: 300px !important; }
-    .preset-btn { @apply bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600; }
+    .loading-spinner {
+      border: 4px solid rgba(0,0,0,0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: #09f;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .dark .loading-spinner {
+      border: 4px solid rgba(255,255,255,0.1);
+      border-left-color: #09f;
+    }
+    canvas { width:100% !important; height:300px !important; }
+    @media (max-width:640px) {
+      .date-filter { flex-direction:column; align-items:flex-start; }
+      .date-filter > * { margin-bottom:.5rem; }
+    }
   </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
 
-  <nav class="bg-gray-900 text-white px-4 py-3 flex gap-4">
+  <!-- Navegación -->
+  <nav class="bg-gray-900 text-white px-4 py-3 shadow flex gap-6">
     <a href="/dashboard.html" class="hover:underline">Dashboard</a>
-    <a href="/reportes.html" class="font-semibold underline">Reportes</a>
+    <a href="/reportes.html" class="font-semibold hover:underline">Reportes</a>
     <a href="/subscripcion.html" class="hover:underline">Subscripción</a>
     <a href="/maquinas.html" class="hover:underline">Mis Máquinas</a>
-    <a href="#" id="btnLogout" class="ml-auto hover:underline">Cerrar Sesión</a>
+    <a href="#" id="btnLogout" class="hover:underline ml-auto">Cerrar Sesión</a>
   </nav>
 
-  <div class="container mx-auto p-4 space-y-6">
-    <!-- Filtros de Fechas -->
-    <div class="flex items-center gap-4 flex-wrap">
-      <label>Desde:</label>
-      <input type="date" id="rptDesde" class="px-2 py-1 border rounded dark:bg-gray-800" />
-      <label>Hasta:</label>
-      <input type="date" id="rptHasta" class="px-2 py-1 border rounded dark:bg-gray-800" />
-      <!-- Presets -->
-      <div class="flex gap-2">
-        <span data-preset="7" class="preset-btn">Últimos 7 días</span>
-        <span data-preset="30" class="preset-btn">Último mes</span>
-        <span data-preset="365" class="preset-btn">Año en curso</span>
+  <div class="container mx-auto px-4 py-6 space-y-8">
+
+    <!-- Filtros -->
+    <div class="mb-6">
+      <div class="flex gap-4 items-center flex-wrap date-filter">
+        <label>Desde:</label>
+        <input type="date" id="desde" class="px-3 py-1 border rounded dark:bg-gray-800" />
+        <label>Hasta:</label>
+        <input type="date" id="hasta" class="px-3 py-1 border rounded dark:bg-gray-800" />
+        <label>Máquina:</label>
+        <select id="maquinaFiltro" class="px-3 py-1 border rounded dark:bg-gray-800">
+          <option value="">Todas</option>
+        </select>
+        <button id="btnAplicar" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Aplicar</button>
       </div>
-      <button id="rptActualizar" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Actualizar</button>
     </div>
 
-    <!-- KPIs Globales -->
-    <div id="rptKPIs" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
-
-    <!-- Desglose por Máquina -->
-    <div>
-      <h3 class="text-xl font-semibold mb-2">Desglose por Máquina</h3>
-      <canvas id="rptPorMaquina"></canvas>
+    <!-- KPIs Principales -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Ventas totales</p>
+        <h2 class="text-2xl font-bold" id="kpiVentasTotales">$0</h2>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Litros vendidos</p>
+        <h2 class="text-2xl font-bold" id="kpiLitros">0 L</h2>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Ticket promedio</p>
+        <h2 class="text-2xl font-bold" id="kpiTicket">$0</h2>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Transacciones</p>
+        <h2 class="text-2xl font-bold" id="kpiTransacciones">0</h2>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Cortes</p>
+        <h2 class="text-2xl font-bold" id="kpiCortes">0</h2>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <p class="text-gray-500 text-sm">Promedio diario</p>
+        <h2 class="text-2xl font-bold" id="kpiPromedioDiario">$0</h2>
+      </div>
     </div>
+  <!-- … KPIs Principales … -->
 
-    <!-- Desglose por Producto -->
-    <div>
-      <h3 class="text-xl font-semibold mb-2">Desglose por Producto</h3>
-      <canvas id="rptPorProducto"></canvas>
+  <!-- 3. Actividad y Uso -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Número de Ventas</p>
+      <h2 class="text-2xl font-bold" id="kpiNumVentas">0</h2>
     </div>
-
-    <!-- Serie temporal Ventas Diarias -->
-    <div>
-      <h3 class="text-xl font-semibold mb-2">Ventas Diarias</h3>
-      <canvas id="rptSerieDiaria"></canvas>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Hora Pico</p>
+      <h2 class="text-2xl font-bold" id="kpiHoraPico">--:00</h2>
     </div>
-
-    <!-- Tabla Detallada -->
-    <div>
-      <h3 class="text-xl font-semibold mb-2">Detalle de Ventas</h3>
-      <table id="rptTabla" class="min-w-full bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
-        <thead>
-          <tr class="bg-gray-200 dark:bg-gray-700 text-left">
-            <th class="px-4 py-2">Fecha</th>
-            <th class="px-4 py-2">Máquina</th>
-            <th class="px-4 py-2">Producto</th>
-            <th class="px-4 py-2">Unidades</th>
-            <th class="px-4 py-2">Importe</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
-      </table>
-    </div>
-
-    <!-- Exportar CSV -->
-    <div class="text-right">
-      <button id="rptExportCSV" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">Exportar CSV</button>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Intervalo Medio</p>
+      <h2 class="text-2xl font-bold" id="kpiIntervaloMedio">0 min</h2>
     </div>
   </div>
 
+<!-- Volumen Despachado -->
+<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
+  <div class="flex flex-wrap gap-4 items-center mb-4">
+    <div>
+      <label class="block text-gray-500 text-sm">Coste por m³ (MXN)</label>
+      <input type="number" id="costoMetro" class="px-3 py-1 border rounded dark:bg-gray-700" placeholder="p.ej. 15" />
+    </div>
+    <div>
+      <label class="block text-gray-500 text-sm">Gastos operativos (MXN)</label>
+      <input type="number" id="gastosOperativos" class="px-3 py-1 border rounded dark:bg-gray-700" placeholder="p.ej. 200" />
+    </div>
+    <button id="btnCalcularVolumen" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">
+      Calcular Utilidad
+    </button>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Litros Totales</p>
+      <h2 class="text-2xl font-bold" id="kpiLitrosTotales">0 L</h2>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Litros por Transacción</p>
+      <h2 class="text-2xl font-bold" id="kpiLitrosPromedio">0 L</h2>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <p class="text-gray-500 text-sm">Distribución Volumen</p>
+      <ul id="kpiDistribucion" class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+        <li>5 L: 0 %</li>
+        <li>10 L: 0 %</li>
+        <li>20 L: 0 %</li>
+      </ul>
+    </div>
+  </div>
+  <div id="volumenCostes" class="mt-4 text-gray-800 dark:text-gray-200 text-sm space-y-1"></div>
+</div>
+
+<!-- Estado de Suscripción por Máquina -->
+<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
+  <h2 class="text-xl font-bold mb-4">Estado de Suscripciones</h2>
+  <table class="w-full text-left">
+    <thead class="bg-gray-200 dark:bg-gray-700">
+      <tr>
+        <th class="px-4 py-2">Máquina</th>
+        <th class="px-4 py-2">Suscripción Hasta</th>
+        <th class="px-4 py-2">Estado</th>
+      </tr>
+    </thead>
+    <tbody id="tablaSuscripciones" class="divide-y divide-gray-200 dark:divide-gray-700">
+      <!-- Se llenará con JS -->
+    </tbody>
+  </table>
+</div>
+
+
+    <!-- Gráficas de tendencia -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h2 class="text-xl font-bold mb-4">Ventas en el tiempo</h2>
+        <canvas id="graficaVentasTiempo"></canvas>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
+        <h2 class="text-xl font-bold mb-4">Volumen en el tiempo</h2>
+        <canvas id="graficaVolumenTiempo"></canvas>
+      </div>
+    </div>
+
+    <!-- Ranking por máquina -->
+    <div class="mb-8">
+      <h2 class="text-xl font-bold mb-4">Ranking por Máquina</h2>
+      <canvas id="graficaRankingMaquinas"></canvas>
+    </div>
+
+    <!-- Historial de cortes -->
+    <div>
+      <h2 class="text-xl font-bold mb-4">Historial de Cortes</h2>
+      <table class="w-full text-left bg-white dark:bg-gray-800 rounded shadow overflow-hidden">
+        <thead class="bg-gray-200 dark:bg-gray-700">
+          <tr>
+            <th class="px-4 py-2">Fecha</th>
+            <th class="px-4 py-2">Máquina</th>
+            <th class="px-4 py-2">Total Ventas</th>
+            <th class="px-4 py-2">Litros</th>
+            <th class="px-4 py-2">Intervalo</th>
+          </tr>
+        </thead>
+        <tbody id="tablaCortes" class="divide-y divide-gray-200 dark:divide-gray-700">
+          <!-- filas generadas por JS -->
+        </tbody>
+      </table>
+      <button id="btnDescargarCortes" class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        Descargar CSV
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Script principal para reportes -->
   <script src="/reportes.js"></script>
 </body>
 </html>

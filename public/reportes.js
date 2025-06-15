@@ -1,269 +1,410 @@
-// reportes.js
+// === CONEXIÓN A SUPABASE ===
+const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// ———————————————————————————————————————————
-// 1) Configuración global y autenticación
-// ———————————————————————————————————————————
-let supabaseClient;
-let usuario;
-let ventas = [];
-let maquinasActivas = [];
+let user = null;
+let mapaNombreMaquina = {};
 
-const SUPABASE_URL = window.env.SUPABASE_URL;
-const SUPABASE_KEY = window.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Inicialización
+document.addEventListener('DOMContentLoaded', getUser);
 
-function inicializarSupabase() {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    alert("Faltan las variables de entorno de Supabase");
-    return false;
+async function getUser() {
+  const { data: { user: currentUser }, error } = await supabase.auth.getUser();
+  if (error || !currentUser) {
+    alert('No estás autenticado.');
+    return;
   }
-  supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: { autoRefreshToken: true, persistSession: true }
-  });
-  return true;
-}
+  user = currentUser;
+  await cargarFiltros();
+  setDefaultDates();
+  cargarReportes();
 
-async function verificarSesion() {
-  if (!supabaseClient && !inicializarSupabase()) return false;
-  const { data, error } = await supabaseClient.auth.getSession();
-  if (error || !data.session) {
-    window.location.href = "/login.html";
-    return false;
-  }
-  usuario = data.session.user;
-  document.getElementById("btnLogout")
-    .addEventListener("click", async () => {
-      await supabaseClient.auth.signOut();
-      location.href = "/login.html";
-    });
-  return true;
-}
-
-// ———————————————————————————————————————————
-// 2) Funciones para obtener datos
-// ———————————————————————————————————————————
-
-async function obtenerMaquinasActivas() {
-  const hoy = new Date().toISOString().split("T")[0];
-  const { data, error } = await supabaseClient
-    .from("maquinas")
-    .select("id,nombre")
-    .eq("user_id", usuario.id)
-    .gt("suscripcion_hasta", hoy);
-  if (error) throw error;
-  maquinasActivas = data;
-  const sel = document.getElementById("filtroMaquinaCSV");
-  sel.innerHTML = `<option value="">Todas</option>`;
-  maquinasActivas.forEach((m) => {
-    sel.innerHTML += `<option value="${m.id}">${m.nombre}</option>`;
+  document.getElementById('btnAplicar').addEventListener('click', cargarReportes);
+  document.getElementById('btnDescargarCortes').addEventListener('click', descargarCSV);
+  document.getElementById('btnLogout').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/login.html';
   });
 }
 
-async function obtenerVentas() {
-  const desde = document.getElementById("rptDesde").value;
-  const hasta = document.getElementById("rptHasta").value;
-  if (!desde || !hasta) throw new Error("Selecciona un rango de fechas");
-  // Ajustar hasta para incluir todo el día
-  const h = new Date(hasta);
-  h.setDate(h.getDate() + 1);
-  let query = supabaseClient
-    .from("ventas")
-    .select(`*, maquinas(nombre)`)
-    .eq("user_id", usuario.id)
-    .gte("fecha", desde)
-    .lt("fecha", h.toISOString().split("T")[0]);
+// Carga la lista de máquinas en el filtro
+async function cargarFiltros() {
+  const nowISO = new Date().toISOString();
 
-  const filtro = document.getElementById("filtroMaquinaCSV").value;
-  if (filtro) query = query.eq("id_maquina", filtro);
-  else query = query.in("id_maquina", maquinasActivas.map((m) => m.id));
+  // Sólo máquinas activas
+  const { data: maquinas, error } = await supabase
+    .from('maquinas')
+    .select('serial, nombre')
+    .eq('user_id', user.id)
+    .gt('suscripcion_hasta', nowISO);
 
-  const { data, error } = await query.order("fecha", { ascending: true });
-  if (error) throw error;
-  ventas = data.map((v) => ({
-    ...v,
-    importe: v.importe ?? 0,
-    unidades: v.unidades ?? 0,
-    maquina: v.maquinas?.nombre ?? "Desconocida",
-    fecha_corta: v.fecha.split("T")[0],
-    hora: new Date(v.fecha).toLocaleTimeString(),
-  }));
+  if (error) { console.error(error); return; }
+
+  const select = document.getElementById('maquinaFiltro');
+  select.innerHTML = '<option value="">Todas</option>';
+
+  maquinas.forEach(m => {
+    mapaNombreMaquina[m.serial] = m.nombre || m.serial;
+    const opt = document.createElement('option');
+    opt.value = m.serial;
+    opt.textContent = m.nombre || m.serial;
+    select.appendChild(opt);
+  });
 }
 
-// ———————————————————————————————————————————
-// 3) Renderizado de KPIs y tabla
-// ———————————————————————————————————————————
+// Fija fechas por defecto (inicio de mes - hoy)
+function setDefaultDates() {
+  const ahora = new Date();
+  const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+  document.getElementById('desde').value    = inicioMes.toISOString().split('T')[0];
+  document.getElementById('hasta').value    = ahora.toISOString().split('T')[0];
+}
 
-function renderKPIs() {
-  const total = ventas.reduce((s, v) => s + v.importe, 0);
-  const unidades = ventas.reduce((s, v) => s + v.unidades, 0);
-  const trans = ventas.length;
-  const desde = new Date(document.getElementById("rptDesde").value);
-  const hasta = new Date(document.getElementById("rptHasta").value);
-  const dias = Math.max(
-    1,
-    Math.ceil((hasta - desde) / (1000 * 60 * 60 * 24)) + 1
-  );
-  const diario = total / dias;
+// Orquesta la carga de todas las secciones
+async function cargarReportes() {
+  const desde  = document.getElementById('desde').value;
+  const hasta  = document.getElementById('hasta').value;
+  const serial = document.getElementById('maquinaFiltro').value;
+  if (!desde || !hasta) return;
 
-  document.getElementById(
-    "rptKPIs"
-  ).innerHTML = `
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-      <h4 class="font-semibold">Ventas Totales</h4>
-      <p>$${total.toFixed(2)}</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-      <h4 class="font-semibold">Unidades Vendidas</h4>
-      <p>${unidades}</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-      <h4 class="font-semibold">Transacciones</h4>
-      <p>${trans}</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-      <h4 class="font-semibold">Promedio Diario</h4>
-      <p>$${diario.toFixed(2)}</p>
-    </div>
+  await cargarKPIs(desde, hasta, serial);
+  await cargarActividadUso(desde, hasta, serial); 
+  await cargarGraficasVentas(desde, hasta, serial);
+  await cargarGraficasVolumen(desde, hasta, serial);
+  await cargarGraficaRanking(desde, hasta, serial);
+  await cargarTablaCortes(desde, hasta, serial);
+  await cargarEstadoSuscripciones();
+
+}
+
+// KPIs principales
+async function cargarKPIs(desde, hasta, serial) {
+  const desdeISO = new Date(desde).toISOString();
+  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
+
+  // Ventas
+  let ventasQ = supabase
+    .from('ventas')
+    .select('precio_total, litros')
+    .eq('user_id', user.id)
+    .gte('created_at', desdeISO)
+    .lte('created_at', hastaISO);
+  if (serial) ventasQ = ventasQ.eq('serial', serial);
+  const { data: ventas, error: errV } = await ventasQ;
+  if (errV) { console.error(errV); return; }
+
+  const totalVentas = ventas.reduce((acc, v) => acc + parseFloat(v.precio_total), 0);
+  const totalLitros = ventas.reduce((acc, v) => acc + parseFloat(v.litros), 0);
+  const transacciones = ventas.length;
+  const ticketProm   = transacciones ? totalVentas / transacciones : 0;
+  const dias         = (new Date(hasta) - new Date(desde)) / 86400000 + 1;
+  const promDiario   = dias > 0 ? totalVentas / dias : 0;
+
+  // Cortes
+  let cortesQ = supabase
+    .from('cortes')
+    .select('*')
+    .eq('user_id', user.id)
+    .gte('fecha_corte', desdeISO)
+    .lte('fecha_corte', hastaISO);
+  if (serial) cortesQ = cortesQ.eq('serial', serial);
+  const { data: cortes } = await cortesQ;
+
+  // Renderizar
+  document.getElementById('kpiVentasTotales').textContent     = `$${totalVentas.toFixed(2)}`;
+  document.getElementById('kpiLitros').textContent             = `${totalLitros.toFixed(1)} L`;
+  document.getElementById('kpiTicket').textContent             = `$${ticketProm.toFixed(2)}`;
+  document.getElementById('kpiTransacciones').textContent     = `${transacciones}`;
+  document.getElementById('kpiCortes').textContent            = `${cortes.length}`;
+  document.getElementById('kpiPromedioDiario').textContent     = `$${promDiario.toFixed(2)}`;
+}
+
+// Gráfica de ventas por día
+async function cargarGraficasVentas(desde, hasta, serial) {
+  const desdeISO = new Date(desde).toISOString();
+  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
+
+  let { data: ventas } = await supabase
+    .from('ventas')
+    .select('precio_total, created_at')
+    .eq('user_id', user.id)
+    .gte('created_at', desdeISO)
+    .lte('created_at', hastaISO);
+  if (serial) ventas = ventas.filter(v => v.serial === serial);
+
+  const mapa = {};
+  ventas.forEach(v => {
+    const day = new Date(v.created_at).toLocaleDateString('es-MX');
+    mapa[day] = (mapa[day] || 0) + parseFloat(v.precio_total);
+  });
+
+  const labels = Object.keys(mapa);
+  const dataPts = labels.map(d => mapa[d]);
+
+  const ctx = document.getElementById('graficaVentasTiempo');
+  if (window.chartVentasTiempo) window.chartVentasTiempo.destroy();
+  window.chartVentasTiempo = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Ventas ($)', data: dataPts }] }
+  });
+}
+
+// Gráfica de volumen por día
+async function cargarGraficasVolumen(desde, hasta, serial) {
+  const desdeISO = new Date(desde).toISOString();
+  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
+
+  let { data: ventas } = await supabase
+    .from('ventas')
+    .select('litros, created_at')
+    .eq('user_id', user.id)
+    .gte('created_at', desdeISO)
+    .lte('created_at', hastaISO);
+  if (serial) ventas = ventas.filter(v => v.serial === serial);
+
+  const mapa = {};
+  ventas.forEach(v => {
+    const day = new Date(v.created_at).toLocaleDateString('es-MX');
+    mapa[day] = (mapa[day] || 0) + parseFloat(v.litros);
+  });
+
+  const labels = Object.keys(mapa);
+  const dataPts = labels.map(d => mapa[d]);
+
+  const ctx = document.getElementById('graficaVolumenTiempo');
+  if (window.chartVolumenTiempo) window.chartVolumenTiempo.destroy();
+  window.chartVolumenTiempo = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Litros vendidos', data: dataPts }] }
+  });
+}
+
+// Ranking de máquinas por ventas
+async function cargarGraficaRanking(desde, hasta, serial) {
+  const desdeISO = new Date(desde).toISOString();
+  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
+
+  let { data: ventas } = await supabase
+    .from('ventas')
+    .select('serial, precio_total')
+    .eq('user_id', user.id)
+    .gte('created_at', desdeISO)
+    .lte('created_at', hastaISO);
+  if (serial) ventas = ventas.filter(v => v.serial === serial);
+
+  const mapa = {};
+  ventas.forEach(v => {
+    mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.precio_total);
+  });
+
+  const labels = Object.keys(mapa).map(s => mapaNombreMaquina[s] || s);
+  const dataPts = Object.values(mapa);
+
+  const ctx = document.getElementById('graficaRankingMaquinas');
+  if (window.chartRanking) window.chartRanking.destroy();
+  window.chartRanking = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Ventas por máquina ($)', data: dataPts }] }
+  });
+}
+
+// Historial de cortes con litros e intervalo
+async function cargarTablaCortes(desde, hasta, serial) {
+  const desdeISO = new Date(desde).toISOString();
+  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
+
+  let cortesQ = supabase
+    .from('cortes')
+    .select('*')
+    .eq('user_id', user.id)
+    .gte('fecha_corte', desdeISO)
+    .lte('fecha_corte', hastaISO)
+    .order('fecha_corte', { ascending: false });
+  if (serial) cortesQ = cortesQ.eq('serial', serial);
+
+  const { data: cortes, error } = await cortesQ;
+  if (error) { console.error(error); return; }
+
+  const tbody = document.getElementById('tablaCortes');
+  tbody.innerHTML = '';
+
+  for (let i = 0; i < cortes.length; i++) {
+    const corte   = cortes[i];
+    const prev    = cortes[i + 1];
+    const current = new Date(corte.fecha_corte);
+
+    // Intervalo
+    let intervalo = '-';
+    if (prev) {
+      const diff = current - new Date(prev.fecha_corte);
+      const dias = Math.floor(diff / 86400000);
+      const horas = Math.floor((diff % 86400000) / 3600000);
+      intervalo = `${dias}d ${horas}h`;
+    }
+
+    // Litros sumados entre cortes
+    let litrosSum = '-';
+    if (prev) {
+      const { data: ventasC, error: errC } = await supabase
+        .from('ventas')
+        .select('litros')
+        .eq('user_id', user.id)
+        .eq('serial', corte.serial)
+        .gte('created_at', prev.fecha_corte)
+        .lt('created_at', corte.fecha_corte);
+      litrosSum = errC ? '-' : ventasC.reduce((a, v) => a + parseFloat(v.litros), 0).toFixed(1);
+    }
+
+    const row = `<tr>
+      <td class="px-4 py-2">${current.toLocaleString('es-MX')}</td>
+      <td class="px-4 py-2">${mapaNombreMaquina[corte.serial] || corte.serial}</td>
+      <td class="px-4 py-2">$${parseFloat(corte.total_ventas).toFixed(2)}</td>
+      <td class="px-4 py-2">${litrosSum}</td>
+      <td class="px-4 py-2">${intervalo}</td>
+    </tr>`;
+    tbody.insertAdjacentHTML('beforeend', row);
+  }
+}
+
+// Descarga CSV del historial de cortes
+function descargarCSV() {
+  const rows = Array.from(document.querySelectorAll('#tablaCortes tr'));
+  let csv = 'Fecha,Máquina,Total Ventas,Litros,Intervalo\n';
+  rows.forEach(tr => {
+    const vals = Array.from(tr.children).map(td => td.textContent.replace(/\$/g, ''));
+    csv += vals.join(',') + '\n';
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `cortes_${document.getElementById('desde').value}_${document.getElementById('hasta').value}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+// 3. Actividad y Uso
+async function cargarActividadUso(desde, hasta, serial) {
+  const desdeISO = new Date(desde).toISOString();
+  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
+
+  let { data: ventas } = await supabase
+    .from('ventas')
+    .select('created_at')
+    .eq('user_id', user.id)
+    .gte('created_at', desdeISO)
+    .lte('created_at', hastaISO);
+  if (serial) ventas = ventas.filter(v => v.serial === serial);
+
+  // Número de ventas
+  document.getElementById('kpiNumVentas').textContent = ventas.length;
+
+  // Hora Pico
+  const horas = {};
+  ventas.forEach(v => {
+    const h = new Date(v.created_at).getHours();
+    horas[h] = (horas[h] || 0) + 1;
+  });
+  const pico = Object.entries(horas).sort((a,b) => b[1]-a[1])[0]?.[0] || 0;
+  document.getElementById('kpiHoraPico').textContent = `${String(pico).padStart(2,'0')}:00`;
+
+  // Intervalo Medio entre ventas (minutos)
+  const tiempos = ventas.map(v => new Date(v.created_at).getTime()).sort();
+  const diffs = tiempos.slice(1).map((t,i) => (t - tiempos[i]) / 60000);
+  const promedio = diffs.length
+    ? Math.round(diffs.reduce((a,b) => a + b, 0) / diffs.length)
+    : 0;
+  document.getElementById('kpiIntervaloMedio').textContent = `${promedio} min`;
+}
+
+// Volumen Despachado + Utilidad
+document.getElementById('btnCalcularVolumen').addEventListener('click', async () => {
+  const costoMetro = parseFloat(document.getElementById('costoMetro').value) || 0;
+  const gastosOp  = parseFloat(document.getElementById('gastosOperativos').value) || 0;
+  const desde     = document.getElementById('desde').value;
+  const hasta     = document.getElementById('hasta').value;
+  const serial    = document.getElementById('maquinaFiltro').value;
+  const desdeISO  = new Date(desde).toISOString();
+  const hastaISO  = new Date(hasta + 'T23:59:59').toISOString();
+
+  // 1) Traer ventas con litros y precio
+  let { data: ventas } = await supabase
+    .from('ventas')
+    .select('litros, precio_total')
+    .eq('user_id', user.id)
+    .gte('created_at', desdeISO)
+    .lte('created_at', hastaISO);
+  if (serial) ventas = ventas.filter(v => v.serial === serial);
+
+  // 2) Cálculo de litros
+  const litrosTotales = ventas.reduce((sum, v) => sum + parseFloat(v.litros), 0);
+  const transCount     = ventas.length;
+  const litrosProm     = transCount ? (litrosTotales / transCount) : 0;
+
+  // 3) Distribución
+  const cnt5  = ventas.filter(v => parseFloat(v.litros) === 5).length;
+  const cnt10 = ventas.filter(v => parseFloat(v.litros) === 10).length;
+  const cnt20 = ventas.filter(v => parseFloat(v.litros) === 20).length;
+  const dist5  = transCount ? ((cnt5  / transCount) * 100).toFixed(1) : 0;
+  const dist10 = transCount ? ((cnt10 / transCount) * 100).toFixed(1) : 0;
+  const dist20 = transCount ? ((cnt20 / transCount) * 100).toFixed(1) : 0;
+
+  // 4) Cálculo de costes y utilidad
+  const costeAguaTotal = (costoMetro / 1000) * litrosTotales;
+  const totalVentas    = ventas.reduce((sum, v) => sum + parseFloat(v.precio_total), 0);
+  const utilidad       = totalVentas - (costeAguaTotal + gastosOp);
+
+  // 5) Renderizar en DOM
+  document.getElementById('kpiLitrosTotales').textContent   = `${litrosTotales.toFixed(1)} L`;
+  document.getElementById('kpiLitrosPromedio').textContent  = `${litrosProm.toFixed(1)} L`;
+  document.getElementById('kpiDistribucion').innerHTML      = `
+    <li>5 L: ${dist5} %</li>
+    <li>10 L: ${dist10} %</li>
+    <li>20 L: ${dist20} %</li>
   `;
-}
-
-function renderTabla() {
-  const tbody = document.querySelector("#rptTabla tbody");
-  tbody.innerHTML = ventas
-    .map(
-      (v) => `
-    <tr class="dark:bg-gray-800">
-      <td class="px-4 py-2">${v.fecha_corta} ${v.hora}</td>
-      <td class="px-4 py-2">${v.maquina}</td>
-      <td class="px-4 py-2">${v.producto || "-"}</td>
-      <td class="px-4 py-2">${v.unidades}</td>
-      <td class="px-4 py-2">$${v.importe.toFixed(2)}</td>
-    </tr>`
-    )
-    .join("");
-}
-
-// ———————————————————————————————————————————
-// 4) Gráficas con Chart.js
-// ———————————————————————————————————————————
-
-let chartMaquina, chartProducto, chartSerie;
-function renderGraficas() {
-  // Desglose por Máquina
-  const byM = {};
-  ventas.forEach((v) => {
-    byM[v.maquina] = (byM[v.maquina] || 0) + v.importe;
-  });
-  const labM = Object.keys(byM),
-    valM = labM.map((l) => byM[l]);
-  const ctxM = document.getElementById("rptPorMaquina").getContext("2d");
-  if (chartMaquina) chartMaquina.destroy();
-  chartMaquina = new Chart(ctxM, {
-    type: "bar",
-    data: { labels: labM, datasets: [{ label: "Ventas $", data: valM }] },
-    options: { responsive: true, maintainAspectRatio: false },
-  });
-
-  // Desglose por Producto
-  const byP = {};
-  ventas.forEach((v) => {
-    const p = v.producto || "Sin nombre";
-    byP[p] = (byP[p] || 0) + v.unidades;
-  });
-  const labP = Object.keys(byP),
-    valP = labP.map((l) => byP[l]);
-  const ctxP = document.getElementById("rptPorProducto").getContext("2d");
-  if (chartProducto) chartProducto.destroy();
-  chartProducto = new Chart(ctxP, {
-    type: "pie",
-    data: { labels: labP, datasets: [{ data: valP }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right" } } },
-  });
-
-  // Serie temporal Ventas Diarias
-  const byDay = {};
-  ventas.forEach((v) => {
-    byDay[v.fecha_corta] = (byDay[v.fecha_corta] || 0) + v.importe;
-  });
-  const labD = Object.keys(byDay).sort(),
-    valD = labD.map((d) => byDay[d]);
-  const ctxS = document.getElementById("rptSerieDiaria").getContext("2d");
-  if (chartSerie) chartSerie.destroy();
-  chartSerie = new Chart(ctxS, {
-    type: "line",
-    data: { labels: labD, datasets: [{ label: "Ventas diarias", data: valD, fill: false }] },
-    options: { responsive: true, maintainAspectRatio: false },
-  });
-}
-
-// ———————————————————————————————————————————
-// 5) Exportar CSV
-// ———————————————————————————————————————————
-
-function exportarCSV() {
-  if (!ventas.length) return alert("Sin datos para exportar");
-  const rows = ventas.map((v) =>
-    [
-      `${v.fecha_corta} ${v.hora}`,
-      v.maquina,
-      v.producto || "-",
-      v.unidades,
-      v.importe.toFixed(2),
-    ]
-      .map((c) => `"${c}"`)
-      .join(",")
-  );
-  const csv = ["Fecha,Maquina,Producto,Unidades,Importe", ...rows].join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `reporte_${document.getElementById("rptDesde").value}_a_${document.getElementById("rptHasta").value}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-// ———————————————————————————————————————————
-// 6) Inicialización y eventos
-// ———————————————————————————————————————————
-
-window.addEventListener("DOMContentLoaded", () => {
-  // Presets de fechas
-  const desdeEl = document.getElementById("rptDesde"),
-    hastaEl = document.getElementById("rptHasta");
-  const hoy = new Date(),
-    ini = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-  desdeEl.value = ini.toISOString().split("T")[0];
-  hastaEl.value = hoy.toISOString().split("T")[0];
-
-  // Botones preset
-  document.querySelectorAll("[data-preset]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const dias = parseInt(btn.getAttribute("data-preset"), 10);
-      const fin = new Date(),
-        ini2 = new Date(fin);
-      ini2.setDate(fin.getDate() - dias + 1);
-      desdeEl.value = ini2.toISOString().split("T")[0];
-      hastaEl.value = fin.toISOString().split("T")[0];
-    });
-  });
-
-  document.getElementById("rptActualizar").addEventListener("click", async () => {
-    await runReporte();
-  });
-  document.getElementById("rptExportCSV").addEventListener("click", exportarCSV);
-
-  // Ejecutar reporte al cargar
-  runReporte();
+  document.getElementById('volumenCostes').innerHTML = `
+    <div>Coste de agua: $${costeAguaTotal.toFixed(2)}</div>
+    <div>Gastos operativos: $${gastosOp.toFixed(2)}</div>
+    <div class="font-semibold">Utilidad estimada: $${utilidad.toFixed(2)}</div>
+  `;
 });
+// 4. Estado de Suscripción por Máquina
+async function cargarEstadoSuscripciones() {
+  // Trae todas las máquinas del usuario, con nombre y fecha de expiración
+  const { data: maquinas, error } = await supabase
+    .from('maquinas')
+    .select('serial, nombre, suscripcion_hasta')
+    .eq('user_id', user.id);
 
-// Función que orquesta todo
-async function runReporte() {
-  if (!await verificarSesion()) return;
-  await obtenerMaquinasActivas();
-  await obtenerVentas();
-  renderKPIs();
-  renderTabla();
-  renderGraficas();
+  if (error) {
+    console.error('Error cargando suscripciones:', error);
+    return;
+  }
+
+  const tbody = document.getElementById('tablaSuscripciones');
+  tbody.innerHTML = '';
+
+  const ahora = new Date();
+
+  maquinas.forEach(m => {
+    const vencimiento = new Date(m.suscripcion_hasta);
+    const estaVigente = vencimiento > ahora;
+    const estadoText  = estaVigente
+      ? 'Activa'
+      : 'Vencida';
+
+    const row = `
+      <tr>
+        <td class="px-4 py-2">${m.nombre || m.serial}</td>
+        <td class="px-4 py-2">${vencimiento.toLocaleDateString('es-MX')}</td>
+        <td class="px-4 py-2 font-semibold ${estaVigente ? 'text-green-600' : 'text-red-600'}">
+          ${estadoText}
+        </td>
+      </tr>`;
+    tbody.insertAdjacentHTML('beforeend', row);
+  });
 }
+
+// Asegúrate de llamar a esta función dentro de cargarReportes():
+// await cargarEstadoSuscripciones();
+
