@@ -9,62 +9,40 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      scroll-behavior: smooth;
     }
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       color: #333;
-      position: relative;
-      overflow-x: hidden;
     }
 
-    /* Animated background elements */
-    body::before {
-      content: '';
-      position: fixed;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
-      background-size: 50px 50px;
-      animation: float 20s ease-in-out infinite;
-      z-index: 1;
-    }
-
-    body::after {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(255,255,255,0.03)" points="0,1000 1000,300 1000,1000"/></svg>');
-      background-size: cover;
-      z-index: 1;
-    }
-
-    /* Navigation */
-    .navbar {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+      color: white;
       padding: 1rem 0;
-      position: sticky;
+      position: fixed;
+      width: 100%;
       top: 0;
-      z-index: 100;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 30px rgba(0,0,0,0.1);
     }
 
     .nav-container {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
       display: flex;
       justify-content: space-between;
@@ -74,141 +52,228 @@
 
     .logo {
       font-size: 1.8rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-weight: bold;
+      color: white;
+      text-decoration: none;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
 
-    .nav-links {
+    .nav-menu {
       display: flex;
-      gap: 2rem;
+      list-style: none;
+      gap: 1.5rem;
       align-items: center;
     }
 
-    .nav-links a {
-      color: #555;
+    .nav-menu a {
+      color: white;
       text-decoration: none;
+      transition: all 0.3s ease;
+      padding: 0.7rem 1.2rem;
+      border-radius: 25px;
       font-weight: 500;
-      transition: all 0.3s ease;
-      padding: 0.5rem 1rem;
-      border-radius: 25px;
       position: relative;
+      overflow: hidden;
     }
 
-    .nav-links a:hover, .nav-links a.active {
-      color: #667eea;
-      background: rgba(102, 126, 234, 0.1);
-      transform: translateY(-1px);
+    .nav-menu a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
     }
 
-    .logout-btn {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white !important;
-      padding: 0.75rem 1.5rem !important;
-      border-radius: 25px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    .nav-menu a:hover::before {
+      left: 100%;
     }
 
-    .logout-btn:hover {
+    .nav-menu a:hover {
+      background: rgba(255,255,255,0.2);
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-      background: linear-gradient(135deg, #5a6fd8, #6a4c93) !important;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
 
-    /* Main Content */
-    .main-content {
+    .nav-menu a.active {
+      background: rgba(255,255,255,0.3);
+      font-weight: bold;
+    }
+
+    /* Main container */
+    .main-container {
+      margin-top: 80px;
+      min-height: calc(100vh - 80px);
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 2rem 0;
+    }
+
+    .container {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 2rem;
-      position: relative;
-      z-index: 10;
+      padding: 0 2rem;
     }
 
-    /* Cards */
-    .card {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+    /* Loading spinner */
+    .loading-spinner {
+      border: 4px solid rgba(102, 126, 234, 0.1);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border-left-color: #667eea;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { 
+      to { transform: rotate(360deg); } 
+    }
+
+    /* Cards styling */
+    .modern-card {
+      background: white;
       border-radius: 20px;
-      padding: 1.5rem;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
-      margin-bottom: 1.5rem;
+      border: 2px solid transparent;
+      position: relative;
+      overflow: hidden;
     }
 
-    .card:hover {
+    .modern-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+
+    .modern-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+      border-color: #667eea;
     }
 
-    /* Filter Section */
+    /* Filter section */
     .filter-section {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: white;
       border-radius: 20px;
       padding: 2rem;
       margin-bottom: 2rem;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     }
 
-    .filter-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-      align-items: end;
-    }
-
-    .filter-group {
+    .filter-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #2345e1;
+      margin-bottom: 1.5rem;
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 0.5rem;
     }
 
-    .filter-group label {
-      font-weight: 600;
-      color: #555;
-      font-size: 0.9rem;
+    .date-filter {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
-    .filter-input {
-      padding: 0.75rem 1rem;
-      border: 2px solid #e5e7eb;
+    .date-filter label {
+      font-weight: 600;
+      color: #555;
+    }
+
+    .date-filter input,
+    .date-filter select {
+      padding: 0.7rem 1rem;
+      border: 2px solid #e2e8f0;
       border-radius: 12px;
-      font-size: 1rem;
+      font-size: 0.9rem;
       transition: all 0.3s ease;
       background: white;
     }
 
-    .filter-input:focus {
+    .date-filter input:focus,
+    .date-filter select:focus {
       outline: none;
       border-color: #667eea;
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-      transform: translateY(-1px);
     }
 
-    .download-btn {
-      background: linear-gradient(135deg, #10b981, #059669);
+    /* Button styling */
+    .modern-button {
+      background: linear-gradient(45deg, #667eea, #764ba2);
       color: white;
-      padding: 0.75rem 1.5rem;
+      padding: 0.8rem 1.5rem;
       border: none;
       border-radius: 12px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    .download-btn:hover {
+    .modern-button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
     }
 
-    /* Summary Cards */
+    .modern-button.success {
+      background: linear-gradient(45deg, #10b981, #059669);
+    }
+
+    .modern-button.danger {
+      background: linear-gradient(45deg, #ef4444, #dc2626);
+    }
+
+    /* Machine cards */
+    .machine-card {
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .machine-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    }
+
+    .machine-header {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .machine-name {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .machine-status {
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    /* Summary cards */
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -217,13 +282,11 @@
     }
 
     .summary-card {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 2rem;
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
       text-align: center;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
@@ -235,444 +298,389 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      height: 3px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
     }
 
     .summary-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
     }
 
-    .summary-label {
-      color: #666;
-      font-size: 0.9rem;
-      font-weight: 500;
+    .summary-card .icon {
+      font-size: 2rem;
       margin-bottom: 0.5rem;
     }
 
-    .summary-value {
-      font-size: 2.2rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .summary-card p {
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
     }
 
-    /* Machine Controls */
-    .machine-controls-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
+    .summary-card h2 {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #2345e1;
     }
 
-    .machine-card {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
+    /* Volume distribution */
+    .volume-card {
+      background: white;
+      border-radius: 15px;
       padding: 1.5rem;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
     }
 
-    .machine-card:hover {
+    .volume-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
     }
 
-    .machine-name {
+    .volume-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-weight: bold;
       font-size: 1.1rem;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 1rem;
-    }
-
-    .machine-btn {
-      width: 100%;
-      background: linear-gradient(135deg, #667eea, #764ba2);
       color: white;
-      padding: 0.75rem;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    }
-
-    .machine-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
     }
 
     /* Charts */
-    .charts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 2rem;
-    }
-
-    .chart-card {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+    .chart-container {
+      background: white;
       border-radius: 20px;
       padding: 2rem;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
     }
 
-    .chart-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    .chart-container:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     }
 
     .chart-title {
       font-size: 1.3rem;
-      font-weight: 600;
-      color: #333;
+      font-weight: bold;
+      color: #2345e1;
       margin-bottom: 1.5rem;
-      text-align: center;
-    }
-
-    /* Loading Spinner */
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(102, 126, 234, 0.1);
-      border-radius: 50%;
-      border-left-color: #667eea;
-      animation: spin 1s linear infinite;
-      margin: 0 auto;
-    }
-
-    .loading-container {
       display: flex;
-      justify-content: center;
       align-items: center;
-      padding: 3rem;
+      gap: 0.5rem;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      33% { transform: translateY(-10px) rotate(1deg); }
-      66% { transform: translateY(5px) rotate(-1deg); }
+    canvas { 
+      width: 100% !important; 
+      height: 300px !important; 
     }
 
     /* Modal */
     .modal {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0,0,0,0.5);
       backdrop-filter: blur(5px);
-      z-index: 1000;
+      z-index: 2000;
       display: flex;
       align-items: center;
       justify-content: center;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-
-    .modal.show {
-      opacity: 1;
-      visibility: visible;
+      padding: 2rem;
     }
 
     .modal-content {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: white;
       border-radius: 20px;
       padding: 2rem;
       max-width: 500px;
-      width: 90%;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.25);
       transform: scale(0.9);
+      opacity: 0;
       transition: all 0.3s ease;
     }
 
-    .modal.show .modal-content {
+    .modal:not(.hidden) .modal-content {
       transform: scale(1);
+      opacity: 1;
     }
 
-    .modal-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 1rem;
+    /* Section titles */
+    .section-title {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #2345e1;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      position: relative;
+      padding-bottom: 0.5rem;
     }
 
-    .modal-btn {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-top: 1rem;
-    }
-
-    .modal-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      border-radius: 2px;
     }
 
     /* Responsive */
     @media (max-width: 768px) {
-      .nav-container {
-        padding: 0 1rem;
-        flex-wrap: wrap;
-        gap: 1rem;
+      .nav-menu {
+        display: none;
       }
-
-      .nav-links {
-        gap: 1rem;
-        flex-wrap: wrap;
+      
+      .date-filter {
+        flex-direction: column;
+        align-items: flex-start;
       }
-
-      .main-content {
-        padding: 1rem;
-      }
-
-      .filter-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .charts-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .machine-controls-grid {
-        grid-template-columns: 1fr;
+      
+      .date-filter > * {
+        margin-bottom: 0.5rem;
+        width: 100%;
       }
 
       .summary-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        padding: 0 1rem;
       }
     }
 
-    /* Chart customization */
-    canvas {
-      width: 100% !important;
-      height: 300px !important;
-      border-radius: 12px;
+    /* Dark mode support */
+    .dark .modern-card,
+    .dark .filter-section,
+    .dark .machine-card,
+    .dark .summary-card,
+    .dark .volume-card,
+    .dark .chart-container {
+      background: #1f2937;
+      color: #f9fafb;
     }
 
-    /* Hide default styles when showing custom design */
-    .hidden {
-      display: none !important;
+    .dark .summary-card p {
+      color: #9ca3af;
+    }
+
+    .dark .date-filter input,
+    .dark .date-filter select {
+      background: #374151;
+      border-color: #4b5563;
+      color: #f9fafb;
     }
   </style>
 </head>
 <body>
 
-  <!-- Navigation -->
-  <nav class="navbar">
+  <!-- Header -->
+  <header class="header">
     <div class="nav-container">
-      <div class="logo">TrackMyVend</div>
-      <div class="nav-links">
-        <a href="/dashboard.html" class="active">Dashboard</a>
-        <a href="/reportes.html">Reportes</a>
-        <a href="/subscripcion.html">Subscripción</a>
-        <a href="/maquinas.html">Mis Máquinas</a>
-        <a href="#" id="btnLogout" class="logout-btn">Cerrar Sesión</a>
+      <a href="#" class="logo">💧 TrackMyVend</a>
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="/dashboard.html" class="active">📊 Dashboard</a></li>
+          <li><a href="/reportes.html">📈 Reportes</a></li>
+          <li><a href="/subscripcion.html">💎 Subscripción</a></li>
+          <li><a href="/maquinas.html">🏭 Mis Máquinas</a></li>
+          <li><a href="#" id="btnLogout">🚪 Cerrar Sesión</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="container">
+
+      <!-- Loading Spinner -->
+      <div id="loading" class="flex justify-center py-8 hidden">
+        <div class="loading-spinner"></div>
       </div>
-    </div>
-  </nav>
 
-  <div class="main-content">
-
-    <!-- Loading Spinner -->
-    <div id="loading" class="loading-container hidden">
-      <div class="loading-spinner"></div>
-    </div>
-
-    <!-- Filters Section -->
-    <div class="filter-section">
-      <div class="filter-grid">
-        <div class="filter-group">
-          <label for="fechaDesde">Desde:</label>
-          <input type="date" id="fechaDesde" class="filter-input" />
+      <!-- Filters Section -->
+      <div class="filter-section">
+        <div class="filter-title">
+          🎛️ Filtros y Controles
         </div>
-        <div class="filter-group">
-          <label for="fechaHasta">Hasta:</label>
-          <input type="date" id="fechaHasta" class="filter-input" />
-        </div>
-        <div class="filter-group">
-          <label for="filtroMaquinaCSV">Máquina:</label>
-          <select id="filtroMaquinaCSV" class="filter-input">
+        <div class="date-filter">
+          <label>📅 Desde:</label>
+          <input type="date" id="fechaDesde" />
+          <label>📅 Hasta:</label>
+          <input type="date" id="fechaHasta" />
+          <label>🏭 Máquina:</label>
+          <select id="filtroMaquinaCSV">
             <option value="">Todas las máquinas</option>
           </select>
-        </div>
-        <div class="filter-group">
-          <label>&nbsp;</label>
-          <button id="btnDescargarCSV" class="download-btn">
-            📊 Descargar CSV
+          <button id="btnDescargarCSV" class="modern-button success">
+            📥 Descargar CSV
           </button>
         </div>
       </div>
-    </div>
 
-    <!-- Machine Controls -->
-    <div id="listaMaquinasCorte" class="machine-controls-grid"></div>
+      <!-- Machine Controls -->
+      <div class="mb-8">
+        <h2 class="section-title">🏭 Control de Máquinas</h2>
+        <div id="listaMaquinasCorte" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+      </div>
 
-    <!-- Summary Cards -->
-    <div id="resumen" class="summary-grid">
-      <div class="summary-card">
-        <div class="summary-label">💰 Ventas esta semana</div>
-        <div class="summary-value" id="ventasSemana">$0.00</div>
+      <!-- Summary Cards -->
+      <div class="mb-8">
+        <h2 class="section-title">📊 Resumen de Hoy</h2>
+        <div id="resumen" class="summary-grid"></div>
       </div>
-      <div class="summary-card">
-        <div class="summary-label">📈 Ventas este mes</div>
-        <div class="summary-value" id="ventasMes">$0.00</div>
-      </div>
-    </div>
 
-    <!-- Money in Machine -->
-    <div id="dineroMaquina" class="hidden"></div>
+      <!-- Volume Distribution -->
+      <div id="volumeDistribution" class="mb-8 hidden">
+        <h2 class="section-title">📏 Distribución por Volumen</h2>
+        <div id="volumeCards" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
+      </div>
 
-    <!-- Charts Grid -->
-    <div class="charts-grid">
-      <div class="chart-card">
-        <h2 class="chart-title">⏰ Ventas por Hora</h2>
-        <canvas id="graficaHoras"></canvas>
+      <!-- Charts Section -->
+      <div class="mb-8">
+        <h2 class="section-title">📈 Análisis y Gráficas</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="chart-container">
+            <h3 class="chart-title">🕐 Ventas por Hora</h3>
+            <canvas id="graficaHoras"></canvas>
+          </div>
+          <div class="chart-container">
+            <h3 class="chart-title">📅 Ventas por Día</h3>
+            <canvas id="graficaDias"></canvas>
+          </div>
+          <div class="chart-container">
+            <h3 class="chart-title">💧 Volumen Vendido</h3>
+            <canvas id="graficaVolumen"></canvas>
+          </div>
+          <div class="chart-container">
+            <h3 class="chart-title">🏆 Rendimiento por Máquina</h3>
+            <canvas id="graficaMaquinas"></canvas>
+          </div>
+        </div>
       </div>
-      <div class="chart-card">
-        <h2 class="chart-title">📅 Ventas por Día</h2>
-        <canvas id="graficaDias"></canvas>
-      </div>
-      <div class="chart-card">
-        <h2 class="chart-title">💧 Volumen Vendido</h2>
-        <canvas id="graficaVolumen"></canvas>
-      </div>
-      <div class="chart-card">
-        <h2 class="chart-title">🏭 Rendimiento por Máquina</h2>
-        <canvas id="graficaMaquinas"></canvas>
-      </div>
+
     </div>
   </div>
 
   <!-- Error Modal -->
-  <div id="errorModal" class="modal">
+  <div id="errorModal" class="modal hidden">
     <div class="modal-content">
-      <h3 class="modal-title">⚠️ Error</h3>
-      <p id="errorMessage"></p>
-      <button onclick="document.getElementById('errorModal').classList.remove('show')" class="modal-btn">
+      <h3 class="text-xl font-bold mb-4 text-red-600">⚠️ Error</h3>
+      <p id="errorMessage" class="mb-6 text-gray-600"></p>
+      <button onclick="document.getElementById('errorModal').classList.add('hidden')"
+              class="modern-button w-full">
         Cerrar
       </button>
     </div>
   </div>
 
-  <!-- Dashboard Script -->
+  <!-- Script principal -->
+  <script src="/dashboard.js"></script>
+
   <script>
-    // Original dashboard.js functionality would be included here
-    // For now, I'll include the basic structure and you can integrate your existing dashboard.js
+    // Add some visual enhancements
+    document.addEventListener('DOMContentLoaded', function() {
+      // Animate cards on scroll
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
 
-    // Supabase configuration (use your existing config)
-    const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+      const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, observerOptions);
 
-    // Show loading
+      // Initially hide and then animate cards
+      setTimeout(() => {
+        document.querySelectorAll('.modern-card, .machine-card, .summary-card, .chart-container').forEach(card => {
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(20px)';
+          card.style.transition = 'all 0.6s ease';
+          observer.observe(card);
+        });
+      }, 100);
+
+      // Add hover effects to buttons
+      document.querySelectorAll('.modern-button').forEach(button => {
+        button.addEventListener('mouseenter', function() {
+          this.style.transform = 'translateY(-2px) scale(1.05)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(0) scale(1)';
+        });
+      });
+    });
+
+    // Enhanced loading animation
     function showLoading() {
       document.getElementById('loading').classList.remove('hidden');
     }
 
-    // Hide loading
     function hideLoading() {
       document.getElementById('loading').classList.add('hidden');
     }
 
-    // Show error modal
-    function showError(message) {
-      document.getElementById('errorMessage').textContent = message;
-      document.getElementById('errorModal').classList.add('show');
+    // Override the renderResumen function to add icons and better styling
+    window.originalRenderResumen = window.renderResumen || function() {};
+    
+    function renderResumen(r) {
+      document.getElementById("resumen").innerHTML = `
+        <div class="summary-card">
+          <div class="icon">💧</div>
+          <p>Litros vendidos hoy</p>
+          <h2>${r.litros.toFixed(1)} L</h2>
+        </div>
+        <div class="summary-card">
+          <div class="icon">💰</div>
+          <p>Ventas totales hoy</p>
+          <h2>$${r.total.toFixed(2)}</h2>
+        </div>
+        <div class="summary-card">
+          <div class="icon">🎫</div>
+          <p>Ticket promedio</p>
+          <h2>$${r.ticket.toFixed(2)}</h2>
+        </div>
+        <div class="summary-card">
+          <div class="icon">⚡</div>
+          <p>Máquinas activas</p>
+          <h2>${r.activas}/${r.cantidad}</h2>
+        </div>
+        <div class="summary-card">
+          <div class="icon">🕐</div>
+          <p>Última venta</p>
+          <h2 style="font-size: 1rem;">${r.ultima ? new Date(r.ultima).toLocaleString("es-MX") : "N/A"}</h2>
+        </div>
+        <div class="summary-card">
+          <div class="icon">📅</div>
+          <p>Ventas esta semana</p>
+          <h2 id="ventasSemana">$0.00</h2>
+        </div>
+        <div class="summary-card">
+          <div class="icon">📊</div>
+          <p>Ventas este mes</p>
+          <h2 id="ventasMes">$0.00</h2>
+        </div>
+      `;
     }
 
-    // Logout functionality
-    document.getElementById('btnLogout').addEventListener('click', async (e) => {
-      e.preventDefault();
-      try {
-        await supabase.auth.signOut();
-        window.location.href = '/login.html';
-      } catch (error) {
-        showError('Error al cerrar sesión: ' + error.message);
-      }
-    });
-
-    // Initialize dashboard
-    document.addEventListener('DOMContentLoaded', function() {
-      // Set default dates
-      const today = new Date();
-      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-      
-      document.getElementById('fechaHasta').value = today.toISOString().split('T')[0];
-      document.getElementById('fechaDesde').value = weekAgo.toISOString().split('T')[0];
-
-      // Initialize your existing dashboard functionality here
-      // This would include loading machine data, setting up charts, etc.
-      
-      // Example: Create sample machine control buttons
-      const machineContainer = document.getElementById('listaMaquinasCorte');
-      const sampleMachines = ['Máquina A', 'Máquina B', 'Máquina C'];
-      
-      sampleMachines.forEach(machineName => {
-        const machineCard = document.createElement('div');
-        machineCard.className = 'machine-card';
-        machineCard.innerHTML = `
-          <div class="machine-name">${machineName}</div>
-          <button class="machine-btn" onclick="realizarCorte('${machineName}')">
-            💰 Realizar Corte
-          </button>
-        `;
-        machineContainer.appendChild(machineCard);
-      });
-    });
-
-    // Sample function for machine actions
-    function realizarCorte(machineName) {
-      alert(`Realizando corte para ${machineName}`);
-      // Your existing corte functionality here
-    }
-
-    // Responsive navigation for mobile
-    function toggleMobileNav() {
-      const navLinks = document.querySelector('.nav-links');
-      navLinks.classList.toggle('mobile-open');
-    }
-
-    // Add smooth animations to cards
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver(function(entries) {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
-        }
-      });
-    }, observerOptions);
-
-    // Observe all cards for animation
-    document.querySelectorAll('.card, .summary-card, .machine-card, .chart-card').forEach(card => {
-      card.style.opacity = '0';
-      card.style.transform = 'translateY(30px)';
-      card.style.transition = 'all 0.6s ease';
-      observer.observe(card);
-    });
-  </script>src="/dashboard.js"></script>
+    // Override machine card rendering
+    window.originalCargarMaquinasParaCSV = window.cargarMaquinasParaCSV || function() {};
+  </script>
 </body>
 </html>
