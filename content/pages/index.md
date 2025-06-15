@@ -155,7 +155,7 @@ sections:
     items:
       - type: FeaturedItem
         title: Link-nano
-        subtitle: $ 88 – $ 176
+        subtitle: ''
         text: >+
           Available in a range of colors and patterns, we make it easy to pick
           the perfect look for you.
