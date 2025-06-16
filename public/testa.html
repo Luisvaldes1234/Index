@@ -476,14 +476,15 @@
   <!-- Header -->
   <header class="header">
     <div class="nav-container">
-      <a href="#" class="logo">💧 TrackMyVend</a>
+      <a href="#" class="logo"> TrackMyVend</a>
       <nav>
         <ul class="nav-menu">
-          <li><a href="/dashboard.html" class="active">📊 Dashboard</a></li>
-          <li><a href="/reportes.html">📈 Reportes</a></li>
-          <li><a href="/subscripcion.html">💎 Subscripción</a></li>
-          <li><a href="/maquinas.html">🏭 Mis Máquinas</a></li>
-          <li><a href="#" id="btnLogout">🚪 Cerrar Sesión</a></li>
+          <li><a href="/dashboard.html" class="active"> Panel</a></li>
+          <li><a href="/reportes.html"> Reportes</a></li>
+          <li><a href="/subscripcion.html"> Suscripcion</a></li>
+          <li><a href="/maquinas.html"> Mis Máquinas</a></li>
+          <li><a href="/agenda.html"> Agenda</a></li>
+          <li><a href="#" id="btnLogout"> Cerrar Sesión</a></li>
         </ul>
       </nav>
     </div>
@@ -507,25 +508,25 @@
           <input type="date" id="fechaDesde" />
           <label>📅 Hasta:</label>
           <input type="date" id="fechaHasta" />
-          <label>🏭 Máquina:</label>
+          <label> Máquina:</label>
           <select id="filtroMaquinaCSV">
             <option value="">Todas las máquinas</option>
           </select>
           <button id="btnDescargarCSV" class="modern-button success">
-            📥 Descargar CSV
+             Descargar CSV
           </button>
         </div>
       </div>
 
       <!-- Machine Controls -->
       <div class="mb-8">
-        <h2 class="section-title">🏭 Control de Máquinas</h2>
+        <h2 class="section-title"> Control de Máquinas</h2>
         <div id="listaMaquinasCorte" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
       </div>
 
       <!-- Summary Cards -->
       <div class="mb-8">
-        <h2 class="section-title">📊 Resumen de Hoy</h2>
+        <h2 class="section-title"> Resumen de Hoy</h2>
         <div id="resumen" class="summary-grid"></div>
       </div>
 
@@ -537,22 +538,22 @@
 
       <!-- Charts Section -->
       <div class="mb-8">
-        <h2 class="section-title">📈 Análisis y Gráficas</h2>
+        <h2 class="section-title"> Análisis y Gráficas</h2>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div class="chart-container">
-            <h3 class="chart-title">🕐 Ventas por Hora</h3>
+            <h3 class="chart-title"> Ventas por Hora</h3>
             <canvas id="graficaHoras"></canvas>
           </div>
           <div class="chart-container">
-            <h3 class="chart-title">📅 Ventas por Día</h3>
+            <h3 class="chart-title"> Ventas por Día</h3>
             <canvas id="graficaDias"></canvas>
           </div>
           <div class="chart-container">
-            <h3 class="chart-title">💧 Volumen Vendido</h3>
+            <h3 class="chart-title"> Volumen Vendido</h3>
             <canvas id="graficaVolumen"></canvas>
           </div>
           <div class="chart-container">
-            <h3 class="chart-title">🏆 Rendimiento por Máquina</h3>
+            <h3 class="chart-title"> Rendimiento por Máquina</h3>
             <canvas id="graficaMaquinas"></canvas>
           </div>
         </div>
