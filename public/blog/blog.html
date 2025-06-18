@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - TrackMyVend | Insights sobre Máquinas de Agua Inteligentes</title>
+    <meta name="description" content="Descubre las últimas tendencias en máquinas de agua inteligentes, consejos de negocio y tecnología IoT para vending.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Header - Mismo del home */
+        .header {
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Blog Hero */
+        .blog-hero {
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            color: white;
+            padding: 120px 0 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .blog-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(255,255,255,0.05)" points="0,1000 1000,300 1000,1000"/></svg>');
+            background-size: cover;
+        }
+
+        .blog-hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .blog-hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .blog-hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        /* Blog Content */
+        .blog-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 2rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 4rem;
+        }
+
+        /* Featured Article */
+        .featured-article {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            margin-bottom: 3rem;
+            transition: all 0.3s ease;
+        }
+
+        .featured-article:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+
+        .featured-image {
+            height: 300px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+        }
+
+        .featured-content {
+            padding: 2rem;
+        }
+
+        .article-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .category-tag {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .featured-content h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #333;
+            line-height: 1.3;
+        }
+
+        .featured-content p {
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .read-more {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .read-more:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Blog Grid */
+        .blog-grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .blog-post {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .blog-post:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+
+        .post-image {
+            height: 200px;
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+        }
+
+        .post-content {
+            padding: 1.5rem;
+        }
+
+        .post-content h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .post-content p {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .post-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .post-link:hover {
+            color: #2345e1;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .sidebar-widget {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        .sidebar-widget h3 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .categories-list {
+            list-style: none;
+        }
+
+        .categories-list li {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .categories-list li:last-child {
+            border-bottom: none;
+        }
+
+        .categories-list a {
+            color: #666;
+            text-decoration: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .categories-list a:hover {
+            color: #667eea;
+        }
+
+        .post-count {
+            background: #f8f9fa;
+            color: #666;
+            padding: 0.2rem 0.6rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        .newsletter-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .newsletter-form input {
+            padding: 0.8rem;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .newsletter-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .newsletter-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .newsletter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 3rem;
+            grid-column: 1 / -1;
+        }
+
+        .pagination a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 10px;
+            border: 2px solid #eee;
+            transition: all 0.3s ease;
+        }
+
+        .pagination a:hover,
+        .pagination a.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        /* Footer - Mismo del home */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 50px 0 30px;
+            margin-top: 5rem;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .footer-section p, .footer-section a {
+            color: #bdc3c7;
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            transform: translateY(-3px);
+            background: #667eea;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #34495e;
+            margin-top: 2rem;
+            color: #95a5a6;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .blog-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .blog-hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .blog-container {
+                padding: 40px 1rem;
+            }
+
+            .featured-content {
+                padding: 1.5rem;
+            }
+
+            .featured-content h2 {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .blog-post {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .blog-post:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .blog-post:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .blog-post:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+            <a href="index.html" class="logo">TrackMyVend</a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="index.html#productos">Productos</a></li>
+                    <li><a href="index.html#beneficios">Beneficios</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                    <li><a href="index.html#contacto">Contacto</a></li>
+                    <li><a href="/login.html">Iniciar sesión</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Blog Hero -->
+    <section class="blog-hero">
+        <div class="blog-hero-content">
+            <h1>Blog TrackMyVend</h1>
+            <p>Descubre las últimas tendencias en máquinas de agua inteligentes, consejos de negocio y tecnología IoT para maximizar tus ganancias</p>
+        </div>
+    </section>
+
+    <!-- Blog Content -->
+    <div class="blog-container">
+        <main class="blog-main">
+            <!-- Featured Article -->
+            <article class="featured-article">
+                <div class="featured-image">📊</div>
+                <div class="featured-content">
+                    <div class="article-meta">
+                        <span class="category-tag">Tecnología</span>
+                        <span>15 Enero 2025</span>
+                        <span>5 min lectura</span>
+                    </div>
+                    <h2>Cómo la Tecnología IoT está Revolucionando el Negocio de Máquinas de Agua</h2>
+                    <p>Descubre cómo la tecnología IoT puede transformar completamente tu negocio de máquinas de agua. Desde monitoreo en tiempo real hasta análisis predictivo, exploramos las tendencias que están definiendo el futuro del industry del vending inteligente.</p>
+                    <a href="blog-post-1.html" class="read-more">Leer Artículo Completo</a>
+                </div>
+            </article>
+
+            <!-- Blog Grid -->
+            <div class="blog-grid">
+                <article class="blog-post">
+                    <div class="post-image">💰</div>
+                    <div class="post-content">
+                        <div class="article-meta">
+                            <span class="category-tag">Negocios</span>
+                            <span>12 Enero 2025</span>
+                        </div>
+                        <h3>5 Estrategias para Maximizar las Ganancias de tu Máquina de Agua</h3>
+                        <p>Conoce las mejores prácticas para optimizar la rentabilidad de tu negocio de máquinas de agua con estrategias probadas.</p>
+                        <a href="blog-post-2.html" class="post-link">Leer más →</a>
+                    </div>
+                </article>
+
+                <article class="blog-post">
+                    <div class="post-image">🔧</div>
+                    <div class="post-content">
+                        <div class="article-meta">
+                            <span class="category-tag">Mantenimiento</span>
+                            <span>10 Enero 2025</span>
+                        </div>
+                        <h3>Guía Completa de Mantenimiento para Máquinas de Agua Inteligentes</h3>
+                        <p>Aprende cómo mantener tu máquina de agua en perfectas condiciones con nuestro sistema de monitoreo predictivo.</p>
+                        <a href="blog-post-3.html" class="post-link">Leer más →</a>
+                    </div>
+                </article>
+
+                <article class="blog-post">
+                    <div class="post-image">📱</div>
+                    <div class="post-content">
+                        <div class="article-meta">
+                            <span class="category-tag">Tutorial</span>
+                            <span>8 Enero 2025</span>
+                        </div>
+                        <h3>Configuración Paso a Paso: Conecta tu Máquina en 10 Minutos</h3>
+                        <p>Tutorial detallado para instalar y configurar tu dispositivo Link-Nano sin conocimientos técnicos.</p>
+                        <a href="blog-post-4.html" class="post-link">Leer más →</a>
+                    </div>
+                </article>
+
+                <article class="blog-post">
+                    <div class="post-image">📈</div>
+                    <div class="post-content">
+                        <div class="article-meta">
+                            <span class="category-tag">Análisis</span>
+                            <span>5 Enero 2025</span>
+                        </div>
+                        <h3>Análisis de Datos: Cómo Interpretar las Métricas de tu Dashboard</h3>
+                        <p>Comprende qué significan los datos de tu dashboard y cómo usarlos para tomar mejores decisiones de negocio.</p>
+                        <a href="blog-post-5.html" class="post-link">Leer más →</a>
+                    </div>
+                </article>
+
+                <article class="blog-post">
+                    <div class="post-image">🏆</div>
+                    <div class="post-content">
+                        <div class="article-meta">
+                            <span class="category-tag">Casos de Éxito</span>
+                            <span>3 Enero 2025</span>
+                        </div>
+                        <h3>Caso de Éxito: Cómo Juan Aumentó sus Ventas un 40% en 3 Meses</h3>
+                        <p>Historia real de un empresario que transformó su negocio tradicional con tecnología TrackMyVend.</p>
+                        <a href="blog-post-6.html" class="post-link">Leer más →</a>
+                    </div>
+                </article>
+
+                <article class="blog-post">
+                    <div class="post-image">🌊</div>
+                    <div class="post-content">
+                        <div class="article-meta">
+                            <span class="category-tag">Industria</span>
+                            <span>1 Enero 2025</span>
+                        </div>
+                        <h3>Tendencias 2025: El Futuro de las Máquinas de Agua Purificada</h3>
+                        <p>Explora las innovaciones y tendencias que marcarán la industria del agua purificada este año.</p>
+                        <a href="blog-post-7.html" class="post-link">Leer más →</a>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <a href="#" class="active">1</a>
+                <a href="blog-page-2.html">2</a>
+                <a href="blog-page-3.html">3</a>
+                <a href="blog-page-2.html">→</a>
+            </div>
+        </main>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Categories -->
+            <div class="sidebar-widget">
+                <h3>Categorías</h3>
+                <ul class="categories-list">
+                    <li><a href="#">Tecnología <span class="post-count">8</span></a></li>
+                    <li><a href="#">Negocios <span class="post-count">12</span></a></li>
+                    <li><a href="#">Mantenimiento <span class="post-count">6</span></a></li>
+                    <li><a href="#">Tutoriales <span class="post-count">9</span></a></li>
+                    <li><a href="#">Casos de Éxito <span class="post-count">4</span></a></li>
+                    <li><a href="#">Industria <span class="post-count">7</span></a></li>
+                </ul>
+            </div>
+
+            <!-- Newsletter -->
+            <div class="sidebar-widget">
+                <h3>Newsletter</h3>
+                <p style="color: #666; margin-bottom: 1rem;">Recibe los mejores consejos y novedades directamente en tu email.</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Tu email" required>
+                    <button type="submit" class="newsletter-btn">Suscribirse</button>
+                </form>
+            </div>
+
+            <!-- Popular Posts -->
+            <div class="sidebar-widget">
+                <h3>Artículos Populares</h3>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">💰</div>
+                        <div>
+                            <a href="#" style="color: #333; text-decoration: none; font-weight: bold; font-size: 0.9rem; line-height: 1.3;">Cómo calcular la ROI de tu máquina inteligente</a>
+                            <p style="color: #666; font-size: 0.8rem; margin-top: 0.3rem;">Hace 2 días</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">🔧</div>
+                        <div>
+                            <a href="#" style="color: #333; text-decoration: none; font-weight: bold; font-size: 0.9rem; line-height: 1.3;">Solución a problemas comunes de conectividad</a>
+                            <p style="color: #666; font-size: 0.8rem; margin-top: 0.3rem;">Hace 5 días</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">📊</div>
+                        <div>
+                            <a href="#" style="color: #333; text-decoration: none; font-weight: bold; font-size: 0.9rem; line-height: 1.3;">Dashboard 2.0: Nuevas funcionalidades</a>
+                            <p style="color: #666; font-size: 0.8rem; margin-top: 0.3rem;">Hace 1 semana</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>TrackMyVend</h3>
+                <p>Transformamos máquinas de agua comunes en dispositivos inteligentes conectados.</p>
+                <div class="social-links">
+                    <a href="#" class="social-link"> 📘 </a>
+                    <a href="#" class="social-link"> 📧 </a>
+                    <a href="#" class="social-link"> 📱 </a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h3>Contacto</h3>
+                <a href="mailto:info@trackmyvend.com">info@trackmyvend.com</a>
+                <a href="tel:+52-81-2698-2507">+52 (81) 2698-2507</a>
+                <p>Monterrey, Nuevo León, México</p>
+            </div>
+            <div class="footer-section">
+                <h3>Productos</h3>
+                <a href="index.html#productos">Link-Nano</a>
+                <a href="index.html#productos">AquaLink</a>
+                <a href="#">Soporte Técnico</a>
+                <a href="#">Documentación</a>
+            </div>
+            <div class="footer-section">
+                <h3>Empresa</h3>
+                <a href="acerca.html">Acerca de</a>
+                <a href="blog.html">Blog</a>
+                <a href="casos-exito.html">Casos de Éxito</a>
+                <a href="privacidad.html">Política de Privacidad</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 TrackMyVend.com Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(35, 69, 225, 0.95)';
+            } else {
+                header.style.background = 'linear-gradient(135deg, #2345e1 0%, #667eea 100%)';
+            }
+        });
+
+        // Newsletter form
+        document.querySelector('.newsletter-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = this.querySelector('input[type="email"]').value;
+            
+            // Simulate subscription
+            alert('¡Gracias por suscribirte! Recibirás nuestros mejores consejos en ' + email);
+            this.reset();
+        });
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe blog posts
+        document.querySelectorAll('.blog-post').forEach((post, index) => {
+            post.style.opacity = '0';
+            post.style.transform = 'translateY(30px)';
+            post.style.transition = `all 0.6s ease ${index * 0.1}s`;
+            observer.observe(post);
+        });
+    </script>
+</body>
+</html>
