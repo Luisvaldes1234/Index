@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cómo Usar tu Dashboard: Aprende a Leer tus Métricas y Vender Más | TrackMyVend</title>
+    <meta name="description" content="Tu dashboard de TrackMyVend te muestra todo lo que pasa con tus máquinas. Aprende a leerlo bien, entender tus métricas y tomar decisiones que aumenten tus ventas.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Header - Mismo del blog principal */
+        .header {
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Article Hero */
+        .article-hero {
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            color: white;
+            padding: 120px 0 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .article-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(255,255,255,0.05)" points="0,1000 1000,300 1000,1000"/></svg>');
+            background-size: cover;
+        }
+
+        .article-hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .breadcrumb a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .breadcrumb a:hover {
+            opacity: 1;
+        }
+
+        .article-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .category-tag {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .article-hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            line-height: 1.2;
+        }
+
+        .article-subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            font-weight: 300;
+            line-height: 1.4;
+        }
+
+        /* Article Content */
+        .article-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 2rem;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .featured-image {
+            height: 300px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            color: white;
+        }
+
+        .content-body {
+            padding: 3rem;
+        }
+
+        .content-body h2 {
+            color: #333;
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem 0;
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        .content-body h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .content-body h3 {
+            color: #333;
+            font-size: 1.4rem;
+            margin: 1.5rem 0 0.8rem 0;
+            font-weight: 600;
+        }
+
+        .content-body p {
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        .content-body strong {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .content-body ul, .content-body ol {
+            margin: 1.5rem 0;
+            padding-left: 2rem;
+        }
+
+        .content-body li {
+            margin-bottom: 0.8rem;
+            line-height: 1.7;
+            color: #555;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-left: 4px solid #667eea;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .highlight-box p {
+            margin-bottom: 0;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .metric-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .metric-card h4 {
+            color: #333;
+            font-size: 1.2rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .metric-card p {
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .metric-tip {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            margin: 3rem 0;
+        }
+
+        .cta-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Article Navigation */
+        .article-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 0;
+            border-top: 1px solid #eee;
+            margin-top: 3rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #2345e1;
+            transform: translateX(5px);
+        }
+
+        .nav-link.prev:hover {
+            transform: translateX(-5px);
+        }
+
+        /* Related Articles */
+        .related-articles {
+            background: #f8f9fa;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+
+        .related-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .related-articles h3 {
+            text-align: center;
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .related-post {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .related-post:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+
+        .related-image {
+            height: 150px;
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .related-content {
+            padding: 1.5rem;
+        }
+
+        .related-content h4 {
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .related-content p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .related-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .related-link:hover {
+            color: #2345e1;
+        }
+
+        /* Footer - Mismo del blog principal */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 50px 0 30px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .footer-section p, .footer-section a {
+            color: #bdc3c7;
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            transform: translateY(-3px);
+            background: #667eea;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #34495e;
+            margin-top: 2rem;
+            color: #95a5a6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .article-hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .article-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .article-container {
+                padding: 40px 1rem;
+            }
+
+            .content-body {
+                padding: 2rem 1.5rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .article-nav {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .related-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .content-body > * {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+            <a href="index.html" class="logo">TrackMyVend</a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="index.html#productos">Productos</a></li>
+                    <li><a href="index.html#beneficios">Beneficios</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                    <li><a href="index.html#contacto">Contacto</a></li>
+                    <li><a href="/login.html">Iniciar sesión</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Article Hero -->
+    <section class="article-hero">
+        <div class="article-hero-content">
+            <div class="breadcrumb">
+                <a href="index.html">Inicio</a>
+                <span>→</span>
+                <a href="blog.html">Blog</a>
+                <span>→</span>
+                <span>Análisis de Dashboard</span>
+            </div>
+            <div class="article-meta">
+                <span class="category-tag">Análisis</span>
+                <span>5 Enero 2025</span>
+                <span>8 min lectura</span>
+            </div>
+            <h1>Cómo Usar tu Dashboard: Aprende a Leer tus Métricas y Vender Más</h1>
+            <p class="article-subtitle">Tu dashboard no está ahí para que lo mires por curiosidad. Está ahí para ayudarte a ganar más dinero.</p>
+        </div>
+    </section>
+
+    <!-- Article Content -->
+    <div class="article-container">
+        <article class="article-content">
+            <div class="featured-image">📈</div>
+            
+            <div class="content-body">
+                <p>Si usás TrackMyVend, tenés acceso a datos valiosos en tiempo real. Antes nadie tenia este tipo de informacion, pero ahora, que los tenemos, siempre es bueno entenderlos mas alla, de saber solamente cuanto vendimos.</p>
+
+                <p>Este artículo es para explicarte, sin vueltas, <strong>cómo usar la informacion de tu dashboard de una forma mas completa</strong>, aunque no tengas experiencia en tecnología o en KPI`s.</p>
+
+                <h2>🧠 Primero lo básico: ¿Qué es un dashboard?</h2>
+
+                <p>Es tu <strong>panel de control</strong>. Ahí ves lo que pasa en tus máquinas: ventas, actividad, ingresos, horarios pico… todo en un solo lugar.</p>
+
+                <p>Es como si cada máquina te hablara y te dijera:</p>
+
+                <div class="highlight-box">
+                    <p>"Estoy vendiendo bien" o "hace rato que nadie viene" o "me desconecté".</p>
+                </div>
+
+                <p>Si lo sabés escuchar, <strong>tomás mejores decisiones</strong>. Si lo ignorás, estás adivinando.
+                y por eso queremos compartirte cuales son las metricas que consideramos mas basicas e importantes.</p>
+
+                <h2>📊 Las métricas más importantes (y cómo usarlas)</h2>
+
+                <p>Estas son las 5 métricas que necesitás revisar <strong>al menos una vez por semana</strong>:</p>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h4>💧 1. Litros Vendidos</h4>
+                        <p>Te muestra la demanda real. Más litros = más uso = más ingresos. Si baja, algo cambió: el lugar, la competencia o tu máquina.</p>
+                        <div class="metric-tip">👉 Úsalo para comparar el rendimiento entre tus ubicaciones.</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h4>💰 2. Ingresos Generados</h4>
+                        <p>Es la cantidad de dinero que vendiste. Depende de cuántos litros y a qué precio.
+                        Cuanto gasta tu cliente en promedio con cada transacción.</p>
+                        <div class="metric-tip">👉 Revisá si los ingresos van subiendo o bajando. Si bajan, revisá precios, horario o conectividad.</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h4>🎯 3. Promedio por Ticket</h4>
+                        <p>Te dice cuánto gasta cada cliente en promedio. Por ejemplo: si vendés 20 litros pero el ticket promedio es $2, la mayoría compra poco.</p>
+                        <div class="metric-tip">👉 Úsalo para decidir si conviene hacer promociones por volumen (ej: "20L por $X").</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h4>🟢 4. Máquinas Activas</h4>
+                        <p>Te muestra cuántas están funcionando y enviando datos.</p>
+                        <div class="metric-tip">👉 Si una máquina aparece como "inactiva" o sin conexión, puede estar apagada, desconectada o con un error. Revisala.</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h4>🕐 5. Última Venta</h4>
+                        <p>Muestra la hora y día del último despacho. Si pasan muchas horas o días sin ventas, tenés un problema.</p>
+                        <div class="metric-tip">👉 Te ayuda a detectar máquinas olvidadas o mal ubicadas.</div>
+                    </div>
+                </div>
+
+                <h2>📅 ¿Cada cuánto deberías revisar?</h2>
+
+                <p>Lo ideal:</p>
+
+                <ul>
+                    <li><strong>Una vez a la semana</strong>, revisar todas las métricas.</li>
+                    <li><strong>Cada 2 o 3 días</strong>, checar si alguna máquina dejó de vender.</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <p>Con 10 minutos semanales podés detectar oportunidades o evitar pérdidas importantes.</p>
+                </div>
+
+                <h2>🚨 Lo que no se ve, no se corrige</h2>
+
+                <p>Tu dashboard te dice cosas que nadie más te va a decir:</p>
+
+                <ul>
+                    <li>Te avisa si algo se apagó.</li>
+                    <li>Te muestra qué funciona y qué no.</li>
+                    <li>Te da claridad para decidir con lógica, no con suposiciones.</li>
+                </ul>
+
+                <p>Y no necesitás ser técnico. Solo tenés que entrar, mirar y <strong>aprender a detectar patrones</strong>.</p>
+
+                <div class="cta-section">
+                    <h3>📲 ¿No sabés por dónde empezar?</h3>
+                    <p>No te preocupes. Nuestro equipo te puede guiar paso a paso para entender tus métricas y tomar decisiones inteligentes.</p>
+                    <a href="https://wa.me/5218126982507" class="cta-button">Hablá con nosotros por WhatsApp</a>
+                </div>
+
+                <h2>✅ Conclusión</h2>
+
+                <p>Tu dashboard es tu mejor herramienta. Si no lo usás, estás volando a ciegas.</p>
+
+                <p>Usalo bien y vas a:</p>
+
+                <ul>
+                    <li>Vender más</li>
+                    <li>Detectar errores antes de que duelan</li>
+                    <li>Tomar mejores decisiones</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <p>Y lo mejor: <strong>todo desde tu celular o computadora.</strong></p>
+                </div>
+
+                <!-- Article Navigation -->
+                <div class="article-nav">
+                    <a href="blog-post-4.html" class="nav-link prev">
+                        ← Artículo Anterior
+                    </a>
+                    <a href="blog-post-6.html" class="nav-link">
+                        Siguiente Artículo →
+                    </a>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <!-- Related Articles -->
+    <section class="related-articles">
+        <div class="related-container">
+            <h3>Artículos Relacionados</h3>
+            <div class="related-grid">
+                <article class="related-post">
+                    <div class="related-image">💰</div>
+                    <div class="related-content">
+                        <h4>5 Estrategias para Maximizar las Ganancias de tu Máquina de Agua</h4>
+                        <p>Conoce las mejores prácticas para optimizar la rentabilidad de tu negocio con estrategias probadas.</p>
+                        <a href="blog-post-2.html" class="related-link">Leer más →</a>
+                    </div>
+                </article>
+
+                <article class="related-post">
+                    <div class="related-image">📱</div>
+                    <div class="related-content">
+                        <h4>Configuración Paso a Paso: Conecta tu Máquina en 10 Minutos</h4>
+                        <p>Tutorial detallado para instalar y configurar tu dispositivo Link-Nano sin conocimientos técnicos.</p>
+                        <a href="blog-post-4.html" class="related-link">Leer más →</a>
+                    </div>
+                </article>
+
+                <article class="related-post">
+                    <div class="related-image">🏆</div>
+                    <div class="related-content">
+                        <h4>Caso de Éxito: Cómo Juan Aumentó sus Ventas un 40% en 3 Meses</h4>
+                        <p>Historia real de un empresario que transformó su negocio tradicional con tecnología TrackMyVend.</p>
+                        <a href="blog-post-6.html" class="related-link">Leer más →</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>TrackMyVend</h3>
+                <p>Transformamos máquinas de agua comunes en dispositivos inteligentes conectados.</p>
+                <div class="social-links">
+                    <a href="#" class="social-link"> 📘 </a>
+                    <a href="#" class="social-link"> 📧 </a>
+                    <a href="#" class="social-link"> 📱 </a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h3>Contacto</h3>
+                <a href="mailto:info@trackmyvend.com">info@trackmyvend.com</a>
+                <a href="tel:+52-81-2698-2507">+52 (81) 2698-2507</a>
+                <p>Monterrey, Nuevo León, México</p>
+            </div>
+            <div class="footer-section">
+                <h3>Productos</h3>
+                <a href="index.html#productos">Link-Nano</a>
+                <a href="index.html#productos">AquaLink</a>
+                <a href="#">Soporte Técnico</a>
+                <a href="#">Documentación</a>
+            </div>
+            <div class="footer-section">
+                <h3>Empresa</h3>
+                <a href="acerca.html">Acerca de</a>
+                <a href="blog.html">Blog</a>
+                <a href="casos-exito.html">Casos de Éxito</a>
+                <a href="privacidad.html">Política de Privacidad</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 TrackMyVend.com Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(35, 69, 225, 0.95)';
+            } else {
+                header.style.background = 'linear-gradient(135deg, #2345e1 0%, #667eea 100%)';
+            }
+        });
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe content elements
+        document.querySelectorAll('.content-body > *').forEach((element, index) => {
+            element.style.opacity = '0';
+            element.style.transform = 'translateY(30px)';
+            element.style.transition = `all 0.6s ease ${index * 0.1}s`;
+            observer.observe(element);
+        });
+
+        // Metric cards hover effect
+        document.querySelectorAll('.metric-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.borderLeftColor = '#2345e1';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.borderLeftColor = '#667eea';
+            });
+        });
+    </script>
+</body>
+</html>
