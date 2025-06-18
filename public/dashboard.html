@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" 
+<html lang="es" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,26 +13,17 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      scroll-behavior: smooth;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       line-height: 1.6;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       color: #333;
-      /* Asegurar renderizado nítido */
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
     }
-
-    /* Header - BLUR REMOVIDO */
     .header {
       background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
       color: white;
@@ -41,450 +32,83 @@
       width: 100%;
       top: 0;
       z-index: 1000;
-      /* backdrop-filter: blur(10px); ← REMOVIDO */
       box-shadow: 0 4px 30px rgba(0,0,0,0.1);
-      /* Asegurar renderizado nítido */
-      transform: translateZ(0);
-      will-change: transform;
     }
-
     .nav-container {
-      max-width: auto;
+      width: 100%;
       margin: 0 auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 0 2rem;
     }
-
-    .logo {
-      font-size: 1.8rem;
-      font-weight: bold;
-      color: white;
-      text-decoration: none;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .nav-menu {
-      display: flex;
-      list-style: none;
-      gap: 1.5rem;
-      align-items: center;
-    }
-
+    .logo { font-size: 1.8rem; font-weight: bold; color: white; text-decoration: none; }
+    .nav-menu { display: flex; list-style: none; gap: 1.5rem; align-items: center; }
     .nav-menu a {
-      color: white;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      padding: 0.7rem 1.2rem;
-      border-radius: 25px;
-      font-weight: 500;
-      position: relative;
-      overflow: hidden;
+      color: white; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 25px;
+      font-weight: 500; position: relative; overflow: hidden; transition: all 0.3s ease;
     }
-
-    .nav-menu a::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-      transition: left 0.5s;
-    }
-
-    .nav-menu a:hover::before {
-      left: 100%;
-    }
-
-    .nav-menu a:hover {
-      background: rgba(255,255,255,0.2);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
-    .nav-menu a.active {
-      background: rgba(255,255,255,0.3);
-      font-weight: bold;
-    }
-
-    /* Main container */
-    .main-container {
-      margin-top: 80px;
-      min-height: calc(100vh - 80px);
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      padding: 2rem 0;
-    }
-
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 2rem;
-    }
-
-    /* Loading spinner */
+    .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.2); }
+    .main-container { margin-top: 80px; padding: 2rem 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: calc(100vh - 80px); }
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; }
+    .section-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    .section-title { font-size: 2rem; font-weight: bold; color: #2345e1; margin-bottom: 1.5rem; text-align: center; }
+    .subsection-title { font-size: 1.5rem; font-weight: bold; color: #2345e1; margin-bottom: 1rem; }
+    .grid { display: grid; gap: 1rem; }
+    @media (min-width: 640px) { .sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); } .sm\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); } .sm\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); } }
+    @media (min-width: 768px) { .md\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 1024px) { .lg\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); } .lg\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); } .lg\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); } }
+    @media (min-width: 1280px) { .xl\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); } .xl\:grid-cols-6 { grid-template-columns: repeat(6, 1fr); } }
+    @media (min-width: 1536px) { .\32xl\:grid-cols-6 { grid-template-columns: repeat(6, 1fr); } }
+    .kpi-card { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 16px; border-left: 5px solid #667eea; transition: all 0.3s ease; }
+    .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .kpi-label { color: #64748b; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
+    .kpi-value { color: #2345e1; font-size: 1.5rem; font-weight: bold; }
+    .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
+    .form-input, .form-select { width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 12px; background: white; transition: all 0.3s ease; }
+    .form-input:focus, .form-select:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); outline: none; }
+    .modern-button { background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .modern-button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); }
+    .modern-button.success { background: linear-gradient(45deg, #10b981, #059669); }
+    .modern-button.danger { background: linear-gradient(45deg, #ef4444, #dc2626); }
+    .modern-button.secondary { background: linear-gradient(45deg, #6b7280, #4b5563); }
+    .modern-button.active { background: linear-gradient(45deg, #2345e1, #667eea); }
+    .modern-button.corte { background: linear-gradient(45deg, #f59e0b, #d97706); margin: 0.25rem; padding: 0.8rem 1.2rem; font-size: 0.9rem; }
+    .filter-section { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem; }
+    .chart-container { background: white; padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
     .loading-spinner {
-      border: 4px solid rgba(102, 126, 234, 0.1);
-      width: 50px;
-      height: 50px;
+      border: 4px solid rgba(102,126,234,0.1);
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border-left-color: #667eea;
       animation: spin 1s linear infinite;
     }
-
-    @keyframes spin { 
-      to { transform: rotate(360deg); } 
-    }
-
-    /* Cards styling - Mejorado para nitidez */
-    .modern-card {
-      background: white;
-      border-radius: 20px;
-      padding: 2rem;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-      border: 2px solid transparent;
-      position: relative;
-      overflow: hidden;
-      /* Mejoras para renderizado nítido */
-      transform: translateZ(0);
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-    }
-
-    .modern-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #667eea, #764ba2);
-    }
-
-    .modern-card:hover {
-      transform: translateY(-5px) translateZ(0);
-      box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-      border-color: #667eea;
-    }
-
-    /* Filter section */
-    .filter-section {
-      background: white;
-      border-radius: 20px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      transform: translateZ(0);
-    }
-
-    .filter-title {
-      font-size: 1.3rem;
-      font-weight: bold;
-      color: #2345e1;
-      margin-bottom: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .date-filter {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .date-filter label {
-      font-weight: 600;
-      color: #555;
-    }
-
-    .date-filter input,
-    .date-filter select {
-      padding: 0.7rem 1rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      transition: all 0.3s ease;
-      background: white;
-    }
-
-    .date-filter input:focus,
-    .date-filter select:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    /* Button styling */
-    .modern-button {
-      background: linear-gradient(45deg, #667eea, #764ba2);
-      color: white;
-      padding: 0.8rem 1.5rem;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      transform: translateZ(0);
-    }
-
-    .modern-button:hover {
-      transform: translateY(-2px) translateZ(0);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-    }
-
-    .modern-button.success {
-      background: linear-gradient(45deg, #10b981, #059669);
-    }
-
-    .modern-button.danger {
-      background: linear-gradient(45deg, #ef4444, #dc2626);
-    }
-
-    /* Machine cards */
-    .machine-card {
-      background: white;
-      border-radius: 15px;
-      padding: 1.5rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-      transform: translateZ(0);
-    }
-
-    .machine-card:hover {
-      transform: translateY(-3px) translateZ(0);
-      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-    }
-
-    .machine-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .machine-name {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .machine-status {
-      padding: 0.5rem 1rem;
-      border-radius: 25px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      text-align: center;
-      margin-top: 1rem;
-    }
-
-    /* Summary cards */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .summary-card {
-      background: white;
-      border-radius: 15px;
-      padding: 1.5rem;
-      text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      transform: translateZ(0);
-    }
-
-    .summary-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #667eea, #764ba2);
-    }
-
-    .summary-card:hover {
-      transform: translateY(-3px) translateZ(0);
-      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-    }
-
-    .summary-card .icon {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .summary-card p {
-      color: #6b7280;
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .summary-card h2 {
-      font-size: 1.8rem;
-      font-weight: bold;
-      color: #2345e1;
-    }
-
-    /* Volume distribution */
-    .volume-card {
-      background: white;
-      border-radius: 15px;
-      padding: 1.5rem;
-      text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-      transform: translateZ(0);
-    }
-
-    .volume-card:hover {
-      transform: translateY(-3px) translateZ(0);
-      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-    }
-
-    .volume-circle {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1rem;
-      font-weight: bold;
-      font-size: 1.1rem;
-      color: white;
-    }
-
-    /* Charts */
-    .chart-container {
-      background: white;
-      border-radius: 20px;
-      padding: 2rem;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-      transform: translateZ(0);
-    }
-
-    .chart-container:hover {
-      transform: translateY(-2px) translateZ(0);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-    }
-
-    .chart-title {
-      font-size: 1.3rem;
-      font-weight: bold;
-      color: #2345e1;
-      margin-bottom: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    canvas { 
-      width: 100% !important; 
-      height: 300px !important; 
-    }
-
-   
-
-    /* Section titles */
-    .section-title {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #2345e1;
-      margin-bottom: 1.5rem;
-      text-align: center;
-      position: relative;
-      padding-bottom: 0.5rem;
-    }
-
-    .section-title::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60px;
-      height: 3px;
-      background: linear-gradient(90deg, #667eea, #764ba2);
-      border-radius: 2px;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .nav-menu {
-        display: none;
-      }
-      
-      .date-filter {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      
-      .date-filter > * {
-        margin-bottom: 0.5rem;
-        width: 100%;
-      }
-
-      .summary-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .container {
-        padding: 0 1rem;
-      }
-    }
-
-    /* Dark mode support */
-    .dark .modern-card,
-    .dark .filter-section,
-    .dark .machine-card,
-    .dark .summary-card,
-    .dark .volume-card,
-    .dark .chart-container {
-      background: #1f2937;
-      color: #f9fafb;
-    }
-
-    .dark .summary-card p {
-      color: #9ca3af;
-    }
-
-    .dark .date-filter input,
-    .dark .date-filter select {
-      background: #374151;
-      border-color: #4b5563;
-      color: #f9fafb;
+    @keyframes spin { to { transform: rotate(360deg); } }
+    canvas { width:100% !important; height:300px !important; }
+    .flex-wrap { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+    .dinero-maquina-card { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 5px solid #f59e0b; }
+    .hidden { display: none !important; }
+    @media (max-width: 640px) {
+      .nav-menu { flex-direction: column; gap: 0.5rem; }
+      .nav-container { flex-direction: column; }
+      .grid { grid-template-columns: 1fr; }
+      .flex-wrap { flex-direction: column; align-items: stretch; }
     }
   </style>
 </head>
 <body>
-
-  <!-- Header -->
   <header class="header">
     <div class="nav-container">
-      <a href="#" class="logo"> TrackMyVend</a>
+      <a href="#" class="logo">TrackMyVend</a>
       <nav>
         <ul class="nav-menu">
-          <li><a href="/dashboard.html" class="active"> Panel</a></li>
-          <li><a href="/reportes.html"> Reportes</a></li>
-          <li><a href="/subscripcion.html"> Suscripcion</a></li>
-          <li><a href="/maquinas.html"> Mis Máquinas</a></li>
-          <li><a href="/agenda.html"> Agenda</a></li>
-          <li><a href="#" id="btnLogout"> Cerrar Sesión</a></li>
+          <li><a href="/dashboard.html" class="active">📊 Panel</a></li>
+          <li><a href="/reportes.html">📈 Reportes</a></li>
+          <li><a href="/subscripcion.html">💳 Suscripción</a></li>
+          <li><a href="/maquinas.html">🔧 Mis Máquinas</a></li>
+          <li><a href="/agenda.html">📅 Agenda</a></li>
+          <li><a href="#" id="btnLogout">🚪 Cerrar Sesión</a></li>
         </ul>
       </nav>
     </div>
@@ -493,184 +117,137 @@
   <div class="main-container">
     <div class="container">
 
-      <!-- Loading Spinner -->
+      <!-- Spinner de carga -->
       <div id="loading" class="flex justify-center py-8 hidden">
         <div class="loading-spinner"></div>
       </div>
 
-      <!-- Filters Section -->
-      <div class="filter-section">
-        <div class="filter-title">
-          🎛️ Filtros y Controles
-        </div>
-        <div class="date-filter">
-          <label>📅 Desde:</label>
-          <input type="date" id="fechaDesde" />
-          <label>📅 Hasta:</label>
-          <input type="date" id="fechaHasta" />
-          <label> Máquina:</label>
-          <select id="filtroMaquinaCSV">
-            <option value="">Todas las máquinas</option>
-          </select>
+      <!-- Filtros -->
+      <div class="section-card filter-section">
+        <h2 class="subsection-title">🔍 Filtros y Descargas</h2>
+        <div class="flex-wrap">
+          <div>
+            <label class="form-label">📅 Desde:</label>
+            <input type="date" id="fechaDesde" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label">📅 Hasta:</label>
+            <input type="date" id="fechaHasta" class="form-input" />
+          </div>
+          <div>
+            <label class="form-label">🏭 Máquina:</label>
+            <select id="filtroMaquinaCSV" class="form-select">
+              <option value="">Todas</option>
+            </select>
+          </div>
           <button id="btnDescargarCSV" class="modern-button success">
-             Descargar CSV
+            📥 Descargar CSV
           </button>
         </div>
       </div>
 
-      <!-- Machine Controls -->
-      <div class="mb-8">
-        <h2 class="section-title"> Control de Máquinas</h2>
-        <div id="listaMaquinasCorte" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+      <!-- Botones de corte -->
+      <div class="section-card">
+        <h2 class="section-title">✂️ Realizar Cortes de Caja</h2>
+        <div id="listaMaquinasCorte" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <!-- Se llenan con JS -->
+        </div>
       </div>
 
-      <!-- Summary Cards -->
-      <div class="mb-8">
-        <h2 class="section-title"> Resumen de Hoy</h2>
-        <div id="resumen" class="summary-grid"></div>
-      </div>
-
-      <!-- Volume Distribution -->
-      <div id="volumeDistribution" class="mb-8 hidden">
-        <h2 class="section-title">📏 Distribución por Volumen</h2>
-        <div id="volumeCards" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
-      </div>
-
-      <!-- Charts Section -->
-      <div class="mb-8">
-        <h2 class="section-title"> Análisis y Gráficas</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div class="chart-container">
-            <h3 class="chart-title"> Ventas por Hora</h3>
-            <canvas id="graficaHoras"></canvas>
+      <!-- Tarjetas resumen -->
+      <div class="section-card">
+        <h2 class="section-title">📊 Resumen de Ventas</h2>
+        <div id="resumen" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
+          <div class="kpi-card">
+            <p class="kpi-label">📅 Ventas esta semana</p>
+            <h2 class="kpi-value" id="ventasSemana">$0.00</h2>
           </div>
-          <div class="chart-container">
-            <h3 class="chart-title"> Ventas por Día</h3>
-            <canvas id="graficaDias"></canvas>
-          </div>
-          <div class="chart-container">
-            <h3 class="chart-title"> Volumen Vendido</h3>
-            <canvas id="graficaVolumen"></canvas>
-          </div>
-          <div class="chart-container">
-            <h3 class="chart-title"> Rendimiento por Máquina</h3>
-            <canvas id="graficaMaquinas"></canvas>
+          <div class="kpi-card">
+            <p class="kpi-label">📆 Ventas este mes</p>
+            <h2 class="kpi-value" id="ventasMes">$0.00</h2>
           </div>
         </div>
       </div>
 
+      <!-- Dinero en máquina -->
+      <div id="dineroMaquina" class="section-card dinero-maquina-card hidden">
+        <!-- Se llena con JS -->
+      </div>
+
+      <!-- Distribución de Volumen de Ventas -->
+      <div class="section-card">
+        <h2 class="section-title">💧 Distribución de Volumen de Ventas</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="kpi-card">
+            <p class="kpi-label">🚰 5 Litros</p>
+            <h2 class="kpi-value" id="volumen5L">0 ventas (0%)</h2>
+          </div>
+          <div class="kpi-card">
+            <p class="kpi-label">🚰 10 Litros</p>
+            <h2 class="kpi-value" id="volumen10L">0 ventas (0%)</h2>
+          </div>
+          <div class="kpi-card">
+            <p class="kpi-label">🚰 20 Litros</p>
+            <h2 class="kpi-value" id="volumen20L">0 ventas (0%)</h2>
+          </div>
+          <div class="kpi-card">
+            <p class="kpi-label">🚰 Otros Volúmenes</p>
+            <h2 class="kpi-value" id="volumenOtros">0 ventas (0%)</h2>
+          </div>
+          <div class="kpi-card">
+            <p class="kpi-label">📊 Total Litros</p>
+            <h2 class="kpi-value" id="volumenTotal">0 L</h2>
+          </div>
+          <div class="kpi-card">
+            <p class="kpi-label">📈 Promedio por Venta</p>
+            <h2 class="kpi-value" id="volumenPromedio">0 L</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráficas -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="section-card">
+          <h2 class="subsection-title">🕐 Ventas por Hora</h2>
+          <div class="chart-container">
+            <canvas id="graficaHoras"></canvas>
+          </div>
+        </div>
+        <div class="section-card">
+          <h2 class="subsection-title">📅 Ventas por Día</h2>
+          <div class="chart-container">
+            <canvas id="graficaDias"></canvas>
+          </div>
+        </div>
+        <div class="section-card">
+          <h2 class="subsection-title">🚰 Volumen Vendido</h2>
+          <div class="chart-container">
+            <canvas id="graficaVolumen"></canvas>
+          </div>
+        </div>
+        <div class="section-card">
+          <h2 class="subsection-title">🏆 Rendimiento por Máquina</h2>
+          <div class="chart-container">
+            <canvas id="graficaMaquinas"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Error Modal -->
-  <div id="errorModal" class="modal hidden">
-    <div class="modal-content">
-      <h3 class="text-xl font-bold mb-4 text-red-600">⚠️ Error</h3>
-      <p id="errorMessage" class="mb-6 text-gray-600"></p>
+  <!-- Modal de error -->
+  <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+    <div class="section-card max-w-md w-full">
+      <h3 class="text-lg font-bold mb-2 text-red-600">⚠️ Error</h3>
+      <p id="errorMessage" class="mb-4"></p>
       <button onclick="document.getElementById('errorModal').classList.add('hidden')"
-              class="modern-button w-full">
-        Cerrar
+              class="modern-button">
+        ✅ Cerrar
       </button>
     </div>
   </div>
 
   <!-- Script principal -->
   <script src="/dashboard.js"></script>
-
-  <script>
-    // Add some visual enhancements
-    document.addEventListener('DOMContentLoaded', function() {
-      // Animate cards on scroll
-      const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-      };
-
-      const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0) translateZ(0)';
-          }
-        });
-      }, observerOptions);
-
-      // Initially hide and then animate cards
-      setTimeout(() => {
-        document.querySelectorAll('.modern-card, .machine-card, .summary-card, .chart-container').forEach(card => {
-          card.style.opacity = '0';
-          card.style.transform = 'translateY(20px) translateZ(0)';
-          card.style.transition = 'all 0.6s ease';
-          observer.observe(card);
-        });
-      }, 100);
-
-      // Add hover effects to buttons
-      document.querySelectorAll('.modern-button').forEach(button => {
-        button.addEventListener('mouseenter', function() {
-          this.style.transform = 'translateY(-2px) scale(1.05) translateZ(0)';
-        });
-        
-        button.addEventListener('mouseleave', function() {
-          this.style.transform = 'translateY(0) scale(1) translateZ(0)';
-        });
-      });
-    });
-
-    // Enhanced loading animation
-    function showLoading() {
-      document.getElementById('loading').classList.remove('hidden');
-    }
-
-    function hideLoading() {
-      document.getElementById('loading').classList.add('hidden');
-    }
-
-    // Override the renderResumen function to add icons and better styling
-    window.originalRenderResumen = window.renderResumen || function() {};
-    
-    function renderResumen(r) {
-      document.getElementById("resumen").innerHTML = `
-        <div class="summary-card">
-          <div class="icon">💧</div>
-          <p>Litros vendidos hoy</p>
-          <h2>${r.litros.toFixed(1)} L</h2>
-        </div>
-        <div class="summary-card">
-          <div class="icon">💰</div>
-          <p>Ventas totales hoy</p>
-          <h2>$${r.total.toFixed(2)}</h2>
-        </div>
-        <div class="summary-card">
-          <div class="icon">🎫</div>
-          <p>Ticket promedio</p>
-          <h2>$${r.ticket.toFixed(2)}</h2>
-        </div>
-        <div class="summary-card">
-          <div class="icon">⚡</div>
-          <p>Máquinas activas</p>
-          <h2>${r.activas}/${r.cantidad}</h2>
-        </div>
-        <div class="summary-card">
-          <div class="icon">🕐</div>
-          <p>Última venta</p>
-          <h2 style="font-size: 1rem;">${r.ultima ? new Date(r.ultima).toLocaleString("es-MX") : "N/A"}</h2>
-        </div>
-        <div class="summary-card">
-          <div class="icon">📅</div>
-          <p>Ventas esta semana</p>
-          <h2 id="ventasSemana">$0.00</h2>
-        </div>
-        <div class="summary-card">
-          <div class="icon">📊</div>
-          <p>Ventas este mes</p>
-          <h2 id="ventasMes">$0.00</h2>
-        </div>
-      `;
-    }
-
-    // Override machine card rendering
-    window.originalCargarMaquinasParaCSV = window.cargarMaquinasParaCSV || function() {};
-  </script>
 </body>
 </html>
