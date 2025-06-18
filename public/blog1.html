@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Suscripción - TrackMyVend</title>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
+
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+  <!-- Inyección segura desde Netlify -->
+  <script>
+    window.env = {
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "{{ NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
+    };
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+    .header {
+      background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+      color: white;
+      padding: 1rem 0;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+    }
+    .nav-container {
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2rem;
+    }
+    .logo { font-size: 1.8rem; font-weight: bold; color: white; text-decoration: none; }
+    .nav-menu { display: flex; list-style: none; gap: 1.5rem; align-items: center; }
+    .nav-menu a {
+      color: white; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 25px;
+      font-weight: 500; position: relative; overflow: hidden; transition: all 0.3s ease;
+    }
+    .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.2); }
+    .main-container { margin-top: 80px; padding: 2rem 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: calc(100vh - 80px); }
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; }
+    .section-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    .section-title { font-size: 2rem; font-weight: bold; color: #2345e1; margin-bottom: 1.5rem; text-align: center; }
+    .subsection-title { font-size: 1.5rem; font-weight: bold; color: #2345e1; margin-bottom: 1rem; }
+    
+    .machine-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      border-left: 6px solid #667eea;
+      margin-bottom: 2rem;
+    }
+    .machine-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+    
+    .machine-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2345e1;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .machine-serial {
+      color: #64748b;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      font-family: 'Courier New', monospace;
+      background: rgba(102, 126, 234, 0.1);
+      padding: 0.3rem 0.8rem;
+      border-radius: 12px;
+      display: inline-block;
+    }
+    
+    .subscription-status {
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    
+    .status-active {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      color: #065f46;
+      border: 2px solid #10b981;
+    }
+    
+    .status-expired {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      color: #991b1b;
+      border: 2px solid #ef4444;
+    }
+    
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .plan-button {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 1rem 1.5rem;
+      border-radius: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .plan-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .plan-button.mensual { background: linear-gradient(45deg, #3b82f6, #1d4ed8); }
+    .plan-button.trimestral { background: linear-gradient(45deg, #8b5cf6, #7c3aed); }
+    .plan-button.semestral { background: linear-gradient(45deg, #f59e0b, #d97706); }
+    .plan-button.anual { background: linear-gradient(45deg, #10b981, #059669); }
+    
+    .plan-name { font-size: 1rem; font-weight: bold; }
+    .plan-price { font-size: 0.875rem; opacity: 0.9; }
+    .plan-savings { font-size: 0.75rem; background: rgba(255,255,255,0.2); padding: 0.2rem 0.5rem; border-radius: 8px; }
+    
+    .loading-spinner {
+      border: 4px solid rgba(102,126,234,0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: #667eea;
+      animation: spin 1s linear infinite;
+      margin: 2rem auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: #64748b;
+    }
+    
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    
+    @media (max-width: 640px) {
+      .nav-menu { flex-direction: column; gap: 0.5rem; }
+      .nav-container { flex-direction: column; }
+      .plans-grid { grid-template-columns: 1fr; }
+      .machine-card { padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="nav-container">
+      <a href="#" class="logo">TrackMyVend</a>
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="/dashboard.html">📊 Panel</a></li>
+          <li><a href="/reportes.html">📈 Reportes</a></li>
+          <li><a href="/subscripcion.html" class="active">💳 Suscripción</a></li>
+          <li><a href="/maquinas.html">🔧 Mis Máquinas</a></li>
+          <li><a href="/agenda.html">📅 Agenda</a></li>
+          <li><a href="#" id="btnLogout">🚪 Cerrar Sesión</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="container">
+      <!-- Título Principal -->
+      <div class="section-card">
+        <h1 class="section-title">💳 Estado de tus Suscripciones</h1>
+        <p class="text-center text-gray-600 mb-4">
+          Gestiona las suscripciones de todas tus máquinas desde un solo lugar
+        </p>
+      </div>
+
+      <!-- Lista de Máquinas -->
+      <div id="listaMaquinas">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <!-- Estado vacío -->
+      <div id="estadoVacio" class="section-card empty-state" style="display: none;">
+        <div class="empty-state-icon">🏭</div>
+        <h3 class="text-xl font-bold mb-2">No tienes máquinas registradas</h3>
+        <p class="mb-4">Agrega tu primera máquina para comenzar a gestionar suscripciones</p>
+        <a href="/maquinas.html" class="plan-button" style="display: inline-block; text-decoration: none;">
+          ➕ Agregar Máquina
+        </a>
+      </div>
+
+      <!-- Información de Planes -->
+      <div class="section-card">
+        <h2 class="section-title">📋 Información de Planes</h2>
+        <div class="plans-grid">
+          <div class="plan-button mensual" style="cursor: default; transform: none;">
+            <div class="plan-name">📅 Mensual</div>
+            <div class="plan-price">Facturado mensualmente</div>
+            <div class="plan-savings">Flexibilidad máxima</div>
+          </div>
+          <div class="plan-button trimestral" style="cursor: default; transform: none;">
+            <div class="plan-name">🗓️ Trimestral</div>
+            <div class="plan-price">Facturado cada 3 meses</div>
+            <div class="plan-savings">Ahorra 5%</div>
+          </div>
+          <div class="plan-button semestral" style="cursor: default; transform: none;">
+            <div class="plan-name">📆 Semestral</div>
+            <div class="plan-price">Facturado cada 6 meses</div>
+            <div class="plan-savings">Ahorra 10%</div>
+          </div>
+          <div class="plan-button anual" style="cursor: default; transform: none;">
+            <div class="plan-name">🎯 Anual</div>
+            <div class="plan-price">Facturado anualmente</div>
+            <div class="plan-savings">Ahorra 15%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script principal -->
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://ikuouxllerfjnibjtlkl.supabase.co',
+      window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    async function suscribirse(serial, plan) {
+      try {
+        // Mostrar loading en el botón
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<div style="display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite;"></div>';
+        button.disabled = true;
+
+        const res = await fetch("/.netlify/functions/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ serial, plan })
+        });
+
+        const data = await res.json();
+
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error("No se pudo iniciar el proceso de suscripción.");
+        }
+      } catch (err) {
+        console.error("Error al suscribirse:", err);
+        alert("Hubo un error al intentar procesar la suscripción.");
+        
+        // Restaurar botón
+        button.innerHTML = originalText;
+        button.disabled = false;
+      }
+    }
+
+    // Exponer función globalmente
+    window.suscribirse = suscribirse;
+
+    async function cargarMaquinas() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          alert("No estás autenticado");
+          window.location.href = "/login.html";
+          return;
+        }
+
+        const { data: maquinas, error } = await supabase
+          .from("maquinas")
+          .select("*")
+          .eq("user_id", user.id);
+
+        if (error) {
+          console.error("Error al cargar máquinas:", error);
+          return;
+        }
+
+        const contenedor = document.getElementById("listaMaquinas");
+        const estadoVacio = document.getElementById("estadoVacio");
+
+        if (!maquinas || maquinas.length === 0) {
+          contenedor.style.display = "none";
+          estadoVacio.style.display = "block";
+          return;
+        }
+
+        contenedor.innerHTML = "";
+        estadoVacio.style.display = "none";
+
+        maquinas.forEach((maquina) => {
+          const vigente = maquina.suscripcion_hasta && new Date(maquina.suscripcion_hasta) > new Date();
+          const diasRestantes = vigente ? Math.ceil((new Date(maquina.suscripcion_hasta) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
+          
+          const card = document.createElement("div");
+          card.className = "machine-card";
+
+          card.innerHTML = `
+            <div class="machine-title">
+              🏭 ${maquina.nombre || "Sin nombre"}
+            </div>
+            <div class="machine-serial">
+              📟 Serial: ${maquina.serial}
+            </div>
+            
+            <div class="subscription-status ${vigente ? 'status-active' : 'status-expired'}">
+              ${vigente 
+                ? `✅ Suscripción Activa
+                   <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+                     Válida hasta: ${new Date(maquina.suscripcion_hasta).toLocaleDateString('es-ES', {
+                       year: 'numeric',
+                       month: 'long',
+                       day: 'numeric'
+                     })}
+                     <br>
+                     <span style="color: #059669;">${diasRestantes} días restantes</span>
+                   </div>`
+                : `❌ Suscripción Inactiva
+                   <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+                     Renueva tu suscripción para continuar usando todos los servicios
+                   </div>`
+              }
+            </div>
+
+            <div class="plans-grid">
+              <button onclick="suscribirse('${maquina.serial}', 'mensual')" class="plan-button mensual">
+                <div class="plan-name">📅 Mensual</div>
+                <div class="plan-price">Pago mensual</div>
+              </button>
+              <button onclick="suscribirse('${maquina.serial}', 'trimestral')" class="plan-button trimestral">
+                <div class="plan-name">🗓️ Trimestral</div>
+                <div class="plan-price">3 meses</div>
+                <div class="plan-savings">Ahorra 5%</div>
+              </button>
+              <button onclick="suscribirse('${maquina.serial}', 'semestral')" class="plan-button semestral">
+                <div class="plan-name">📆 Semestral</div>
+                <div class="plan-price">6 meses</div>
+                <div class="plan-savings">Ahorra 10%</div>
+              </button>
+              <button onclick="suscribirse('${maquina.serial}', 'anual')" class="plan-button anual">
+                <div class="plan-name">🎯 Anual</div>
+                <div class="plan-price">12 meses</div>
+                <div class="plan-savings">Ahorra 15%</div>
+              </button>
+            </div>
+          `;
+
+          contenedor.appendChild(card);
+        });
+      } catch (error) {
+        console.error("Error al cargar máquinas:", error);
+        document.getElementById("listaMaquinas").innerHTML = `
+          <div class="section-card">
+            <div style="text-align: center; color: #ef4444;">
+              ❌ Error al cargar las máquinas. Por favor, recarga la página.
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Logout functionality
+    document.getElementById("btnLogout")?.addEventListener("click", async (e) => {
+      e.preventDefault();
+      await supabase.auth.signOut();
+      window.location.href = "/login.html";
+    });
+
+    // Cargar máquinas al iniciar
+    cargarMaquinas();
+  </script>
+</body>
+</html>
