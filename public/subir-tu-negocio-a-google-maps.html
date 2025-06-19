@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cómo Subir tu Negocio a Google Maps y Aumentar tu Visibilidad | TrackMyVend</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+    <meta name="description" content="Aprende paso a paso cómo subir tu máquina expendedora de agua a Google Maps de forma gratuita y aumenta tu visibilidad local para atraer más clientes.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Header - Mismo del blog principal */
+        .header {
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Article Hero */
+        .article-hero {
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            color: white;
+            padding: 120px 0 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .article-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(255,255,255,0.05)" points="0,1000 1000,300 1000,1000"/></svg>');
+            background-size: cover;
+        }
+
+        .article-hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .breadcrumb a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .breadcrumb a:hover {
+            opacity: 1;
+        }
+
+        .article-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .category-tag {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .article-hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            line-height: 1.2;
+        }
+
+        .article-subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            font-weight: 300;
+            line-height: 1.4;
+        }
+
+        /* Article Content */
+        .article-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 2rem;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .featured-image {
+            height: 300px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            color: white;
+        }
+
+        .content-body {
+            padding: 3rem;
+        }
+
+        .content-body h2 {
+            color: #333;
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem 0;
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        .content-body h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .content-body h3 {
+            color: #333;
+            font-size: 1.4rem;
+            margin: 1.5rem 0 0.8rem 0;
+            font-weight: 600;
+        }
+
+        .content-body p {
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        .content-body strong {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .content-body ul, .content-body ol {
+            margin: 1.5rem 0;
+            padding-left: 2rem;
+        }
+
+        .content-body li {
+            margin-bottom: 0.8rem;
+            line-height: 1.7;
+            color: #555;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-left: 4px solid #667eea;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .highlight-box p {
+            margin-bottom: 0;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .step-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .step-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .step-number {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .step-card h4 {
+            color: #333;
+            font-size: 1.2rem;
+            margin-bottom: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .step-card p {
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .step-tip {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .benefit-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        }
+
+        .benefit-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .benefit-card h4 {
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .benefit-card p {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            margin: 3rem 0;
+        }
+
+        .cta-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Article Navigation */
+        .article-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 0;
+            border-top: 1px solid #eee;
+            margin-top: 3rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #2345e1;
+            transform: translateX(5px);
+        }
+
+        .nav-link.prev:hover {
+            transform: translateX(-5px);
+        }
+
+        /* Related Articles */
+        .related-articles {
+            background: #f8f9fa;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+
+        .related-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .related-articles h3 {
+            text-align: center;
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .related-post {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .related-post:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+
+        .related-image {
+            height: 150px;
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .related-content {
+            padding: 1.5rem;
+        }
+
+        .related-content h4 {
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .related-content p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .related-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .related-link:hover {
+            color: #2345e1;
+        }
+
+        /* Footer - Mismo del blog principal */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 50px 0 30px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .footer-section p, .footer-section a {
+            color: #bdc3c7;
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            transform: translateY(-3px);
+            background: #667eea;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #34495e;
+            margin-top: 2rem;
+            color: #95a5a6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .article-hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .article-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .article-container {
+                padding: 40px 1rem;
+            }
+
+            .content-body {
+                padding: 2rem 1.5rem;
+            }
+
+            .steps-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .article-nav {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .related-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .content-body > * {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+            <a href="home.html" class="logo">TrackMyVend</a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="home.html">Inicio</a></li>
+                    <li><a href="home.html#productos">Productos</a></li>
+                    <li><a href="home.html#beneficios">Beneficios</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                    <li><a href="home.html#contacto">Contacto</a></li>
+                    <li><a href="/login.html">Iniciar sesión</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Article Hero -->
+    <section class="article-hero">
+        <div class="article-hero-content">
+            <div class="breadcrumb">
+                <a href="index.html">Inicio</a>
+                <span>→</span>
+                <a href="blog.html">Blog</a>
+                <span>→</span>
+                <span>Google Maps Marketing</span>
+            </div>
+            <div class="article-meta">
+                <span class="category-tag">Marketing</span>
+                <span>10 Enero 2025</span>
+                <span>6 min lectura</span>
+            </div>
+            <h1>📍 Cómo Subir tu Negocio a Google Maps y Aumentar tu Visibilidad</h1>
+            <p class="article-subtitle">Si tu máquina de agua no aparece en Google Maps, simplemente no existe para tus clientes potenciales.</p>
+        </div>
+    </section>
+
+    <!-- Article Content -->
+    <div class="article-container">
+        <article class="article-content">
+            <div class="featured-image">🗺️</div>
+            
+            <div class="content-body">
+                <p>Si tenés una máquina de agua, un comercio local o cualquier negocio físico, <strong>estar en Google Maps ya no es opcional — es esencial</strong>. Cada vez más personas usan su celular para buscar "agua purificada cerca de mí" o "máquinas de agua 24 horas".</p>
+
+                <p>Si tu negocio no aparece ahí… simplemente no existe para ellos.</p>
+
+                <div class="highlight-box">
+                    <p>La buena noticia es que <strong>subir tu negocio a Google Maps es gratis y fácil</strong>. Aquí te explicamos cómo hacerlo paso a paso.</p>
+                </div>
+
+                <h2>🚀 Por qué necesitás estar en Google Maps</h2>
+
+                <p>Antes de empezar con el paso a paso, entendé por qué es tan importante:</p>
+
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-icon">📍</div>
+                        <h4>Más visibilidad local</h4>
+                        <p>Quienes estén cerca te encontrarán fácilmente cuando busquen agua purificada</p>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-icon">⭐</div>
+                        <h4>Reputación en línea</h4>
+                        <p>Las buenas reseñas generan confianza y atraen más clientes</p>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-icon">📈</div>
+                        <h4>Más ventas</h4>
+                        <p>La mayoría de las búsquedas con intención de compra terminan en una visita física</p>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-icon">📊</div>
+                        <h4>Estadísticas</h4>
+                        <p>Sabrás cuántas personas te buscan, llaman o piden indicaciones</p>
+                    </div>
+                </div>
+
+                <h2>✅ Cómo subir tu negocio paso a paso</h2>
+
+                <p>Seguí estos 5 pasos y en menos de 30 minutos tendrás tu negocio visible en Google Maps:</p>
+
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h4>Crea o inicia sesión en tu cuenta de Google</h4>
+                        <p>Ve a business.google.com y entra con tu cuenta de Gmail (de preferencia la del negocio). Si no tienes una, podés crear una en minutos.</p>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h4>Añade tu negocio</h4>
+                        <p>Haz clic en "Agregar tu empresa a Google". Te pedirá:</p>
+                        <ul>
+                            <li><strong>Nombre del negocio</strong> (ej. "Aqua Pura Guadalupe")</li>
+                            <li><strong>Categoría</strong> (elige "Máquina expendedora de agua")</li>
+                            <li><strong>Ubicación física</strong> (marca en el mapa dónde está tu máquina)</li>
+                        </ul>
+                        <div class="step-tip">💡 Si tenés más de una máquina, podés agregarlas como ubicaciones individuales.</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h4>Agrega información de contacto</h4>
+                        <p>Incluye:</p>
+                        <ul>
+                            <li>Número de teléfono (opcional pero útil)</li>
+                            <li>Sitio web o redes sociales</li>
+                            <li>Horarios (podés poner "Abierto 24 horas" si aplica)</li>
+                        </ul>
+                        <div class="step-tip">💡 Si usás TrackMyVend, ¡incluí tu página LinkNano para mostrar que tu máquina es inteligente!</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <h4>Verifica tu negocio</h4>
+                        <p>Google necesitará verificar que vos sos el dueño. Lo más común es que te envíen una <strong>postal con un código</strong> a la dirección que marcaste (puede tardar unos días).</p>
+                        <div class="step-tip">📮 También hay opciones por teléfono o email si Google lo permite.</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">5</div>
+                        <h4>Personaliza tu perfil</h4>
+                        <p>Una vez verificado, podés:</p>
+                        <ul>
+                            <li>Subir fotos de tu máquina o local</li>
+                            <li>Escribir una descripción clara</li>
+                            <li>Publicar novedades o promociones</li>
+                            <li>Invitar a tus clientes a dejar reseñas</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h2>📱 Consejos para optimizar tu perfil</h2>
+
+                <p>Una vez que estés en Google Maps, seguí estos consejos para destacarte:</p>
+
+                <ul>
+                    <li><strong>Subí fotos de calidad:</strong> Mostrá tu máquina funcionando, el agua cristalina, el entorno limpio.</li>
+                    <li><strong>Pedí reseñas:</strong> Invitá a tus clientes satisfechos a dejar comentarios positivos.</li>
+                    <li><strong>Respondé a las reseñas:</strong> Tanto a las buenas como a las malas. Muestra que te importa la opinión de tus clientes.</li>
+                    <li><strong>Mantené la información actualizada:</strong> Si cambias horarios, precios o hay algún problema, actualizalo inmediatamente.</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <p><strong>Tip de TrackMyVend:</strong> Si usás nuestro sistema LinkNano, podés incluir en tu perfil que tu máquina es inteligente, activa y monitoreada. Esto genera más confianza en tus clientes.</p>
+                </div>
+
+                <h2>⚠️ Errores comunes que debes evitar</h2>
+
+                <p>No cometas estos errores típicos:</p>
+
+                <ul>
+                    <li><strong>Información incompleta:</strong> Llenar solo los campos básicos. Cuanta más información, mejor.</li>
+                    <li><strong>Fotos de mala calidad:</strong> Imágenes borrosas o mal iluminadas dan mala impresión.</li>
+                    <li><strong>No responder reseñas:</strong> Ignorar a los clientes que se toman el tiempo de comentar.</li>
+                    <li><strong>Datos desactualizados:</strong> Horarios o información de contacto incorrecta frustra a los clientes.</li>
+                </ul>
+
+                <div class="cta-section">
+                    <h3>🚀 ¿Querés potenciar aún más tu negocio?</h3>
+                    <p>Con TrackMyVend no solo tendrás tu negocio en Google Maps, también tendrás datos en tiempo real para tomar mejores decisiones y aumentar tus ventas.</p>
+                    <a href="https://wa.me/5218126982507" class="cta-button">Contactanos por WhatsApp</a>
+                </div>
+
+   
+
+                <div class="highlight-box">
+                    <p>Recuerda: <strong>Si no estás en Google Maps, no existis para tus clientes potenciales.</strong> Tomá acción hoy mismo.</p>
+                </div>
+
+                <!-- Article Navigation -->
+                <div class="article-nav">
+                    <a href="como-usar-dashboard.html" class="nav-link prev">
+                        ← Artículo Anterior
+                    </a>
+                    <a href="blog-post-7.html" class="nav-link">
+                        Siguiente Artículo →
+                    </a>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <!-- Related Articles -->
+    <section class="related-articles">
+        <div class="related-container">
+            <h3>Artículos Relacionados</h3>
+            <div class="related-grid">
+                <article class="related-post">
+                    <div class="related-image">📈</div>
+                    <div class="related-content">
+                        <h4>Cómo Usar tu Dashboard: Aprende a Leer tus Métricas y Vender Más</h4>
+                        <p>Tu dashboard te muestra todo lo que pasa con tus máquinas. Aprende a leerlo bien y toma decisiones inteligentes.</p>
+                        <a href="como-usar-dashboard.html" class="related-link">Leer más →</a>
+                    </div>
+                </article>
+
+                <article class="related-post">
+                    <div class="related-image">💰</div>
+                    <div class="related-content">
+                        <h4>5 Estrategias para Maximizar las Ganancias de tu Máquina de Agua</h4>
+                        <p>Conoce las mejores prácticas para optimizar la rentabilidad de tu negocio con estrategias probadas.</p>
+                        <a href="blog-post-2.html" class="related-link">Leer más →</a>
+                    </div>
+                </article>
+
+                <article class="related-post">
+                    <div class="related-image">🏆</div>
+                    <div class="related-content">
+                        <h4>Caso de Éxito: Cómo Juan Aumentó sus Ventas un 40% en 3 Meses</h4>
+                        <p>Historia real de un empresario que transformó su negocio tradicional con tecnología TrackMyVend.</p>
+                        <a href="blog-post-6.html" class
