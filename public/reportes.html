@@ -1,521 +1,165 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reportes - TrackMyVend</title>
-  <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reportes - TrackMyVend</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
 
-  <!-- Supabase & Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
-  <!-- Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      color: #333;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
-    }
-    .header {
-      background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
-      color: white;
-      padding: 1rem 0;
-      position: fixed;
-      width: 100%;
-      top: 0;
-      z-index: 1000;
-      box-shadow: 0 4px 30px rgba(0,0,0,0.1);
-    }
-    .nav-container {
-      width: 100%;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 2rem;
-    }
-    .logo { font-size: 1.8rem; font-weight: bold; color: white; text-decoration: none; }
-    
-    /* Desktop Navigation */
-    .nav-menu { 
-      display: flex; 
-      list-style: none; 
-      gap: 1.5rem; 
-      align-items: center; 
-    }
-    .nav-menu a {
-      color: white; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 25px;
-      font-weight: 500; position: relative; overflow: hidden; transition: all 0.3s ease;
-    }
-    .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.2); }
-
-    /* Hamburger Menu Button */
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      cursor: pointer;
-      padding: 4px;
-      z-index: 1001;
-    }
-    .hamburger span {
-      width: 25px;
-      height: 3px;
-      background: white;
-      margin: 3px 0;
-      transition: all 0.3s ease;
-      border-radius: 2px;
-    }
-    .hamburger.active span:nth-child(1) {
-      transform: rotate(-45deg) translate(-5px, 6px);
-    }
-    .hamburger.active span:nth-child(2) {
-      opacity: 0;
-    }
-    .hamburger.active span:nth-child(3) {
-      transform: rotate(45deg) translate(-5px, -6px);
-    }
-
-    /* Mobile Navigation Overlay */
-    .mobile-nav {
-      position: fixed;
-      top: 0;
-      right: 0;
-      height: 100vh;
-      width: 280px;
-      background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
-      transform: translateX(100%);
-      transition: transform 0.3s ease;
-      z-index: 1000;
-      padding-top: 80px;
-      box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-    }
-    .mobile-nav.active {
-      transform: translateX(0);
-    }
-    .mobile-nav ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .mobile-nav li {
-      margin: 0;
-    }
-    .mobile-nav a {
-      display: block;
-      color: white;
-      text-decoration: none;
-      padding: 1rem 2rem;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .mobile-nav a:hover, .mobile-nav a.active {
-      background: rgba(255,255,255,0.2);
-      padding-left: 2.5rem;
-    }
-
-    /* Overlay for mobile menu */
-    .mobile-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      z-index: 999;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-    .mobile-overlay.active {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .main-container { margin-top: 80px; padding: 2rem 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: calc(100vh - 80px); }
-    .container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; }
-    .section-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 2rem; }
-    .section-title { font-size: 2rem; font-weight: bold; color: #2345e1; margin-bottom: 1.5rem; text-align: center; }
-    .subsection-title { font-size: 1.5rem; font-weight: bold; color: #2345e1; margin-bottom: 1rem; }
-    .grid { display: grid; gap: 1rem; }
-    @media (min-width: 640px) { .sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); } }
-    @media (min-width: 768px) { .md\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); } }
-    @media (min-width: 1024px) { .lg\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); } }
-    @media (min-width: 1280px) { .xl\:grid-cols-6 { grid-template-columns: repeat(6, 1fr); } }
-    .kpi-card { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 16px; border-left: 5px solid #667eea; transition: all 0.3s ease; }
-    .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-    .kpi-label { color: #64748b; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
-    .kpi-value { color: #2345e1; font-size: 1.5rem; font-weight: bold; }
-    .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
-    .form-input, .form-select { width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 12px; background: white; transition: all 0.3s ease; }
-    .form-input:focus, .form-select:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); outline: none; }
-    .modern-button { background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
-    .modern-button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); }
-    .modern-button.success { background: linear-gradient(45deg, #10b981, #059669); }
-    .modern-button.danger { background: linear-gradient(45deg, #ef4444, #dc2626); }
-    .modern-button.secondary { background: linear-gradient(45deg, #6b7280, #4b5563); }
-    .modern-button.active { background: linear-gradient(45deg, #2345e1, #667eea); }
-    .filter-section { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem; }
-    .chart-container { background: white; padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .loading-spinner {
-      border: 4px solid rgba(102,126,234,0.1);
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border-left-color: #667eea;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    canvas { width:100% !important; height:300px !important; }
-    .table-container { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .table-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-    .table-row { border-bottom: 1px solid #e5e7eb; transition: all 0.3s ease; }
-    .table-row:hover { background: #f8fafc; }
-    .status-active { color: #10b981; font-weight: 600; }
-    .status-expired { color: #ef4444; font-weight: 600; }
-    .volume-section { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 5px solid #f59e0b; }
-    .flex-wrap { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
-
-    /* Mobile Responsive Breakpoints */
-    @media (max-width: 768px) {
-      .nav-menu { 
-        display: none; 
-      }
-      .hamburger { 
-        display: flex; 
-      }
-      .nav-container { 
-        padding: 0 1rem; 
-      }
-      .container { 
-        padding: 0 1rem; 
-      }
-      .grid { 
-        grid-template-columns: 1fr; 
-      }
-      .flex-wrap { 
-        flex-direction: column; 
-        align-items: stretch; 
-      }
-      .section-card { 
-        padding: 1.5rem; 
-      }
-      .section-title { 
-        font-size: 1.5rem; 
-      }
-      .subsection-title { 
-        font-size: 1.25rem; 
-      }
-    }
-
-    @media (max-width: 480px) {
-      .logo { 
-        font-size: 1.5rem; 
-      }
-      .nav-container { 
-        padding: 0 0.5rem; 
-      }
-      .container { 
-        padding: 0 0.5rem; 
-      }
-      .section-card { 
-        padding: 1rem; 
-      }
-      .kpi-card { 
-        padding: 1rem; 
-      }
-    }
-  </style>
+    <style>
+        /* Estilos consistentes con el resto de la aplicación */
+        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+        .header { background: linear-gradient(135deg, #2345e1 0%, #667eea 100%); color: white; padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; box-shadow: 0 4px 30px rgba(0,0,0,0.1); }
+        .nav-container { width: 100%; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
+        .logo { font-size: 1.8rem; font-weight: bold; color: white; text-decoration: none; }
+        .nav-menu { display: none; } /* Oculto en mobile por defecto */
+        @media (min-width: 768px) { .nav-menu { display: flex; list-style: none; gap: 1.5rem; align-items: center; } }
+        .nav-menu a { color: white; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 25px; font-weight: 500; transition: all 0.3s ease; }
+        .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.2); }
+        .hamburger { display: flex; flex-direction: column; cursor: pointer; padding: 4px; z-index: 1001; }
+        @media (min-width: 768px) { .hamburger { display: none; } }
+        .hamburger span { width: 25px; height: 3px; background: white; margin: 3px 0; transition: all 0.3s ease; border-radius: 2px; }
+        .hamburger.active span:nth-child(1) { transform: rotate(-45deg) translate(-5px, 6px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(45deg) translate(-5px, -6px); }
+        .mobile-nav { position: fixed; top: 0; right: 0; height: 100vh; width: 280px; background: linear-gradient(135deg, #2345e1 0%, #667eea 100%); transform: translateX(100%); transition: transform 0.3s ease; z-index: 1000; padding-top: 80px; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
+        .mobile-nav.active { transform: translateX(0); }
+        .mobile-nav ul { list-style: none; padding: 0; margin: 0; }
+        .mobile-nav a { display: block; color: white; text-decoration: none; padding: 1rem 2rem; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .mobile-nav a.active, .mobile-nav a:hover { background: rgba(255,255,255,0.2); }
+        .mobile-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .mobile-overlay.active { opacity: 1; visibility: visible; }
+        .main-container { margin-top: 80px; padding: 2rem; }
+        .section-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .section-title { font-size: 2rem; font-weight: bold; color: #2345e1; margin-bottom: 1.5rem; text-align: center; }
+        .subsection-title { font-size: 1.5rem; font-weight: bold; color: #2345e1; margin-bottom: 1rem; }
+        .kpi-card { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 16px; border-left: 5px solid #667eea; transition: all 0.3s ease; }
+        .kpi-label { color: #64748b; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
+        .kpi-value { color: #2345e1; font-size: 1.5rem; font-weight: bold; }
+        .kpi-comparison { font-size: 1rem; font-weight: bold; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
+        .form-input, .form-select { width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 12px; background: white; }
+        .modern-button { background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        .modern-button.success { background: linear-gradient(45deg, #10b981, #059669); }
+        .filter-section { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); }
+        .chart-container { background: white; padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .table-container { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .table-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .loading-spinner { border: 4px solid rgba(102,126,234,0.1); width: 48px; height: 48px; border-radius: 50%; border-left-color: #667eea; animation: spin 1s linear infinite; margin: 4rem auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
 </head>
-<body>
-  <header class="header">
-    <div class="nav-container">
-      <a href="#" class="logo">TrackMyVend</a>
-      
-      <!-- Desktop Navigation -->
-      <nav>
-        <ul class="nav-menu">
-          <li><a href="/dashboard.html"> Panel</a></li>
-          <li><a href="/reportes.html" class="active"> Reportes</a></li>
-          <li><a href="/subscripcion.html"> Suscripción</a></li>
-          <li><a href="/maquinas.html"> Mis Máquinas</a></li>
-          <li><a href="/agenda.html"> Agenda</a></li>
-          <li><a href="#" id="btnLogout"> Cerrar Sesión</a></li>
-        </ul>
-      </nav>
-
-      <!-- Hamburger Menu Button -->
-      <div class="hamburger" id="hamburger">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-    </div>
-
-    <!-- Mobile Navigation Overlay -->
+<body class="min-h-screen">
+    <header class="header">
+        <div class="nav-container">
+            <a href="/dashboard.html" class="logo">TrackMyVend</a>
+            <nav class="nav-menu">
+                <ul class="flex items-center gap-6">
+                    <li><a href="/dashboard.html">📊 Panel</a></li>
+                    <li><a href="/reportes.html" class="active">📈 Reportes</a></li>
+                    <li><a href="/subscripcion.html">💳 Suscripcion</a></li>
+                    <li><a href="/maquinas.html">🔧 Mis Máquinas</a></li>
+                    <li><a href="/agenda.html">📅 Agenda</a></li>
+                    <li><a href="#" id="btnLogout">🚪 Cerrar Sesión</a></li>
+                </ul>
+            </nav>
+            <div class="hamburger" id="hamburger">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </header>
     <nav class="mobile-nav" id="mobileNav">
-      <ul>
-        <li><a href="/dashboard.html"> Panel</a></li>
-        <li><a href="/reportes.html" class="active"> Reportes</a></li>
-        <li><a href="/subscripcion.html"> Suscripción</a></li>
-        <li><a href="/maquinas.html"> Mis Máquinas</a></li>
-        <li><a href="/agenda.html"> Agenda</a></li>
-        <li><a href="#" id="btnLogoutMobile"> Cerrar Sesión</a></li>
-      </ul>
+        <ul>
+            <li><a href="/dashboard.html">📊 Panel</a></li>
+            <li><a href="/reportes.html" class="active">📈 Reportes</a></li>
+            <li><a href="/subscripcion.html">💳 Suscripcion</a></li>
+            <li><a href="/maquinas.html">🔧 Mis Máquinas</a></li>
+            <li><a href="/agenda.html">📅 Agenda</a></li>
+            <li><a href="#" id="btnLogoutMobile">🚪 Cerrar Sesión</a></li>
+        </ul>
     </nav>
-  </header>
+    <div class="mobile-overlay" id="mobileOverlay"></div>
 
-  <!-- Mobile Overlay -->
-  <div class="mobile-overlay" id="mobileOverlay"></div>
-
-  <div class="main-container">
-    <div class="container">
-      <!-- Filtros -->
-      <div class="section-card filter-section">
-        <h2 class="subsection-title"> Filtros de Análisis</h2>
-        <div class="flex-wrap">
-          <div>
-            <label class="form-label">📅 Desde:</label>
-            <input type="date" id="desde" class="form-input" />
-          </div>
-          <div>
-            <label class="form-label">📅 Hasta:</label>
-            <input type="date" id="hasta" class="form-input" />
-          </div>
-          <div>
-            <label class="form-label"> Máquina:</label>
-            <select id="maquinaFiltro" class="form-select">
-              <option value="">Todas</option>
-            </select>
-          </div>
-          <button id="btnAplicar" class="modern-button">Aplicar Filtros</button>
+    <main class="main-container">
+        <div id="loading" class="hidden">
+            <div class="loading-spinner"></div>
         </div>
-      </div>
+        
+        <div id="report-content">
+            <div class="section-card filter-section">
+                <h2 class="subsection-title">Filtros de Análisis</h2>
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label class="form-label">📅 Desde:</label>
+                        <input type="date" id="desde" class="form-input" />
+                    </div>
+                    <div>
+                        <label class="form-label">📅 Hasta:</label>
+                        <input type="date" id="hasta" class="form-input" />
+                    </div>
+                    <div>
+                        <label class="form-label">🔧 Máquina:</label>
+                        <select id="maquinaFiltro" class="form-select">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <button id="btnAplicar" class="modern-button">Aplicar Filtros</button>
+                </div>
+            </div>
 
-      <!-- KPIs Principales -->
-      <div class="section-card">
-        <h2 class="section-title"> Métricas Principales</h2>
-        <div class="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
-          <div class="kpi-card">
-            <p class="kpi-label"> Ventas totales</p>
-            <h2 class="kpi-value" id="kpiVentasTotales">$0</h2>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label"> Litros vendidos</p>
-            <h2 class="kpi-value" id="kpiLitros">0 L</h2>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label"> Ticket promedio</p>
-            <h2 class="kpi-value" id="kpiTicket">$0</h2>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label"> Transacciones</p>
-            <h2 class="kpi-value" id="kpiTransacciones">0</h2>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label">️ Cortes</p>
-            <h2 class="kpi-value" id="kpiCortes">0</h2>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label"> Promedio diario</p>
-            <h2 class="kpi-value" id="kpiPromedioDiario">$0</h2>
-          </div>
+            <div class="section-card">
+                <h2 class="section-title">Métricas Principales</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-6">
+                    <div class="kpi-card flex items-center justify-between">
+                        <div><p class="kpi-label">Ventas totales</p><h2 class="kpi-value" id="kpiVentasTotales">$0</h2></div>
+                        <span id="kpiVentasTotales_comp" class="kpi-comparison"></span>
+                    </div>
+                    <div class="kpi-card flex items-center justify-between">
+                        <div><p class="kpi-label">Litros vendidos</p><h2 class="kpi-value" id="kpiLitros">0 L</h2></div>
+                        <span id="kpiLitros_comp" class="kpi-comparison"></span>
+                    </div>
+                    <div class="kpi-card flex items-center justify-between">
+                        <div><p class="kpi-label">Transacciones</p><h2 class="kpi-value" id="kpiTransacciones">0</h2></div>
+                        <span id="kpiTransacciones_comp" class="kpi-comparison"></span>
+                    </div>
+                    <div class="kpi-card"><p class="kpi-label">Ticket promedio</p><h2 class="kpi-value" id="kpiTicket">$0</h2></div>
+                    <div class="kpi-card"><p class="kpi-label">Promedio diario</p><h2 class="kpi-value" id="kpiPromedioDiario">$0</h2></div>
+                    <div class="kpi-card"><p class="kpi-label">️Cortes realizados</p><h2 class="kpi-value" id="kpiCortes">0</h2></div>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                <div class="section-card">
+                    <h2 class="subsection-title">Ventas en el tiempo</h2>
+                    <div class="chart-container"><canvas id="graficaVentasTiempo"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <h2 class="subsection-title">Volumen en el tiempo</h2>
+                    <div class="chart-container"><canvas id="graficaVolumenTiempo"></canvas></div>
+                </div>
+            </div>
+            
+            <div class="section-card">
+                <h2 class="section-title">Ranking por Máquina</h2>
+                <div class="chart-container"><canvas id="graficaRankingMaquinas"></canvas></div>
+            </div>
+
+            <div class="section-card">
+                <h2 class="section-title">Historial de Cortes</h2>
+                <button id="btnDescargarCortes" class="modern-button success mb-4">📥 Descargar CSV</button>
+                <div class="table-container">
+                    <table class="w-full text-left"><thead class="table-header"><tr><th class="p-3">Fecha</th><th class="p-3">Máquina</th><th class="p-3">Total Ventas</th><th class="p-3">Litros</th><th class="p-3">Intervalo</th></tr></thead><tbody id="tablaCortes"></tbody></table>
+                </div>
+            </div>
         </div>
-      </div>
+    </main>
 
-      <!-- Actividad y Uso -->
-      <div class="section-card">
-        <h2 class="section-title"> Actividad y Uso</h2>
-        <div class="grid sm:grid-cols-2 md:grid-cols-3">
-          <div class="kpi-card">
-            <p class="kpi-label"> Número de Ventas</p>
-            <h2 class="kpi-value" id="kpiNumVentas">0</h2>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label"> Hora Pico</p>
-            <h2 class="kpi-value" id="kpiHoraPico">--:00</h2>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label"> Intervalo Medio</p>
-            <h2 class="kpi-value" id="kpiIntervaloMedio">0 min</h2>
-          </div>
-        </div>
-      </div>
-
-      <!-- Volumen Despachado -->
-      <div class="section-card volume-section">
-        <h2 class="section-title"> Análisis de Volumen y Utilidad</h2>
-        <div class="flex-wrap mb-4">
-          <div>
-            <label class="form-label"> Coste por m³ (MXN)</label>
-            <input type="number" id="costoMetro" class="form-input" placeholder="p.ej. 15" />
-          </div>
-          <div>
-            <label class="form-label"> Gastos operativos (MXN)</label>
-            <input type="number" id="gastosOperativos" class="form-input" placeholder="p.ej. 200" />
-          </div>
-          <button id="btnCalcularVolumen" class="modern-button success"> Calcular Utilidad Aproximada</button>
-        </div>
-        <div class="grid sm:grid-cols-2 md:grid-cols-3">
-          <div class="kpi-card">
-            <p class="kpi-label"> Litros Totales</p>
-            <h2 class="kpi-value" id="kpiLitrosTotales">0 L</h2>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label"> Litros por Transacción</p>
-            <h2 class="kpi-value" id="kpiLitrosPromedio">0 L</h2>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label"> Distribución Volumen</p>
-            <ul id="kpiDistribucion" class="mt-2 text-sm text-gray-700">
-              <li>5 L: 0 %</li>
-              <li>10 L: 0 %</li>
-              <li>20 L: 0 %</li>
-            </ul>
-          </div>
-        </div>
-        <div id="volumenCostes" class="mt-4 text-gray-800 text-sm space-y-1 font-semibold"></div>
-      </div>
-
-      <!-- Estado de Suscripción por Máquina -->
-      <div class="section-card">
-        <h2 class="section-title"> Estado de Suscripciones</h2>
-        <div class="table-container">
-          <table class="w-full text-left">
-            <thead class="table-header">
-              <tr>
-                <th class="px-4 py-3"> Máquina</th>
-                <th class="px-4 py-3">📅 Suscripción Hasta</th>
-                <th class="px-4 py-3">Estado</th>
-              </tr>
-            </thead>
-            <tbody id="tablaSuscripciones" class="divide-y divide-gray-200">
-              <!-- Se llenará con JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Gráficas de tendencia -->
-      <div class="grid lg:grid-cols-2 gap-8 mb-8">
-        <div class="section-card">
-          <h2 class="subsection-title"> Ventas en el tiempo</h2>
-          <div class="chart-container">
-            <canvas id="graficaVentasTiempo"></canvas>
-          </div>
-        </div>
-        <div class="section-card">
-          <h2 class="subsection-title"> Volumen en el tiempo</h2>
-          <div class="chart-container">
-            <canvas id="graficaVolumenTiempo"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Ranking por máquina -->
-      <div class="section-card">
-        <h2 class="section-title"> Ranking por Máquina</h2>
-        <div class="chart-container">
-          <canvas id="graficaRankingMaquinas"></canvas>
-        </div>
-      </div>
-
-      <!-- Historial de cortes -->
-      <div class="section-card">
-        <h2 class="section-title">️ Historial de Cortes</h2>
-        <div class="table-container">
-          <table class="w-full text-left">
-            <thead class="table-header">
-              <tr>
-                <th class="px-4 py-3">📅 Fecha</th>
-                <th class="px-4 py-3"> Máquina</th>
-                <th class="px-4 py-3"> Total Ventas</th>
-                <th class="px-4 py-3"> Litros</th>
-                <th class="px-4 py-3"> Intervalo</th>
-              </tr>
-            </thead>
-            <tbody id="tablaCortes" class="divide-y divide-gray-200">
-              <!-- filas generadas por JS -->
-            </tbody>
-          </table>
-        </div>
-        <button id="btnDescargarCortes" class="modern-button success mt-4">
-          📥 Descargar CSV
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    // Mobile Navigation Functionality
-    const hamburger = document.getElementById('hamburger');
-    const mobileNav = document.getElementById('mobileNav');
-    const mobileOverlay = document.getElementById('mobileOverlay');
-    const body = document.body;
-
-    function toggleMobileNav() {
-      hamburger.classList.toggle('active');
-      mobileNav.classList.toggle('active');
-      mobileOverlay.classList.toggle('active');
-      body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
-    }
-
-    function closeMobileNav() {
-      hamburger.classList.remove('active');
-      mobileNav.classList.remove('active');
-      mobileOverlay.classList.remove('active');
-      body.style.overflow = '';
-    }
-
-    // Event listeners
-    hamburger.addEventListener('click', toggleMobileNav);
-    mobileOverlay.addEventListener('click', closeMobileNav);
-
-    // Close mobile nav when clicking on a link
-    document.querySelectorAll('.mobile-nav a').forEach(link => {
-      link.addEventListener('click', closeMobileNav);
-    });
-
-    // Handle window resize
-    window.addEventListener('resize', () => {
-      if (window.innerWidth > 768) {
-        closeMobileNav();
-      }
-    });
-
-    // Handle logout for both desktop and mobile
-    document.getElementById('btnLogout').addEventListener('click', function(e) {
-      e.preventDefault();
-      // Add your logout logic here
-      console.log('Logout clicked');
-    });
-
-    document.getElementById('btnLogoutMobile').addEventListener('click', function(e) {
-      e.preventDefault();
-      closeMobileNav();
-      // Add your logout logic here
-      console.log('Mobile logout clicked');
-    });
-
-    // Prevent scrolling when mobile menu is open
-    document.addEventListener('touchmove', function(e) {
-      if (mobileNav.classList.contains('active')) {
-        e.preventDefault();
-      }
-    }, { passive: false });
-  </script>
-
-  <!-- Script principal para reportes -->
-  <script src="/reportes.js"></script>
+    <script src="reportes.js"></script>
 </body>
 </html>
