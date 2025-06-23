@@ -31,6 +31,7 @@
             z-index: 1000;
             backdrop-filter: blur(10px);
             box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
         }
 
         .nav-container {
@@ -40,6 +41,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 0 2rem;
+            position: relative;
         }
 
         .logo {
@@ -76,6 +78,7 @@
             padding: 0.5rem;
             background: none;
             border: none;
+            z-index: 1001;
         }
 
         .hamburger-line {
@@ -84,55 +87,52 @@
             background: white;
             margin: 3px 0;
             transition: all 0.3s ease;
-            transform-origin: center;
+            border-radius: 2px;
         }
 
         /* Mobile Menu Styles */
         .mobile-menu {
-            position: absolute;
-            top: 100%;
+            position: fixed;
+            top: 0;
             left: 0;
             width: 100%;
+            height: 100vh;
             background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            transform: translateY(-100%);
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .mobile-menu.active {
-            transform: translateY(0);
-            opacity: 1;
-            visibility: visible;
+            transform: translateX(0);
         }
 
         .mobile-menu ul {
             list-style: none;
-            padding: 1rem 0;
+            text-align: center;
         }
 
         .mobile-menu li {
-            padding: 0.5rem 2rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .mobile-menu li:last-child {
-            border-bottom: none;
+            margin: 1.5rem 0;
         }
 
         .mobile-menu a {
             color: white;
             text-decoration: none;
-            display: block;
-            padding: 0.5rem 0;
+            font-size: 1.5rem;
+            font-weight: 500;
             transition: all 0.3s ease;
+            display: block;
+            padding: 1rem 2rem;
+            border-radius: 25px;
         }
 
         .mobile-menu a:hover {
-            padding-left: 1rem;
-            color: #ffeb3b;
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
         }
 
         /* Hamburger Animation */
@@ -528,7 +528,7 @@
 
         .social-link:hover {
             transform: translateY(-3px);
-            background: #667eea;
+            background: #5a6fd8;
         }
 
         .footer-bottom {
@@ -549,6 +549,20 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .device-mockup {
+            animation: float 3s ease-in-out infinite;
         }
 
         /* Responsive */
@@ -624,6 +638,29 @@
                 padding: 1.5rem;
             }
         }
+
+        /* Prevent body scroll when mobile menu is open */
+        body.menu-open {
+            overflow: hidden;
+        }
+
+        /* Loading animation */
+        .loading {
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        /* Intersection Observer animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.6s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -650,34 +687,34 @@
                 <div class="hamburger-line"></div>
                 <div class="hamburger-line"></div>
             </button>
+        </div>
 
-            <!-- Mobile Menu -->
-            <div class="mobile-menu" id="mobile-menu">
-                <ul>
-                    <li><a href="#inicio">Inicio</a></li>
-                    <li><a href="#productos">Productos</a></li>
-                    <li><a href="#beneficios">Beneficios</a></li>
-                    <li><a href="blog.html">Blog</a></li>
-                    <li><a href="#contacto">Contacto</a></li>
-                    <li><a href="/login.html">¿Iniciar sesión?</a></li>
-                </ul>
-            </div>
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobile-menu">
+            <ul>
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="#productos">Productos</a></li>
+                <li><a href="#beneficios">Beneficios</a></li>
+                <li><a href="blog.html">Blog</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+                <li><a href="/login.html">¿Iniciar sesión?</a></li>
+            </ul>
         </div>
     </header>
 
     <!-- Hero Section -->
-   <section class="hero" id="inicio">
-  <div class="hero-content">
-    <h1>Convierte cualquier máquina de agua en una máquina inteligente</h1>
-    <p>Transforma tu negocio con tecnología IoT avanzada. Monitorea, controla y optimiza tus máquinas de agua desde cualquier lugar.</p>
-    <a href="https://wa.link/609119" target="_blank" rel="noopener noreferrer" class="cta-button">
-      Solicita una Demo
-    </a>
-  </div>
-</section>
+    <section class="hero" id="inicio">
+        <div class="hero-content">
+            <h1>Convierte cualquier máquina de agua en una máquina inteligente</h1>
+            <p>Transforma tu negocio con tecnología IoT avanzada. Monitorea, controla y optimiza tus máquinas de agua desde cualquier lugar.</p>
+            <a href="https://wa.link/609119" target="_blank" rel="noopener noreferrer" class="cta-button">
+                Solicita una Demo
+            </a>
+        </div>
+    </section>
 
     <!-- Product Showcase -->
-    <section class="product-showcase">
+    <section class="product-showcase fade-in">
         <div class="showcase-container">
             <div class="product-image">
                 <div class="device-mockup">
@@ -694,7 +731,7 @@
     </section>
 
     <!-- Benefits Section -->
-    <section class="benefits" id="beneficios">
+    <section class="benefits fade-in" id="beneficios">
         <div class="benefits-container">
             <h2>Beneficios que Transforman tu Negocio</h2>
             <div class="benefits-grid">
@@ -706,20 +743,20 @@
                 <div class="benefit-card">
                     <div class="benefit-icon">💰</div>
                     <h3>Claridad sobre tu dinero</h3>
-                    <p>Optimiza precios, reduce costos operativos y aumenta la eficiencia. Ademas de evitar perdidas, Nuestro sistema te ayuda a llevar un control total sobre los ingresos, e inclusive tenemos una herramienta que te permite calcular tu utilidad.</p>
+                    <p>Optimiza precios, reduce costos operativos y aumenta la eficiencia. Además de evitar pérdidas, nuestro sistema te ayuda a llevar un control total sobre los ingresos, e inclusive tenemos una herramienta que te permite calcular tu utilidad.</p>
                 </div>
                 <div class="benefit-card">
                     <div class="benefit-icon">☁️</div>
                     <h3>Control Total desde la Nube</h3>
                     <p>Monitorea y administra tu máquina desde cualquier lugar.
-Desde tu celular o PC, puedes ajustar precios, revisar ventas, actualizar parámetros y tomar decisiones sin estar presente físicamente.</p>
+                    Desde tu celular o PC, puedes ajustar precios, revisar ventas, actualizar parámetros y tomar decisiones sin estar presente físicamente.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Products Section -->
-    <section class="products" id="productos">
+    <section class="products fade-in" id="productos">
         <div class="products-container">
             <h2>Nuestras Soluciones</h2>
             <div class="products-grid">
@@ -731,22 +768,22 @@ Desde tu celular o PC, puedes ajustar precios, revisar ventas, actualizar parám
                         <li>Conectividad WiFi (sin cables, sin complicaciones)</li>
                         <li>Instalación plug-and-play en menos de 10 minutos</li>
                         <li>Monitoreo de ventas en tiempo real desde tu celular o PC</li>
-                        <li> Historial de ventas en la nube accesible desde el dashboard</li>
+                        <li>Historial de ventas en la nube accesible desde el dashboard</li>
                         <li>Compatible con cualquier marca o tarjeta de control</li>
                     </ul>
                 </div>
                 <div class="product-card">
                     <h3>AquaLink</h3>
                     <p>La tarjeta inteligente que controla tu máquina de agua con precisión total.
-AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de agua inteligentes. Administra válvulas, sensores, botones, flujo y funciones avanzadas desde una interfaz local y remota. Es el núcleo de nuestras vending de nueva generación.</p>
+                    AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de agua inteligentes. Administra válvulas, sensores, botones, flujo y funciones avanzadas desde una interfaz local y remota. Es el núcleo de nuestras vending de nueva generación.</p>
                     <ul class="product-features">
-                        <li> Control directo de válvulas, flujo y sensores</li>
+                        <li>Control directo de válvulas, flujo y sensores</li>
                         <li>Pantalla LCD 20x4 con interfaz técnica integrada</li>
                         <li>Calibración por pulsos para máxima precisión</li>
                         <li>Función de devolución automática si no hay agua</li>
                         <li>Compatible con hopper y lector multicoin</li>
                         <li>Totalmente sincronizable con el dashboard web</li>
-                        <li>Gestión remota de precios y productos
+                        <li>Gestión remota de precios y productos</li>
                     </ul>
                 </div>
             </div>
@@ -754,7 +791,7 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
     </section>
 
     <!-- Trust Section -->
-    <section class="trust">
+    <section class="trust fade-in">
         <div class="trust-container">
             <h2>Empresas que Confían en Nosotros</h2>
             <div class="trust-logos">
@@ -768,15 +805,15 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
     </section>
 
     <!-- CTA Section -->
-   <section class="cta-section" id="contacto">
-  <div class="cta-container">
-    <h2>¿Listo para Transformar tu Negocio?</h2>
-    <p>Únete a cientos de empresarios que ya están maximizando sus ganancias con TrackMyVend</p>
-    <a href="https://wa.link/gp26kh" target="_blank" rel="noopener noreferrer" class="cta-button">
-      Contactar Ahora
-    </a>
-  </div>
-</section>
+    <section class="cta-section fade-in" id="contacto">
+        <div class="cta-container">
+            <h2>¿Listo para Transformar tu Negocio?</h2>
+            <p>Únete a cientos de empresarios que ya están maximizando sus ganancias con TrackMyVend</p>
+            <a href="https://wa.link/gp26kh" target="_blank" rel="noopener noreferrer" class="cta-button">
+                Contactar Ahora
+            </a>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer class="footer">
@@ -785,9 +822,9 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
                 <h3>TrackMyVend</h3>
                 <p>Transformamos máquinas de agua comunes en dispositivos inteligentes conectados.</p>
                 <div class="social-links">
-                    <a href="#" class="social-link"> 📘 </a>
-                    <a href="#" class="social-link"> 📧 </a>
-                    <a href="#" class="social-link"> 📱 </a>
+                    <a href="#" class="social-link">📘</a>
+                    <a href="#" class="social-link">📧</a>
+                    <a href="#" class="social-link">📱</a>
                 </div>
             </div>
             <div class="footer-section">
@@ -817,21 +854,42 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
     </footer>
 
     <script>
-        // Mobile menu toggle
+        // Mobile menu functionality
         const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
         const mobileMenu = document.getElementById('mobile-menu');
+        const body = document.body;
 
-        mobileMenuToggle.addEventListener('click', function() {
-            mobileMenuToggle.classList.toggle('active');
-            mobileMenu.classList.toggle('active');
+        // Toggle mobile menu
+        mobileMenuToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const isActive = mobileMenuToggle.classList.contains('active');
+            
+            if (isActive) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
         });
+
+        function openMobileMenu() {
+            mobileMenuToggle.classList.add('active');
+            mobileMenu.classList.add('active');
+            body.classList.add('menu-open');
+        }
+
+        function closeMobileMenu() {
+            mobileMenuToggle.classList.remove('active');
+            mobileMenu.classList.remove('active');
+            body.classList.remove('menu-open');
+        }
 
         // Close mobile menu when clicking on a link
         const mobileMenuLinks = mobileMenu.querySelectorAll('a');
         mobileMenuLinks.forEach(link => {
             link.addEventListener('click', function() {
-                mobileMenuToggle.classList.remove('active');
-                mobileMenu.classList.remove('active');
+                closeMobileMenu();
             });
         });
 
@@ -841,51 +899,21 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
             const isClickOnToggle = mobileMenuToggle.contains(event.target);
             
             if (!isClickInsideMenu && !isClickOnToggle && mobileMenu.classList.contains('active')) {
-                mobileMenuToggle.classList.remove('active');
-                mobileMenu.classList.remove('active');
+                closeMobileMenu();
             }
         });
 
-        // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
+        // Prevent menu from closing when clicking inside the menu
+        mobileMenu.addEventListener('click', function(e) {
+            e.stopPropagation();
         });
 
-        // Add scroll effect to header
-        window.addEventListener('scroll', function() {
-            const header = document.querySelector('.header');
-            if (window.scrollY > 100) {
-                header.style.background = 'rgba(35, 69, 225, 0.95)';
-            } else {
-                header.style.background = 'linear-gradient(135deg, #2345e1 0%, #667eea 100%)';
-            }
-        });
-
-        // Animate elements on scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver(function(entries) {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
-
-        // Observe benefit cards and product cards
-        document.querySelectorAll('.benefit-card, .product-card').forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translate
+       // Close menu on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
+    closeMobileMenu();
+  }
+});
+</script>
+</body>
+</html>
