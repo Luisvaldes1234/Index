@@ -6,8 +6,6 @@
   <title>Reportes - TrackMyVend</title>
   <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
 
-
-
   <!-- Supabase & Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -46,12 +44,103 @@
       padding: 0 2rem;
     }
     .logo { font-size: 1.8rem; font-weight: bold; color: white; text-decoration: none; }
-    .nav-menu { display: flex; list-style: none; gap: 1.5rem; align-items: center; }
+    
+    /* Desktop Navigation */
+    .nav-menu { 
+      display: flex; 
+      list-style: none; 
+      gap: 1.5rem; 
+      align-items: center; 
+    }
     .nav-menu a {
       color: white; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 25px;
       font-weight: 500; position: relative; overflow: hidden; transition: all 0.3s ease;
     }
     .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.2); }
+
+    /* Hamburger Menu Button */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+      padding: 4px;
+      z-index: 1001;
+    }
+    .hamburger span {
+      width: 25px;
+      height: 3px;
+      background: white;
+      margin: 3px 0;
+      transition: all 0.3s ease;
+      border-radius: 2px;
+    }
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(-45deg) translate(-5px, 6px);
+    }
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(45deg) translate(-5px, -6px);
+    }
+
+    /* Mobile Navigation Overlay */
+    .mobile-nav {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: 280px;
+      background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+      padding-top: 80px;
+      box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+    }
+    .mobile-nav.active {
+      transform: translateX(0);
+    }
+    .mobile-nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .mobile-nav li {
+      margin: 0;
+    }
+    .mobile-nav a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 1rem 2rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .mobile-nav a:hover, .mobile-nav a.active {
+      background: rgba(255,255,255,0.2);
+      padding-left: 2.5rem;
+    }
+
+    /* Overlay for mobile menu */
+    .mobile-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .mobile-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
     .main-container { margin-top: 80px; padding: 2rem 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: calc(100vh - 80px); }
     .container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; }
     .section-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 2rem; }
@@ -95,11 +184,55 @@
     .status-expired { color: #ef4444; font-weight: 600; }
     .volume-section { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 5px solid #f59e0b; }
     .flex-wrap { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
-    @media (max-width: 640px) {
-      .nav-menu { flex-direction: column; gap: 0.5rem; }
-      .nav-container { flex-direction: column; }
-      .grid { grid-template-columns: 1fr; }
-      .flex-wrap { flex-direction: column; align-items: stretch; }
+
+    /* Mobile Responsive Breakpoints */
+    @media (max-width: 768px) {
+      .nav-menu { 
+        display: none; 
+      }
+      .hamburger { 
+        display: flex; 
+      }
+      .nav-container { 
+        padding: 0 1rem; 
+      }
+      .container { 
+        padding: 0 1rem; 
+      }
+      .grid { 
+        grid-template-columns: 1fr; 
+      }
+      .flex-wrap { 
+        flex-direction: column; 
+        align-items: stretch; 
+      }
+      .section-card { 
+        padding: 1.5rem; 
+      }
+      .section-title { 
+        font-size: 1.5rem; 
+      }
+      .subsection-title { 
+        font-size: 1.25rem; 
+      }
+    }
+
+    @media (max-width: 480px) {
+      .logo { 
+        font-size: 1.5rem; 
+      }
+      .nav-container { 
+        padding: 0 0.5rem; 
+      }
+      .container { 
+        padding: 0 0.5rem; 
+      }
+      .section-card { 
+        padding: 1rem; 
+      }
+      .kpi-card { 
+        padding: 1rem; 
+      }
     }
   </style>
 </head>
@@ -107,6 +240,8 @@
   <header class="header">
     <div class="nav-container">
       <a href="#" class="logo">TrackMyVend</a>
+      
+      <!-- Desktop Navigation -->
       <nav>
         <ul class="nav-menu">
           <li><a href="/dashboard.html"> Panel</a></li>
@@ -117,8 +252,30 @@
           <li><a href="#" id="btnLogout"> Cerrar Sesión</a></li>
         </ul>
       </nav>
+
+      <!-- Hamburger Menu Button -->
+      <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
     </div>
+
+    <!-- Mobile Navigation Overlay -->
+    <nav class="mobile-nav" id="mobileNav">
+      <ul>
+        <li><a href="/dashboard.html"> Panel</a></li>
+        <li><a href="/reportes.html" class="active"> Reportes</a></li>
+        <li><a href="/subscripcion.html"> Suscripción</a></li>
+        <li><a href="/maquinas.html"> Mis Máquinas</a></li>
+        <li><a href="/agenda.html"> Agenda</a></li>
+        <li><a href="#" id="btnLogoutMobile"> Cerrar Sesión</a></li>
+      </ul>
+    </nav>
   </header>
+
+  <!-- Mobile Overlay -->
+  <div class="mobile-overlay" id="mobileOverlay"></div>
 
   <div class="main-container">
     <div class="container">
@@ -140,13 +297,13 @@
               <option value="">Todas</option>
             </select>
           </div>
-          <button id="btnAplicar" class="modern-button"> Aplicar Filtros</button>
+          <button id="btnAplicar" class="modern-button">Aplicar Filtros</button>
         </div>
       </div>
 
       <!-- KPIs Principales -->
       <div class="section-card">
-        <h2 class="section-title">📊 Métricas Principales</h2>
+        <h2 class="section-title"> Métricas Principales</h2>
         <div class="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
           <div class="kpi-card">
             <p class="kpi-label"> Ventas totales</p>
@@ -180,15 +337,15 @@
         <h2 class="section-title"> Actividad y Uso</h2>
         <div class="grid sm:grid-cols-2 md:grid-cols-3">
           <div class="kpi-card">
-            <p class="kpi-label">🔢 Número de Ventas</p>
+            <p class="kpi-label"> Número de Ventas</p>
             <h2 class="kpi-value" id="kpiNumVentas">0</h2>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">🕐 Hora Pico</p>
+            <p class="kpi-label"> Hora Pico</p>
             <h2 class="kpi-value" id="kpiHoraPico">--:00</h2>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">⏱️ Intervalo Medio</p>
+            <p class="kpi-label"> Intervalo Medio</p>
             <h2 class="kpi-value" id="kpiIntervaloMedio">0 min</h2>
           </div>
         </div>
@@ -206,7 +363,7 @@
             <label class="form-label"> Gastos operativos (MXN)</label>
             <input type="number" id="gastosOperativos" class="form-input" placeholder="p.ej. 200" />
           </div>
-          <button id="btnCalcularVolumen" class="modern-button success"> Calcular Utilidad</button>
+          <button id="btnCalcularVolumen" class="modern-button success"> Calcular Utilidad Aproximada</button>
         </div>
         <div class="grid sm:grid-cols-2 md:grid-cols-3">
           <div class="kpi-card">
@@ -218,7 +375,7 @@
             <h2 class="kpi-value" id="kpiLitrosPromedio">0 L</h2>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">📈 Distribución Volumen</p>
+            <p class="kpi-label"> Distribución Volumen</p>
             <ul id="kpiDistribucion" class="mt-2 text-sm text-gray-700">
               <li>5 L: 0 %</li>
               <li>10 L: 0 %</li>
@@ -231,14 +388,14 @@
 
       <!-- Estado de Suscripción por Máquina -->
       <div class="section-card">
-        <h2 class="section-title">📋 Estado de Suscripciones</h2>
+        <h2 class="section-title"> Estado de Suscripciones</h2>
         <div class="table-container">
           <table class="w-full text-left">
             <thead class="table-header">
               <tr>
                 <th class="px-4 py-3"> Máquina</th>
                 <th class="px-4 py-3">📅 Suscripción Hasta</th>
-                <th class="px-4 py-3"> Estado</th>
+                <th class="px-4 py-3">Estado</th>
               </tr>
             </thead>
             <tbody id="tablaSuscripciones" class="divide-y divide-gray-200">
@@ -251,7 +408,7 @@
       <!-- Gráficas de tendencia -->
       <div class="grid lg:grid-cols-2 gap-8 mb-8">
         <div class="section-card">
-          <h2 class="subsection-title">📈 Ventas en el tiempo</h2>
+          <h2 class="subsection-title"> Ventas en el tiempo</h2>
           <div class="chart-container">
             <canvas id="graficaVentasTiempo"></canvas>
           </div>
@@ -274,7 +431,7 @@
 
       <!-- Historial de cortes -->
       <div class="section-card">
-        <h2 class="section-title"> Historial de Cortes</h2>
+        <h2 class="section-title">️ Historial de Cortes</h2>
         <div class="table-container">
           <table class="w-full text-left">
             <thead class="table-header">
@@ -283,7 +440,7 @@
                 <th class="px-4 py-3"> Máquina</th>
                 <th class="px-4 py-3"> Total Ventas</th>
                 <th class="px-4 py-3"> Litros</th>
-                <th class="px-4 py-3">️ Intervalo</th>
+                <th class="px-4 py-3"> Intervalo</th>
               </tr>
             </thead>
             <tbody id="tablaCortes" class="divide-y divide-gray-200">
@@ -298,6 +455,65 @@
 
     </div>
   </div>
+
+  <script>
+    // Mobile Navigation Functionality
+    const hamburger = document.getElementById('hamburger');
+    const mobileNav = document.getElementById('mobileNav');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const body = document.body;
+
+    function toggleMobileNav() {
+      hamburger.classList.toggle('active');
+      mobileNav.classList.toggle('active');
+      mobileOverlay.classList.toggle('active');
+      body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
+    }
+
+    function closeMobileNav() {
+      hamburger.classList.remove('active');
+      mobileNav.classList.remove('active');
+      mobileOverlay.classList.remove('active');
+      body.style.overflow = '';
+    }
+
+    // Event listeners
+    hamburger.addEventListener('click', toggleMobileNav);
+    mobileOverlay.addEventListener('click', closeMobileNav);
+
+    // Close mobile nav when clicking on a link
+    document.querySelectorAll('.mobile-nav a').forEach(link => {
+      link.addEventListener('click', closeMobileNav);
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) {
+        closeMobileNav();
+      }
+    });
+
+    // Handle logout for both desktop and mobile
+    document.getElementById('btnLogout').addEventListener('click', function(e) {
+      e.preventDefault();
+      // Add your logout logic here
+      console.log('Logout clicked');
+    });
+
+    document.getElementById('btnLogoutMobile').addEventListener('click', function(e) {
+      e.preventDefault();
+      closeMobileNav();
+      // Add your logout logic here
+      console.log('Mobile logout clicked');
+    });
+
+    // Prevent scrolling when mobile menu is open
+    document.addEventListener('touchmove', function(e) {
+      if (mobileNav.classList.contains('active')) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  </script>
 
   <!-- Script principal para reportes -->
   <script src="/reportes.js"></script>
