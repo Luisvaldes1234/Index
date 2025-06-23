@@ -78,12 +78,34 @@
             border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
         }
         .modern-button.success { background: linear-gradient(45deg, #10b981, #059669); }
+        .modern-button.secondary { background: linear-gradient(45deg, #6b7280, #4b5563); }
         /* Estilo para los mapas */
-        #locationPickerMap, #map { height: 300px; border-radius: 12px; border: 2px solid #e5e7eb; margin-top: 1rem; z-index: 1; }
+        #locationPickerMap, #map { height: 350px; border-radius: 12px; border: 2px solid #e5e7eb; margin-top: 1rem; z-index: 1; }
         .machine-card {
             border-left: 5px solid #667eea; transition: all 0.3s ease;
         }
         .machine-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        /* Estilo para el tooltip de ayuda (?) */
+        .tooltip-container { position: relative; display: inline-block; cursor: pointer; }
+        .tooltip-icon {
+            background-color: #9ca3af; color: white; border-radius: 50%;
+            width: 1.25rem; height: 1.25rem; display: inline-flex;
+            align-items: center; justify-content: center; font-weight: bold;
+            font-size: 0.8rem; margin-left: 0.5rem;
+        }
+        .tooltip-text {
+            visibility: hidden; width: 250px; background-color: #2d3748;
+            color: #fff; text-align: center; border-radius: 6px;
+            padding: 8px; position: absolute; z-index: 10;
+            bottom: 125%; left: 50%; margin-left: -125px;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .tooltip-text::after { /* Flecha del tooltip */
+            content: ""; position: absolute; top: 100%; left: 50%;
+            margin-left: -5px; border-width: 5px; border-style: solid;
+            border-color: #2d3748 transparent transparent transparent;
+        }
+        .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
 
         @media (max-width: 768px) {
             .nav-menu { display: none; }
@@ -126,7 +148,7 @@
     <div class="mobile-overlay" id="mobileOverlay"></div>
 
     <main class="main-container">
-        <div class="section-card">
+        <div id="registration-form-container" class="section-card hidden">
             <h2 class="section-title">Registrar Nueva Máquina</h2>
             <form id="machineForm" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -141,57 +163,47 @@
                 </div>
 
                 <div>
-                    <label for="ubicacion" class="form-label">Ubicación (Opcional)</label>
+                    <label for="ubicacion" class="form-label inline-flex items-center">
+                        Ubicación (Opcional)
+                        <span class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">Navega en el mapa y haz un solo clic en el punto exacto para fijar la ubicación de tu máquina.</span>
+                        </span>
+                    </label>
                     <input type="text" id="ubicacion" class="form-input" placeholder="Ej: Tienda de la esquina, Av. Siempreviva 123">
-                    <p class="text-sm text-gray-500 mt-2">Haz clic en el mapa para fijar la ubicación exacta (Opcional)</p>
                     <div id="locationPickerMap"></div>
-                    <input type="hidden" id="latitude">
-                    <input type="hidden" id="longitude">
+                    <input type="hidden" id="latitude"><input type="hidden" id="longitude">
                 </div>
 
                 <div>
                     <h3 class="text-lg font-semibold text-gray-700 mb-2">Configuración de Botones</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="p-4 bg-gray-50 rounded-lg">
-                            <label class="form-label">B1 Litros</label>
-                            <input type="number" step="any" id="litros1" class="form-input">
-                            <label class="form-label mt-2">B1 Precio</label>
-                            <input type="number" step="any" id="precio1" class="form-input">
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg">
-                            <label class="form-label">B2 Litros</label>
-                            <input type="number" step="any" id="litros2" class="form-input">
-                            <label class="form-label mt-2">B2 Precio</label>
-                            <input type="number" step="any" id="precio2" class="form-input">
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg">
-                            <label class="form-label">B3 Litros</label>
-                            <input type="number" step="any" id="litros3" class="form-input">
-                            <label class="form-label mt-2">B3 Precio</label>
-                            <input type="number" step="any" id="precio3" class="form-input">
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg border-2 border-dashed">
-                            <label class="form-label">B4 Litros</label>
-                            <input type="number" step="any" id="litros4" class="form-input">
-                            <label class="form-label mt-2">B4 Precio</label>
-                            <input type="number" step="any" id="precio4" class="form-input">
-                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg"><label class="form-label">B1 Litros</label><input type="number" step="any" id="litros1" class="form-input"><label class="form-label mt-2">B1 Precio</label><input type="number" step="any" id="precio1" class="form-input"></div>
+                        <div class="p-4 bg-gray-50 rounded-lg"><label class="form-label">B2 Litros</label><input type="number" step="any" id="litros2" class="form-input"><label class="form-label mt-2">B2 Precio</label><input type="number" step="any" id="precio2" class="form-input"></div>
+                        <div class="p-4 bg-gray-50 rounded-lg"><label class="form-label">B3 Litros</label><input type="number" step="any" id="litros3" class="form-input"><label class="form-label mt-2">B3 Precio</label><input type="number" step="any" id="precio3" class="form-input"></div>
+                        <div class="p-4 bg-gray-50 rounded-lg border-2 border-dashed"><label class="form-label">B4 Litros</label><input type="number" step="any" id="litros4" class="form-input"><label class="form-label mt-2">B4 Precio</label><input type="number" step="any" id="precio4" class="form-input"></div>
                     </div>
                 </div>
-
-                <button type="submit" class="modern-button success">💾 Registrar Máquina</button>
+                <div class="flex gap-4">
+                    <button type="submit" class="modern-button success">💾 Registrar Máquina</button>
+                    <button type="button" id="cancel-form-btn" class="modern-button secondary">✖️ Cancelar</button>
+                </div>
             </form>
+        </div>
+
+        <div id="show-form-button-container" class="mb-8">
+            <button id="show-form-btn" class="modern-button">➕ Agregar Nueva Máquina</button>
+        </div>
+        
+        <div class="section-card">
+            <h2 class="section-title">Mapa de Máquinas</h2>
+            <div id="map"></div>
         </div>
 
         <div class="section-card">
             <h2 class="section-title">Mis Máquinas Registradas</h2>
-            <div id="machineList" class="space-y-4">
+            <div id="machineList" class="space-y-6">
                 </div>
-        </div>
-
-        <div class="section-card">
-            <h2 class="section-title">Mapa de Máquinas</h2>
-            <div id="map"></div>
         </div>
     </main>
 
