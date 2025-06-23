@@ -6,12 +6,8 @@
   <title>Agenda - TrackMyVend</title>
   <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
 
-
-
-  <!-- Supabase client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
 
-  <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 
   <style>
@@ -83,13 +79,50 @@
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 2000; }
     .modal.hidden { display: none; }
     .modal-content { background: white; border-radius: 20px; padding: 2rem; width: 90%; max-width: 500px; }
+    
+    /* Responsive styles for navigation */
+    @media (max-width: 767px) {
+        #nav-menu {
+            display: none; /* Hide by default on mobile */
+            position: absolute;
+            top: 68px; /* Adjust based on header height */
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+        }
+        #nav-menu.show {
+            display: block; /* Show when toggled */
+        }
+        .nav-menu {
+            flex-direction: column;
+            gap: 0;
+            align-items: stretch;
+        }
+        .nav-menu li {
+            text-align: center;
+        }
+        .nav-menu a {
+            display: block;
+            padding: 1rem;
+            border-radius: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .nav-menu li:last-child a {
+            border-bottom: none;
+        }
+    }
   </style>
 </head>
 <body>
   <header class="header">
     <div class="nav-container">
       <a href="#" class="logo">TrackMyVend</a>
-      <nav>
+      <button id="hamburger-button" class="md:hidden text-white focus:outline-none">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+          </svg>
+      </button>
+      <nav id="nav-menu" class="hidden md:flex">
         <ul class="nav-menu">
           <li><a href="/dashboard.html">📊 Panel</a></li>
           <li><a href="/reportes.html">📈 Reportes</a></li>
@@ -131,9 +164,9 @@
 
       <div class="calendar-container">
         <div class="calendar-header">
-          <button id="prevMonth" class="calendar-nav">⬅️ Anterior</button>
+          <button id="prevMonth" class="modern-button secondary">⬅️ Anterior</button>
           <h2 id="calendarTitle" class="calendar-title"></h2>
-          <button id="nextMonth" class="calendar-nav">Siguiente ➡️</button>
+          <button id="nextMonth" class="modern-button secondary">Siguiente ➡️</button>
         </div>
         <div id="calendar" class="calendar-grid"></div>
       </div>
@@ -203,6 +236,18 @@
     </div>
   </div>
 
+  <script>
+    // JavaScript for Hamburger Menu
+    document.addEventListener('DOMContentLoaded', function () {
+        const hamburgerButton = document.getElementById('hamburger-button');
+        const navMenu = document.getElementById('nav-menu');
+
+        hamburgerButton.addEventListener('click', function () {
+            navMenu.classList.toggle('hidden');
+            navMenu.classList.toggle('show');
+        });
+    });
+  </script>
   <script src="agenda.js"></script>
 </body>
 </html>
