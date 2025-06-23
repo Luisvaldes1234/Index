@@ -49,6 +49,7 @@
             text-decoration: none;
         }
 
+        /* Desktop Navigation */
         .nav-menu {
             display: flex;
             list-style: none;
@@ -66,6 +67,98 @@
         .nav-menu a:hover {
             background: rgba(255,255,255,0.2);
             transform: translateY(-2px);
+        }
+
+        /* Hamburger Menu Button */
+        .hamburger {
+            display: none; /* Hidden by default for desktop */
+            flex-direction: column;
+            cursor: pointer;
+            padding: 4px;
+            z-index: 1001; /* Ensure it's above other content when active */
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        /* Hamburger animation */
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        /* Mobile Navigation Overlay */
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: 280px;
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            transform: translateX(100%); /* Start off-screen */
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            padding-top: 80px; /* Space for fixed header */
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        }
+
+        .mobile-nav.active {
+            transform: translateX(0); /* Slide in */
+        }
+
+        .mobile-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .mobile-nav li {
+            margin: 0;
+        }
+
+        .mobile-nav a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .mobile-nav a:hover, .mobile-nav a.active {
+            background: rgba(255,255,255,0.2);
+            padding-left: 2.5rem; /* Slight indent on hover */
+        }
+
+        /* Overlay for mobile menu */
+        .mobile-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999; /* Below mobile-nav but above content */
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-overlay.active {
+            opacity: 1;
+            visibility: visible;
         }
 
         /* Hero Section */
@@ -474,7 +567,11 @@
         /* Responsive */
         @media (max-width: 768px) {
             .nav-menu {
-                display: none;
+                display: none; /* Hide desktop menu on smaller screens */
+            }
+
+            .hamburger {
+                display: flex; /* Show hamburger icon on smaller screens */
             }
 
             .hero h1 {
@@ -501,11 +598,11 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="nav-container">
             <a href="#" class="logo">TrackMyVend</a>
-            <nav>
+
+            <nav class="desktop-nav">
                 <ul class="nav-menu">
                     <li><a href="#inicio">Inicio</a></li>
                     <li><a href="#productos">Productos</a></li>
@@ -513,24 +610,40 @@
                     <li><a href="blog.html">Blog</a></li>
                     <li><a href="#contacto">Contacto</a></li>
                     <li><a href="/login.html">¿Iniciar sesión?</a></li>
-
                 </ul>
             </nav>
+
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         </div>
+
+        <nav class="mobile-nav" id="mobileNav">
+            <ul>
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="#productos">Productos</a></li>
+                <li><a href="#beneficios">Beneficios</a></li>
+                <li><a href="blog.html">Blog</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+                <li><a href="/login.html">¿Iniciar sesión?</a></li>
+            </ul>
+        </nav>
     </header>
 
-    <!-- Hero Section -->
-   <section class="hero" id="inicio">
-  <div class="hero-content">
-    <h1>Convierte cualquier máquina de agua en una máquina inteligente</h1>
-    <p>Transforma tu negocio con tecnología IoT avanzada. Monitorea, controla y optimiza tus máquinas de agua desde cualquier lugar.</p>
-    <a href="https://wa.link/609119" target="_blank" rel="noopener noreferrer" class="cta-button">
-      Solicita una Demo
-    </a>
-  </div>
-</section>
+    <div class="mobile-overlay" id="mobileOverlay"></div>
 
-    <!-- Product Showcase -->
+    <section class="hero" id="inicio">
+        <div class="hero-content">
+            <h1>Convierte cualquier máquina de agua en una máquina inteligente</h1>
+            <p>Transforma tu negocio con tecnología IoT avanzada. Monitorea, controla y optimiza tus máquinas de agua desde cualquier lugar.</p>
+            <a href="https://wa.link/609119" target="_blank" rel="noopener noreferrer" class="cta-button">
+                Solicita una Demo
+            </a>
+        </div>
+    </section>
+
     <section class="product-showcase">
         <div class="showcase-container">
             <div class="product-image">
@@ -541,13 +654,12 @@
             <div class="showcase-content">
                 <h2>Tecnología que transforma tu negocio</h2>
                 <p>Convierte cualquier máquina de agua en un sistema inteligente conectado.
-                   Monitorea ventas en tiempo real, controla tu operación desde la nube y escala con eficiencia y transparencia.</p>
+                    Monitorea ventas en tiempo real, controla tu operación desde la nube y escala con eficiencia y transparencia.</p>
                 <a href="#productos" class="cta-button">Conoce Más</a>
             </div>
         </div>
     </section>
 
-    <!-- Benefits Section -->
     <section class="benefits" id="beneficios">
         <div class="benefits-container">
             <h2>Beneficios que Transforman tu Negocio</h2>
@@ -566,13 +678,12 @@
                     <div class="benefit-icon">☁️</div>
                     <h3>Control Total desde la Nube</h3>
                     <p>Monitorea y administra tu máquina desde cualquier lugar.
-Desde tu celular o PC, puedes ajustar precios, revisar ventas, actualizar parámetros y tomar decisiones sin estar presente físicamente.</p>
+                        Desde tu celular o PC, puedes ajustar precios, revisar ventas, actualizar parámetros y tomar decisiones sin estar presente físicamente.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Products Section -->
     <section class="products" id="productos">
         <div class="products-container">
             <h2>Nuestras Soluciones</h2>
@@ -580,11 +691,10 @@ Desde tu celular o PC, puedes ajustar precios, revisar ventas, actualizar parám
                 <div class="product-card">
                     <h3>Link-Nano</h3>
                     <p>Dispositivo IoT ultracompacto que se instala fácilmente en cualquier vending de agua existente
-                    sin importar la marca.</p>
+                        sin importar la marca.</p>
                     <ul class="product-features">
                         <li>Conectividad WiFi (sin cables, sin complicaciones)</li>
                         <li>Instalación plug-and-play en menos de 10 minutos</li>
-                        <li>Monitoreo de ventas en tiempo real desde tu celular o PC</li>
                         <li>Monitoreo de ventas en tiempo real desde tu celular o PC</li>
                         <li> Historial de ventas en la nube accesible desde el dashboard</li>
                         <li>Compatible con cualquier marca o tarjeta de control</li>
@@ -593,7 +703,7 @@ Desde tu celular o PC, puedes ajustar precios, revisar ventas, actualizar parám
                 <div class="product-card">
                     <h3>AquaLink</h3>
                     <p>La tarjeta inteligente que controla tu máquina de agua con precisión total.
-AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de agua inteligentes. Administra válvulas, sensores, botones, flujo y funciones avanzadas desde una interfaz local y remota. Es el núcleo de nuestras vending de nueva generación.</p>
+                        AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de agua inteligentes. Administra válvulas, sensores, botones, flujo y funciones avanzadas desde una interfaz local y remota. Es el núcleo de nuestras vending de nueva generación.</p>
                     <ul class="product-features">
                         <li> Control directo de válvulas, flujo y sensores</li>
                         <li>Pantalla LCD 20x4 con interfaz técnica integrada</li>
@@ -608,7 +718,6 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
         </div>
     </section>
 
-    <!-- Trust Section -->
     <section class="trust">
         <div class="trust-container">
             <h2>Empresas que Confían en Nosotros</h2>
@@ -622,18 +731,16 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
         </div>
     </section>
 
-    <!-- CTA Section -->
-   <section class="cta-section" id="contacto">
-  <div class="cta-container">
-    <h2>¿Listo para Transformar tu Negocio?</h2>
-    <p>Únete a cientos de empresarios que ya están maximizando sus ganancias con TrackMyVend</p>
-    <a href="https://wa.link/gp26kh" target="_blank" rel="noopener noreferrer" class="cta-button">
-      Contactar Ahora
-    </a>
-  </div>
-</section>
+    <section class="cta-section" id="contacto">
+        <div class="cta-container">
+            <h2>¿Listo para Transformar tu Negocio?</h2>
+            <p>Únete a cientos de empresarios que ya están maximizando sus ganancias con TrackMyVend</p>
+            <a href="https://wa.link/gp26kh" target="_blank" rel="noopener noreferrer" class="cta-button">
+                Contactar Ahora
+            </a>
+        </div>
+    </section>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="footer-container">
             <div class="footer-section">
@@ -650,10 +757,6 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
                 <a href="mailto:info@trackmyvend.com">info@trackmyvend.com</a>
                 <a href="tel:+52-81-2698-2507">+52 (81) 2698-2507</a>
                 <p>Monterrey, Nuevo León, México</p>
-                
-                
-
-
             </div>
             <div class="footer-section">
                 <h3>Productos</h3>
@@ -696,7 +799,7 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
             if (window.scrollY > 100) {
                 header.style.background = 'rgba(102, 126, 234, 0.95)';
             } else {
-                header.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                header.style.background = 'linear-gradient(135deg, #2345e1 0%, #667eea 100%)';
             }
         });
 
@@ -722,6 +825,35 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
             card.style.transition = 'all 0.6s ease';
             observer.observe(card);
         });
+
+        // --- Hamburger Menu Script ---
+        const hamburger = document.getElementById('hamburger');
+        const mobileNav = document.getElementById('mobileNav');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        const mobileNavLinks = mobileNav.querySelectorAll('a');
+
+        function toggleMobileMenu() {
+            hamburger.classList.toggle('active');
+            mobileNav.classList.toggle('active');
+            mobileOverlay.classList.toggle('active');
+            document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : ''; // Prevent scrolling when menu is open
+        }
+
+        // Toggle menu when hamburger is clicked
+        hamburger.addEventListener('click', toggleMobileMenu);
+
+        // Close menu when overlay is clicked
+        mobileOverlay.addEventListener('click', toggleMobileMenu);
+
+        // Close menu when a navigation link is clicked (for smooth scrolling)
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                toggleMobileMenu(); // Close the menu
+                // For smooth scrolling, ensure the default behavior is allowed after closing
+                // Or you can re-implement the smooth scroll here if needed.
+            });
+        });
+        // --- End Hamburger Menu Script ---
     </script>
 </body>
 </html>
