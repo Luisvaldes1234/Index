@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,17 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Reportes - TrackMyVend</title>
     <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
     <style>
-        /* Estilos consistentes (sin cambios) */
+        /* Estilos consistentes con el resto de la aplicación */
         * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
         .header { background: linear-gradient(135deg, #2345e1 0%, #667eea 100%); color: white; padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; box-shadow: 0 4px 30px rgba(0,0,0,0.1); }
         .nav-container { width: 100%; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
         .logo { font-size: 1.8rem; font-weight: bold; color: white; text-decoration: none; }
-        .nav-menu { display: none; } @media (min-width: 768px) { .nav-menu { display: flex; list-style: none; gap: 1.5rem; align-items: center; } }
+        .nav-menu { display: none; } /* Oculto en mobile por defecto */
+        @media (min-width: 768px) { .nav-menu { display: flex; list-style: none; gap: 1.5rem; align-items: center; } }
         .nav-menu a { color: white; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 25px; font-weight: 500; transition: all 0.3s ease; }
         .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.2); }
         .hamburger { display: flex; flex-direction: column; cursor: pointer; padding: 4px; z-index: 1001; }
@@ -52,14 +57,62 @@
     </style>
 </head>
 <body class="min-h-screen">
-    <header class="header"></header>
-    <nav class="mobile-nav" id="mobileNav"></nav>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/dashboard.html" class="logo">TrackMyVend</a>
+            <nav class="nav-menu">
+                <ul class="flex items-center gap-6">
+                    <li><a href="/dashboard.html">📊 Panel</a></li>
+                    <li><a href="/reportes.html" class="active">📈 Reportes</a></li>
+                    <li><a href="/subscripcion.html">💳 Suscripcion</a></li>
+                    <li><a href="/maquinas.html">🔧 Mis Máquinas</a></li>
+                    <li><a href="/agenda.html">📅 Agenda</a></li>
+                    <li><a href="#" id="btnLogout">🚪 Cerrar Sesión</a></li>
+                </ul>
+            </nav>
+            <div class="hamburger" id="hamburger">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </header>
+    <nav class="mobile-nav" id="mobileNav">
+        <ul>
+            <li><a href="/dashboard.html">📊 Panel</a></li>
+            <li><a href="/reportes.html" class="active">📈 Reportes</a></li>
+            <li><a href="/subscripcion.html">💳 Suscripcion</a></li>
+            <li><a href="/maquinas.html">🔧 Mis Máquinas</a></li>
+            <li><a href="/agenda.html">📅 Agenda</a></li>
+            <li><a href="#" id="btnLogoutMobile">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </nav>
     <div class="mobile-overlay" id="mobileOverlay"></div>
 
     <main class="main-container">
-        <div id="loading" class="hidden"><div class="loading-spinner"></div></div>
+        <div id="loading" class="hidden">
+            <div class="loading-spinner"></div>
+        </div>
+        
         <div id="report-content">
-            <div class="section-card filter-section"></div>
+            <div class="section-card filter-section">
+                <h2 class="subsection-title">Filtros de Análisis</h2>
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label class="form-label">📅 Desde:</label>
+                        <input type="date" id="desde" class="form-input" />
+                    </div>
+                    <div>
+                        <label class="form-label">📅 Hasta:</label>
+                        <input type="date" id="hasta" class="form-input" />
+                    </div>
+                    <div>
+                        <label class="form-label">🔧 Máquina:</label>
+                        <select id="maquinaFiltro" class="form-select">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <button id="btnAplicar" class="modern-button">Aplicar Filtros</button>
+                </div>
+            </div>
 
             <div class="section-card">
                 <h2 class="section-title">Salud Operativa</h2>
@@ -75,31 +128,62 @@
                 </div>
             </div>
 
-            <div class="section-card"></div>
+            <div class="section-card">
+                <h2 class="section-title">Métricas Principales</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-6">
+                    <div class="kpi-card flex items-center justify-between">
+                        <div><p class="kpi-label">Ventas totales</p><h2 class="kpi-value" id="kpiVentasTotales">$0</h2></div>
+                        <span id="kpiVentasTotales_comp" class="kpi-comparison"></span>
+                    </div>
+                    <div class="kpi-card flex items-center justify-between">
+                        <div><p class="kpi-label">Litros vendidos</p><h2 class="kpi-value" id="kpiLitros">0 L</h2></div>
+                        <span id="kpiLitros_comp" class="kpi-comparison"></span>
+                    </div>
+                    <div class="kpi-card flex items-center justify-between">
+                        <div><p class="kpi-label">Transacciones</p><h2 class="kpi-value" id="kpiTransacciones">0</h2></div>
+                        <span id="kpiTransacciones_comp" class="kpi-comparison"></span>
+                    </div>
+                    <div class="kpi-card"><p class="kpi-label">Ticket promedio</p><h2 class="kpi-value" id="kpiTicket">$0</h2></div>
+                    <div class="kpi-card"><p class="kpi-label">Promedio diario</p><h2 class="kpi-value" id="kpiPromedioDiario">$0</h2></div>
+                    <div class="kpi-card"><p class="kpi-label">️Cortes realizados</p><h2 class="kpi-value" id="kpiCortes">0</h2></div>
+                </div>
+            </div>
 
-            <div class="grid lg:grid-cols-2 gap-8 mb-8"></div>
-            <div class="section-card"></div>
+            <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                <div class="section-card">
+                    <h2 class="subsection-title">Ventas en el tiempo</h2>
+                    <div class="chart-container"><canvas id="graficaVentasTiempo"></canvas></div>
+                </div>
+                <div class="section-card">
+                    <h2 class="subsection-title">Volumen en el tiempo</h2>
+                    <div class="chart-container"><canvas id="graficaVolumenTiempo"></canvas></div>
+                </div>
+            </div>
+            
+            <div class="section-card">
+                <h2 class="section-title">Ranking por Máquina (Ingresos)</h2>
+                <div class="chart-container"><canvas id="graficaRankingMaquinas"></canvas></div>
+            </div>
 
             <div class="section-card">
                 <h2 class="section-title">Estado de Suscripciones</h2>
                 <div class="table-container">
-                    <table class="w-full text-left">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="p-3">Máquina</th>
-                                <th class="p-3">Vence el</th>
-                                <th class="p-3">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaSuscripciones">
-                            </tbody>
-                    </table>
+                    <table class="w-full text-left"><thead class="table-header"><tr><th class="p-3">Máquina</th><th class="p-3">Vence el</th><th class="p-3">Estado</th></tr></thead><tbody id="tablaSuscripciones"></tbody></table>
                 </div>
             </div>
 
-            <div class="section-card"></div>
+            <div class="section-card">
+                <h2 class="section-title">Historial de Cortes</h2>
+                <div class="flex justify-end mb-4">
+                    <button id="btnDescargarCortes" class="modern-button success">📥 Descargar CSV</button>
+                </div>
+                <div class="table-container">
+                    <table class="w-full text-left"><thead class="table-header"><tr><th class="p-3">Fecha</th><th class="p-3">Máquina</th><th class="p-3">Total Ventas</th><th class="p-3">Litros</th><th class="p-3">Intervalo</th></tr></thead><tbody id="tablaCortes"></tbody></table>
+                </div>
+            </div>
         </div>
     </main>
+
     <script src="reportes.js"></script>
 </body>
 </html>
