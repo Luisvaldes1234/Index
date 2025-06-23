@@ -1,69 +1,200 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mis Máquinas</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mis Máquinas - TrackMyVend</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        /* Estilos consistentes con reportes.html y agenda.html */
+        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .header {
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            color: white; padding: 1rem 0; position: fixed;
+            width: 100%; top: 0; z-index: 1000;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+        }
+        .nav-container {
+            width: 100%; margin: 0 auto; display: flex;
+            justify-content: space-between; align-items: center; padding: 0 2rem;
+        }
+        .logo { font-size: 1.8rem; font-weight: bold; color: white; text-decoration: none; }
+        .nav-menu { display: flex; list-style: none; gap: 1.5rem; align-items: center; }
+        .nav-menu a {
+            color: white; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 25px;
+            font-weight: 500; transition: all 0.3s ease;
+        }
+        .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.2); }
+        .hamburger { display: none; flex-direction: column; cursor: pointer; padding: 4px; z-index: 1001; }
+        .hamburger span { width: 25px; height: 3px; background: white; margin: 3px 0; transition: all 0.3s ease; border-radius: 2px; }
+        .hamburger.active span:nth-child(1) { transform: rotate(-45deg) translate(-5px, 6px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(45deg) translate(-5px, -6px); }
+        .mobile-nav {
+            position: fixed; top: 0; right: 0; height: 100vh; width: 280px;
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            transform: translateX(100%); transition: transform 0.3s ease;
+            z-index: 1000; padding-top: 80px; box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        }
+        .mobile-nav.active { transform: translateX(0); }
+        .mobile-nav ul { list-style: none; padding: 0; margin: 0; }
+        .mobile-nav a {
+            display: block; color: white; text-decoration: none; padding: 1rem 2rem;
+            font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-nav a.active, .mobile-nav a:hover { background: rgba(255,255,255,0.2); }
+        .mobile-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 999;
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+        .mobile-overlay.active { opacity: 1; visibility: visible; }
+        .main-container { margin-top: 80px; padding: 2rem; }
+        .section-card {
+            background: white; border-radius: 20px; padding: 2rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 2rem;
+        }
+        .section-title { font-size: 2rem; font-weight: bold; color: #2345e1; margin-bottom: 1.5rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
+        .form-input {
+            width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb;
+            border-radius: 12px; transition: border-color 0.3s;
+        }
+        .form-input:focus { border-color: #667eea; outline: none; }
+        .modern-button {
+            background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 0.8rem 1.5rem;
+            border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+        }
+        .modern-button.success { background: linear-gradient(45deg, #10b981, #059669); }
+        /* Estilo para los mapas */
+        #locationPickerMap, #map { height: 300px; border-radius: 12px; border: 2px solid #e5e7eb; margin-top: 1rem; z-index: 1; }
+        .machine-card {
+            border-left: 5px solid #667eea; transition: all 0.3s ease;
+        }
+        .machine-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+
+        @media (max-width: 768px) {
+            .nav-menu { display: none; }
+            .hamburger { display: flex; }
+            .main-container, .nav-container { padding: 1rem; margin-top: 60px; }
+            .section-card { padding: 1.5rem; }
+            .section-title { font-size: 1.5rem; }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
+<body class="min-h-screen">
+    <header class="header">
+        <div class="nav-container">
+            <a href="/dashboard.html" class="logo">TrackMyVend</a>
+            <nav class="hidden md:block">
+                <ul class="nav-menu">
+                    <li><a href="/dashboard.html">📊 Panel</a></li>
+                    <li><a href="/reportes.html">📈 Reportes</a></li>
+                    <li><a href="/subscripcion.html">💳 Suscripcion</a></li>
+                    <li><a href="/maquinas.html" class="active">🔧 Mis Máquinas</a></li>
+                    <li><a href="/agenda.html">📅 Agenda</a></li>
+                    <li><a href="#" id="btnLogout">🚪 Cerrar Sesión</a></li>
+                </ul>
+            </nav>
+            <div class="hamburger" id="hamburger">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </header>
+    <nav class="mobile-nav" id="mobileNav">
+        <ul>
+            <li><a href="/dashboard.html">📊 Panel</a></li>
+            <li><a href="/reportes.html">📈 Reportes</a></li>
+            <li><a href="/subscripcion.html">💳 Suscripcion</a></li>
+            <li><a href="/maquinas.html" class="active">🔧 Mis Máquinas</a></li>
+            <li><a href="/agenda.html">📅 Agenda</a></li>
+            <li><a href="#" id="btnLogoutMobile">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </nav>
+    <div class="mobile-overlay" id="mobileOverlay"></div>
 
-  <!-- ✅ NAV HEADER -->
-  <nav class="bg-gray-900 text-white px-4 py-3 shadow-md flex gap-6 text-sm md:text-base">
-    <a href="/dashboard.html" class="hover:underline">Dashboard</a>
-    <a href="/reportes.html" class="hover:underline">Reportes</a>
-    <a href="/Agenda.html" class="hover:underline">Agenda</a>
-    <a href="/subscripcion.html" class="hover:underline">Subscripción</a>
-    <a href="/maquinas.html" class="hover:underline font-semibold">Mis Máquinas</a>
-  </nav>
+    <main class="main-container">
+        <div class="section-card">
+            <h2 class="section-title">Registrar Nueva Máquina</h2>
+            <form id="machineForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="serial" class="form-label">Número de Serie</label>
+                        <input type="text" id="serial" class="form-input" required>
+                    </div>
+                    <div>
+                        <label for="name" class="form-label">Nombre / Alias de la Máquina</label>
+                        <input type="text" id="name" class="form-input" required>
+                    </div>
+                </div>
 
-  <!-- ✅ CONTENIDO PRINCIPAL -->
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">Mis Máquinas</h1>
+                <div>
+                    <label for="ubicacion" class="form-label">Ubicación (Opcional)</label>
+                    <input type="text" id="ubicacion" class="form-input" placeholder="Ej: Tienda de la esquina, Av. Siempreviva 123">
+                    <p class="text-sm text-gray-500 mt-2">Haz clic en el mapa para fijar la ubicación exacta (Opcional)</p>
+                    <div id="locationPickerMap"></div>
+                    <input type="hidden" id="latitude">
+                    <input type="hidden" id="longitude">
+                </div>
 
-    <div class="bg-white dark:bg-gray-800 shadow-md rounded p-6 mb-8">
-      <h2 class="text-xl font-semibold mb-4">Registrar nueva máquina</h2>
-      <form id="machineForm" class="space-y-4">
-        <div>
-          <label for="serial" class="block text-sm font-medium mb-1">Número de serie</label>
-          <input type="text" id="serial" class="w-full border rounded px-3 py-2" required>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Configuración de Botones</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <label class="form-label">B1 Litros</label>
+                            <input type="number" step="any" id="litros1" class="form-input">
+                            <label class="form-label mt-2">B1 Precio</label>
+                            <input type="number" step="any" id="precio1" class="form-input">
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <label class="form-label">B2 Litros</label>
+                            <input type="number" step="any" id="litros2" class="form-input">
+                            <label class="form-label mt-2">B2 Precio</label>
+                            <input type="number" step="any" id="precio2" class="form-input">
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <label class="form-label">B3 Litros</label>
+                            <input type="number" step="any" id="litros3" class="form-input">
+                            <label class="form-label mt-2">B3 Precio</label>
+                            <input type="number" step="any" id="precio3" class="form-input">
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border-2 border-dashed">
+                            <label class="form-label">B4 Litros</label>
+                            <input type="number" step="any" id="litros4" class="form-input">
+                            <label class="form-label mt-2">B4 Precio</label>
+                            <input type="number" step="any" id="precio4" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="modern-button success">💾 Registrar Máquina</button>
+            </form>
         </div>
 
-        <div>
-          <label for="name" class="block text-sm font-medium mb-1">Nombre de la máquina</label>
-          <input type="text" id="name" class="w-full border rounded px-3 py-2" required>
+        <div class="section-card">
+            <h2 class="section-title">Mis Máquinas Registradas</h2>
+            <div id="machineList" class="space-y-4">
+                </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-4">
-          <div>
-            <label for="litros1" class="block text-sm font-medium mb-1">Botón 1 – Litros</label>
-            <input type="number" step="any" id="litros1" class="w-full border rounded px-3 py-2">
-            <label for="precio1" class="block text-sm font-medium mt-2 mb-1">Precio</label>
-            <input type="number" step="any" id="precio1" class="w-full border rounded px-3 py-2">
-          </div>
-          <div>
-            <label for="litros2" class="block text-sm font-medium mb-1">Botón 2 – Litros</label>
-            <input type="number" step="any" id="litros2" class="w-full border rounded px-3 py-2">
-            <label for="precio2" class="block text-sm font-medium mt-2 mb-1">Precio</label>
-            <input type="number" step="any" id="precio2" class="w-full border rounded px-3 py-2">
-          </div>
-          <div>
-            <label for="litros3" class="block text-sm font-medium mb-1">Botón 3 – Litros</label>
-            <input type="number" step="any" id="litros3" class="w-full border rounded px-3 py-2">
-            <label for="precio3" class="block text-sm font-medium mt-2 mb-1">Precio</label>
-            <input type="number" step="any" id="precio3" class="w-full border rounded px-3 py-2">
-          </div>
+        <div class="section-card">
+            <h2 class="section-title">Mapa de Máquinas</h2>
+            <div id="map"></div>
         </div>
+    </main>
 
-        <button type="submit" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Registrar</button>
-      </form>
-    </div>
-
-    <h2 class="text-xl font-semibold mb-4">Máquinas registradas</h2>
-    <div id="machineList" class="space-y-4"></div>
-  </div>
-
-  <script src="maquinas.js"></script>
+    <script src="maquinas.js"></script>
 </body>
 </html>
