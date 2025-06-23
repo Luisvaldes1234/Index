@@ -3,31 +3,645 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Crear cuenta - AquaLink</title>
+  <title>Registrarse - TrackMyVend</title>
   <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    /* …tus estilos existentes… */
-    #otp, #verifyBtn {
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Animated background elements */
+    body::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: float 20s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(255,255,255,0.05)" points="0,1000 1000,300 1000,1000"/></svg>');
+      background-size: cover;
+      z-index: 1;
+    }
+
+    .signup-container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 3rem;
+      border-radius: 25px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 450px;
+      position: relative;
+      z-index: 10;
+      animation: slideUp 0.8s ease-out;
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .logo {
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #2345e1 0%, #667eea);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .logo-subtitle {
+      color: #666;
+      font-size: 0.95rem;
+      opacity: 0.8;
+    }
+
+    .form-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .form-header h2 {
+      font-size: 1.8rem;
+      color: #333;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .form-header p {
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #555;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .input-container {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+      font-size: 1.1rem;
+      z-index: 2;
+    }
+
+    input {
+      width: 100%;
+      padding: 1rem 1rem 1rem 3rem;
+      border-radius: 12px;
+      border: 2px solid #e5e7eb;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: white;
+      position: relative;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      transform: translateY(-1px);
+    }
+
+    input::placeholder {
+      color: #999;
+    }
+
+    .signup-button {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #2345e1 0%, #667eea);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .signup-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .signup-button:active {
+      transform: translateY(0);
+    }
+
+    .signup-button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .signup-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .signup-button:hover::before {
+      left: 100%;
+    }
+
+    .message {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 10px;
+      font-weight: 500;
+      text-align: center;
+      transition: all 0.3s ease;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .message.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: #dc2626;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .message.success {
+      background: rgba(34, 197, 94, 0.1);
+      color: #16a34a;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 2rem 0;
+      color: #999;
+      font-size: 0.9rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e5e7eb;
+    }
+
+    .divider span {
+      padding: 0 1rem;
+    }
+
+    .login-link {
+      display: block;
+      text-align: center;
+      margin-top: 2rem;
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      padding: 0.5rem;
+      border-radius: 8px;
+    }
+
+    .login-link:hover {
+      background: rgba(102, 126, 234, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .feature-item {
+      text-align: center;
+      padding: 1rem 0.5rem;
+      border-radius: 12px;
+      background: rgba(102, 126, 234, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .feature-item:hover {
+      background: rgba(102, 126, 234, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-text {
+      font-size: 0.8rem;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .loading-spinner {
       display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-10px) rotate(1deg); }
+      66% { transform: translateY(5px) rotate(-1deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .signup-container {
+        padding: 2rem;
+        margin: 1rem;
+      }
+
+      .logo {
+        font-size: 1.8rem;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+
+      .feature-item {
+        padding: 0.75rem;
+      }
+    }
+
+    /* Password visibility toggle */
+    .password-toggle {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 0.25rem;
+      z-index: 2;
+    }
+
+    .password-toggle:hover {
+      color: #667eea;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Crear cuenta</h2>
-    <input type="email"    id="email"    placeholder="Correo electrónico" />
-    <input type="password" id="password" placeholder="Contraseña" />
-    <button id="signupBtn">Registrarme</button>
+  <div class="signup-container">
+    <div class="logo-section">
+      <div class="logo">TrackMyVend</div>
+      <div class="logo-subtitle">Donde Empieza el control</div>
+    </div>
 
-    <!-- Aparece tras enviar el OTP -->
-    <input type="text" id="otp" placeholder="Código OTP" />
-    <button id="verifyBtn">Verificar código</button>
+    <div class="form-header">
+      <h2>Crear Cuenta</h2>
+      <p>Regístrate para empezar a usar TrackMyVend</p>
+    </div>
 
-    <div id="message"></div>
-    <a href="login.html">¿Ya tienes cuenta? Inicia sesión</a>
+    <form id="signupForm">
+      <div class="form-group">
+        <label for="email">Correo Electrónico</label>
+        <div class="input-container">
+          <span class="input-icon">📧</span>
+          <input type="email" id="email" placeholder="tu@email.com" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <div class="input-container">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="password" placeholder="•••••••" required />
+          <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirmar Contraseña</label>
+        <div class="input-container">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="confirmPassword" placeholder="•••••••" required />
+          <button type="button" class="password-toggle" onclick="toggleConfirmPassword()">👁️</button>
+        </div>
+      </div>
+
+      <button type="submit" class="signup-button" id="signupBtn">
+        <span class="loading-spinner" id="loadingSpinner"></span>
+        <span id="buttonText">Registrarse</span>
+      </button>
+    </form>
+
+    <div id="message" class="message"></div>
+
+    <div class="divider">
+      <span>¿Ya tienes una cuenta?</span>
+    </div>
+
+    <a href="login.html" class="login-link">Iniciar Sesión</a>
+
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="feature-icon">📊</div>
+        <div class="feature-text">Monitoreo en Tiempo Real</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">💰</div>
+        <div class="feature-text">Maximiza Ganancias</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">🔧</div>
+        <div class="feature-text">Mantenimiento Predictivo</div>
+      </div>
+    </div>
   </div>
 
-  <script src="auth.js"></script>
+  <script>
+    const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Form submission handler
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await signup();
+    });
+
+    // Signup function
+    async function signup() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const confirmPassword = document.getElementById('confirmPassword').value.trim();
+      const messageEl = document.getElementById('message');
+      const signupBtn = document.getElementById('signupBtn');
+      const loadingSpinner = document.getElementById('loadingSpinner');
+      const buttonText = document.getElementById('buttonText');
+
+      // Clear previous messages
+      messageEl.className = 'message';
+      messageEl.textContent = '';
+
+      // Validate inputs
+      if (!email || !password || !confirmPassword) {
+        showMessage('Por favor completa todos los campos.', 'error');
+        return;
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showMessage('Por favor ingresa un correo electrónico válido.', 'error');
+        return;
+      }
+
+      // Password strength validation (example: min 6 characters)
+      if (password.length < 6) {
+        showMessage('La contraseña debe tener al menos 6 caracteres.', 'error');
+        return;
+      }
+
+      // Password confirmation
+      if (password !== confirmPassword) {
+        showMessage('Las contraseñas no coinciden.', 'error');
+        return;
+      }
+
+      // Show loading state
+      signupBtn.disabled = true;
+      loadingSpinner.style.display = 'inline-block';
+      buttonText.textContent = 'Registrando...';
+
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        showMessage('¡Registro exitoso! Por favor, verifica tu correo electrónico para confirmar tu cuenta.', 'success');
+        // Optionally redirect after a delay, or show a success message
+        // setTimeout(() => {
+        //   window.location.href = '/login.html';
+        // }, 3000);
+
+      } catch (error) {
+        let errorMessage = 'Error al registrarse. ';
+        if (error.message.includes('User already registered')) {
+          errorMessage = 'Este correo electrónico ya está registrado. Intenta iniciar sesión.';
+        } else if (error.message.includes('Weak password')) {
+          errorMessage = 'La contraseña es demasiado débil. Por favor, usa una contraseña más segura.';
+        }
+        else {
+          errorMessage += error.message;
+        }
+        showMessage(errorMessage, 'error');
+      } finally {
+        // Reset button state
+        signupBtn.disabled = false;
+        loadingSpinner.style.display = 'none';
+        buttonText.textContent = 'Registrarse';
+      }
+    }
+
+    // Message display function
+    function showMessage(text, type) {
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = text;
+      messageEl.className = `message ${type} show`;
+      
+      // Auto-hide success messages
+      if (type === 'success') {
+        setTimeout(() => {
+          messageEl.className = 'message';
+        }, 5000); // Keep success message longer for email verification instruction
+      }
+    }
+
+    // Password visibility toggle for password field
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const toggleBtn = passwordInput.nextElementSibling; // Get the next sibling, which is the button
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleBtn.textContent = '🙈';
+        toggleBtn.title = 'Ocultar contraseña';
+      } else {
+        passwordInput.type = 'password';
+        toggleBtn.textContent = '👁️';
+        toggleBtn.title = 'Mostrar contraseña';
+      }
+    }
+
+    // Password visibility toggle for confirm password field
+    function toggleConfirmPassword() {
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const toggleBtn = confirmPasswordInput.nextElementSibling; // Get the next sibling, which is the button
+
+      if (confirmPasswordInput.type === 'password') {
+        confirmPasswordInput.type = 'text';
+        toggleBtn.textContent = '🙈';
+        toggleBtn.title = 'Ocultar contraseña';
+      } else {
+        confirmPasswordInput.type = 'password';
+        toggleBtn.textContent = '👁️';
+        toggleBtn.title = 'Mostrar contraseña';
+      }
+    }
+
+    // Enhanced keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const activeElement = document.activeElement;
+        if (activeElement.id === 'email') {
+          document.getElementById('password').focus();
+        } else if (activeElement.id === 'password') {
+          document.getElementById('confirmPassword').focus();
+        } else if (activeElement.id === 'confirmPassword') {
+          signup();
+        }
+      }
+    });
+
+    // Auto-focus on email input
+    window.addEventListener('load', () => {
+      document.getElementById('email').focus();
+    });
+
+    // Clear error messages on input focus
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('focus', () => {
+        const messageEl = document.getElementById('message');
+        if (messageEl.classList.contains('error')) {
+          messageEl.className = 'message';
+        }
+      });
+    });
+
+    // Add input validation styling
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('blur', validateField);
+      input.addEventListener('input', clearFieldError);
+    });
+
+    function validateField(e) {
+      const field = e.target;
+      const value = field.value.trim();
+      
+      if (field.id === 'email' && value) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+          field.style.borderColor = '#ef4444';
+        } else {
+          field.style.borderColor = '#10b981';
+        }
+      }
+      
+      if ((field.id === 'password' || field.id === 'confirmPassword') && value) {
+        if (value.length < 6) {
+          field.style.borderColor = '#f59e0b';
+        } else {
+          field.style.borderColor = '#10b981';
+        }
+      }
+
+      if (field.id === 'confirmPassword' && value && document.getElementById('password').value.trim()) {
+        if (value !== document.getElementById('password').value.trim()) {
+          field.style.borderColor = '#ef4444';
+        } else {
+          field.style.borderColor = '#10b981';
+        }
+      }
+    }
+
+    function clearFieldError(e) {
+      const field = e.target;
+      field.style.borderColor = '#e5e7eb';
+    }
+  </script>
 </body>
 </html>
