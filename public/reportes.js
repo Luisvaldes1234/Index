@@ -1,5 +1,5 @@
 // =================================================================================
-// reportes.js - v4 (Gráficas Avanzadas y Funciones Restauradas)
+// reportes.js - v5 (Definitiva, Completa y Corregida)
 // =================================================================================
 
 // --- 1. CONFIGURACIÓN E INICIALIZACIÓN ---
@@ -9,9 +9,9 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // --- VARIABLES GLOBALES ---
 let user = null;
-let allUserMachines = []; // Almacena TODAS las máquinas del usuario para evitar re-consultas
-let charts = {}; // Para gestionar las instancias de las gráficas
-let lastReportData = {}; // Caché de los últimos datos cargados para la calculadora de utilidad
+let allUserMachines = [];
+let charts = {};
+let lastReportData = {};
 
 // --- PUNTO DE ENTRADA ---
 document.addEventListener('DOMContentLoaded', initializePage);
@@ -29,14 +29,13 @@ async function initializePage() {
     }
     user = session.user;
     
-    await loadAllUserMachines(); // Carga datos maestros de máquinas una sola vez
-    renderMachineFilters(); // Llena el dropdown de filtros
-    renderOperationalStatus(); // Renderiza KPIs que no dependen de la fecha
+    await loadAllUserMachines();
+    renderMachineFilters();
     
     setDefaultDates();
     setupEventListeners();
     
-    await loadReports(); // Carga los reportes de ventas iniciales
+    await loadReports();
 }
 
 function setupNavigation() {
@@ -62,6 +61,7 @@ function setupNavigation() {
 function setupEventListeners() {
     document.getElementById('btnAplicar').addEventListener('click', loadReports);
     document.getElementById('btnCalcularUtilidad').addEventListener('click', renderUtilityCalculator);
+    document.getElementById('btnDescargarCortes').addEventListener('click', downloadCutsCSV);
 }
 
 function setDefaultDates() {
@@ -105,6 +105,8 @@ async function loadReports() {
     contentEl.classList.add('hidden');
     
     try {
+        renderOperationalStatus(); // Renderiza KPIs que no dependen de la fecha
+
         const filters = {
             desde: document.getElementById('desde').value,
             hasta: document.getElementById('hasta').value,
@@ -113,7 +115,7 @@ async function loadReports() {
         if (!filters.desde || !filters.hasta) throw new Error("Fechas no válidas");
         
         const reportData = await fetchReportData(filters);
-        lastReportData = reportData; // Guardar datos para re-uso en la calculadora
+        lastReportData = reportData;
         
         renderAllSections(reportData, filters);
 
@@ -134,7 +136,7 @@ async function fetchReportData(filters) {
 
     if (activeSerials.length === 0) {
         alert("No tienes máquinas con suscripción activa para mostrar reportes.");
-        return { current: { sales: [] }, previous: { sales: [] } };
+        return { current: { sales: [], cuts: [] }, previous: { sales: [] } };
     }
 
     const previousPeriod = getPreviousPeriod(filters.desde, filters.hasta);
@@ -144,20 +146,26 @@ async function fetchReportData(filters) {
         const to = new Date(end + 'T23:59:59Z').toISOString();
         
         let salesQuery = supabase.from('ventas').select('serial, precio_total, litros, created_at').eq('user_id', user.id).in('serial', activeSerials).gte('created_at', from).lte('created_at', to);
+        let cutsQuery = supabase.from('cortes').select('*').eq('user_id', user.id).in('serial', activeSerials).gte('fecha_corte', from).lte('fecha_corte', to);
+
         if (filters.serial && activeSerials.includes(filters.serial)) {
             salesQuery = salesQuery.eq('serial', filters.serial);
+            cutsQuery = cutsQuery.eq('serial', filters.serial);
         }
-        const { data: sales, error } = await salesQuery;
-        if(error) throw error;
-        return sales || [];
+
+        const [{ data: sales, error: salesError }, { data: cuts, error: cutsError }] = await Promise.all([salesQuery, cutsQuery]);
+        if(salesError) throw salesError;
+        if(cutsError) throw cutsError;
+
+        return { sales: sales || [], cuts: cuts || [] };
     };
 
-    const [currentSales, previousSales] = await Promise.all([
+    const [current, previous] = await Promise.all([
         fetchDataForPeriod(filters.desde, filters.hasta),
         fetchDataForPeriod(previousPeriod.start, previousPeriod.end)
     ]);
 
-    return { current: { sales: currentSales }, previous: { sales: previousSales } };
+    return { current, previous };
 }
 
 
@@ -167,10 +175,11 @@ function renderAllSections({ current, previous }, filters) {
     const currentTotals = processSalesData(current.sales);
     const previousTotals = processSalesData(previous.sales);
 
-    renderKPIs(currentTotals, previousTotals, filters);
+    renderKPIs(currentTotals, previousTotals, current.cuts.length, filters);
     renderActivityKPIs(current.sales);
     renderAdvancedCharts(current.sales);
     renderUtilityCalculator();
+    renderCutsTable(current.cuts, current.sales);
 }
 
 function renderOperationalStatus() {
@@ -186,9 +195,23 @@ function renderOperationalStatus() {
 
     const activeSubscriptions = allUserMachines.filter(m => m.suscripcion_hasta && new Date(m.suscripcion_hasta) > now).length;
     document.getElementById('kpiSuscripcionesActivas').textContent = `${activeSubscriptions} / ${allUserMachines.length}`;
+    
+    const tbody = document.getElementById('tablaSuscripciones');
+    tbody.innerHTML = '';
+    allUserMachines.forEach(m => {
+        const vencimiento = new Date(m.suscripcion_hasta);
+        const estaVigente = m.suscripcion_hasta && vencimiento > now;
+        const estadoText = estaVigente ? 'Activa' : 'Vencida';
+        const row = `<tr>
+            <td class="p-3">${m.nombre || m.serial}</td>
+            <td class="p-3">${m.suscripcion_hasta ? vencimiento.toLocaleDateString('es-MX') : 'N/A'}</td>
+            <td class="p-3 font-semibold ${estaVigente ? 'text-green-600' : 'text-red-600'}">${estadoText}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
 }
 
-function renderKPIs(current, previous, filters) {
+function renderKPIs(current, previous, cutsCount, filters) {
     const { totalSales, totalLiters, transactionCount } = current;
     const ticketProm = transactionCount > 0 ? totalSales / transactionCount : 0;
     const dias = (new Date(filters.hasta) - new Date(filters.desde)) / 86400000 + 1;
@@ -199,6 +222,7 @@ function renderKPIs(current, previous, filters) {
     document.getElementById('kpiTransacciones').textContent = transactionCount;
     document.getElementById('kpiTicket').textContent = `$${ticketProm.toFixed(2)}`;
     document.getElementById('kpiPromedioDiario').textContent = `$${promDiario.toFixed(2)}`;
+    document.getElementById('kpiCortes').textContent = cutsCount;
 
     renderComparison(totalSales, previous.totalSales, 'kpiVentasTotales_comp');
     renderComparison(totalLiters, previous.totalLiters, 'kpiLitros_comp');
@@ -211,14 +235,12 @@ function renderActivityKPIs(sales) {
         document.getElementById('kpiDiaFuerte').textContent = '---';
         return;
     }
-    // Hora Pico
     const hours = sales.map(v => new Date(v.created_at).getHours());
     const hourCounts = hours.reduce((acc, hour) => { acc[hour] = (acc[hour] || 0) + 1; return acc; }, {});
     const peakHour = Object.keys(hourCounts).reduce((a, b) => hourCounts[a] > hourCounts[b] ? a : b);
     document.getElementById('kpiHoraPico').textContent = `${peakHour.toString().padStart(2, '0')}:00`;
 
-    // Día más fuerte
-    const days = sales.map(v => new Date(v.created_at).getDay()); // 0=Domingo, 1=Lunes...
+    const days = sales.map(v => new Date(v.created_at).getDay());
     const dayCounts = days.reduce((acc, day) => { acc[day] = (acc[day] || 0) + 1; return acc; }, {});
     const busiestDayIndex = Object.keys(dayCounts).reduce((a, b) => dayCounts[a] > dayCounts[b] ? a : b);
     const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -265,7 +287,6 @@ function renderAdvancedCharts(sales) {
         machineColors[serial] = colorPalette[colorIndex++ % colorPalette.length];
     });
 
-    // Datasets para gráfica de ventas (multi-línea)
     const salesDatasets = [{
         label: 'Ventas Totales', data: sortedDays.map(day => dailyData[day].totalSales),
         borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.1, borderWidth: 3, order: 0
@@ -279,16 +300,59 @@ function renderAdvancedCharts(sales) {
         });
     });
 
-    // Datasets para gráfica de volumen (barras apiladas)
     const volumeDatasets = uniqueMachineSerials.map(serial => ({
         label: machineNameMap.get(serial) || serial,
         data: sortedDays.map(day => (dailyData[day].litersByMachine[serial] || 0)),
         backgroundColor: machineColors[serial]
     }));
     
-    updateChart('graficaVentasTiempo', 'line', chartLabels, salesDatasets);
+    updateChart('graficaVentasTiempo', 'line', chartLabels, salesDatasets, { scales: { x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd-MMM' }}} }});
     updateChart('graficaVolumenTiempo', 'bar', chartLabels, volumeDatasets, { scales: { x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd-MMM' }}, stacked: true }, y: { stacked: true } } });
+
+    // RESTAURADO: Lógica para la gráfica de Ranking
+    const salesByMachine = {};
+    sales.forEach(v => {
+        const name = machineNameMap.get(v.serial) || v.serial;
+        salesByMachine[name] = (salesByMachine[name] || 0) + parseFloat(v.precio_total);
+    });
+    const sortedMachines = Object.entries(salesByMachine).sort((a, b) => b[1] - a[1]);
+    updateChart('graficaRankingMaquinas', 'bar', sortedMachines.map(m => m[0]), sortedMachines.map(m => m[1]), { indexAxis: 'y', plugins: { legend: { display: false } } });
 }
+
+// RESTAURADO: Renderiza la tabla de historial de cortes
+function renderCutsTable(cutsData, salesData) {
+    const tbody = document.getElementById('tablaCortes');
+    tbody.innerHTML = '';
+    if (!cutsData) return;
+    const machineNameMap = new Map(allUserMachines.map(m => [m.serial, m.nombre || m.serial]));
+    const sortedCuts = cutsData.sort((a, b) => new Date(b.fecha_corte) - new Date(a.fecha_corte));
+
+    sortedCuts.forEach((corte, i) => {
+        const prevCorte = sortedCuts[i + 1];
+        const current = new Date(corte.fecha_corte);
+        let intervalo = '-';
+        if (prevCorte) {
+            const diff = current - new Date(prevCorte.fecha_corte);
+            intervalo = `${Math.round(diff / 86400000)}d`;
+        }
+        let litrosSum = salesData
+            .filter(v => {
+                const saleDate = new Date(v.created_at);
+                return v.serial === corte.serial && (!prevCorte || saleDate > new Date(prevCorte.fecha_corte)) && saleDate <= current;
+            })
+            .reduce((sum, v) => sum + parseFloat(v.litros), 0);
+        
+        const row = `<tr>
+            <td class="p-3">${current.toLocaleString('es-MX', {dateStyle: 'short', timeStyle: 'short'})}</td>
+            <td class="p-3">${machineNameMap.get(corte.serial) || corte.serial}</td>
+            <td class="p-3">$${parseFloat(corte.total_ventas).toFixed(2)}</td>
+            <td class="p-3">${litrosSum.toFixed(1)} L</td>
+            <td class="p-3">${intervalo}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
 
 // --- 5. FUNCIONES DE AYUDA (Helpers) ---
 function getPreviousPeriod(startDate, endDate) {
@@ -317,9 +381,13 @@ function updateChart(canvasId, type, labels, datasets, extraOptions = {}) {
     const ctx = document.getElementById(canvasId)?.getContext('2d');
     if (!ctx) return;
     if (charts[canvasId]) charts[canvasId].destroy();
+    
+    // Si los datasets no son un array (para el ranking), se convierte en uno
+    const finalDatasets = Array.isArray(datasets) ? datasets : [{ data: datasets }];
+
     charts[canvasId] = new Chart(ctx, {
         type: type,
-        data: { labels, datasets },
+        data: { labels, datasets: finalDatasets },
         options: { responsive: true, maintainAspectRatio: false, ...extraOptions }
     });
 }
@@ -331,5 +399,17 @@ function processSalesData(sales) {
     return { totalSales, totalLiters, transactionCount: sales.length };
 }
 
-// Estas funciones de setup y la inicialización global deben estar al principio del archivo.
-// Asegúrate de que no haya duplicados si copias y pegas en un archivo existente.
+function downloadCutsCSV() {
+    const table = document.getElementById('tablaCortes');
+    let csv = '"Fecha","Máquina","Total Ventas","Litros","Intervalo"\n';
+    table.querySelectorAll('tr').forEach(tr => {
+        const cells = Array.from(tr.querySelectorAll('td')).map(td => `"${td.textContent.trim()}"`);
+        csv += cells.join(',') + '\n';
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `historial_cortes_${document.getElementById('desde').value}_a_${document.getElementById('hasta').value}.csv`;
+    link.click();
+}
