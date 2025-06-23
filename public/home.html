@@ -68,6 +68,86 @@
             transform: translateY(-2px);
         }
 
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 0.5rem;
+            background: none;
+            border: none;
+        }
+
+        .hamburger-line {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
+
+        /* Mobile Menu Styles */
+        .mobile-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transform: translateY(-100%);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu.active {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-menu ul {
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .mobile-menu li {
+            padding: 0.5rem 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .mobile-menu li:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-menu a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 0.5rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu a:hover {
+            padding-left: 1rem;
+            color: #ffeb3b;
+        }
+
+        /* Hamburger Animation */
+        .mobile-menu-toggle.active .hamburger-line:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .mobile-menu-toggle.active .hamburger-line:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active .hamburger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
         /* Hero Section */
         .hero {
             background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
@@ -477,8 +557,16 @@
                 display: none;
             }
 
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
             .hero h1 {
                 font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
             }
 
             .showcase-container {
@@ -497,6 +585,44 @@
             .trust-logos {
                 gap: 1.5rem;
             }
+
+            .cta-section h2 {
+                font-size: 2rem;
+            }
+
+            .showcase-content h2 {
+                font-size: 2rem;
+            }
+
+            .benefits h2 {
+                font-size: 2rem;
+            }
+
+            .products h2 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .nav-container {
+                padding: 0 1rem;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+            }
+
+            .benefit-card, .product-card {
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -505,6 +631,8 @@
     <header class="header">
         <div class="nav-container">
             <a href="#" class="logo">TrackMyVend</a>
+            
+            <!-- Desktop Navigation -->
             <nav>
                 <ul class="nav-menu">
                     <li><a href="#inicio">Inicio</a></li>
@@ -513,9 +641,27 @@
                     <li><a href="blog.html">Blog</a></li>
                     <li><a href="#contacto">Contacto</a></li>
                     <li><a href="/login.html">¿Iniciar sesión?</a></li>
-
                 </ul>
             </nav>
+
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                <div class="hamburger-line"></div>
+                <div class="hamburger-line"></div>
+                <div class="hamburger-line"></div>
+            </button>
+
+            <!-- Mobile Menu -->
+            <div class="mobile-menu" id="mobile-menu">
+                <ul>
+                    <li><a href="#inicio">Inicio</a></li>
+                    <li><a href="#productos">Productos</a></li>
+                    <li><a href="#beneficios">Beneficios</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                    <li><a href="/login.html">¿Iniciar sesión?</a></li>
+                </ul>
+            </div>
         </div>
     </header>
 
@@ -585,7 +731,6 @@ Desde tu celular o PC, puedes ajustar precios, revisar ventas, actualizar parám
                         <li>Conectividad WiFi (sin cables, sin complicaciones)</li>
                         <li>Instalación plug-and-play en menos de 10 minutos</li>
                         <li>Monitoreo de ventas en tiempo real desde tu celular o PC</li>
-                        <li>Monitoreo de ventas en tiempo real desde tu celular o PC</li>
                         <li> Historial de ventas en la nube accesible desde el dashboard</li>
                         <li>Compatible con cualquier marca o tarjeta de control</li>
                     </ul>
@@ -650,10 +795,6 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
                 <a href="mailto:info@trackmyvend.com">info@trackmyvend.com</a>
                 <a href="tel:+52-81-2698-2507">+52 (81) 2698-2507</a>
                 <p>Monterrey, Nuevo León, México</p>
-                
-                
-
-
             </div>
             <div class="footer-section">
                 <h3>Productos</h3>
@@ -676,6 +817,35 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
     </footer>
 
     <script>
+        // Mobile menu toggle
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuToggle.addEventListener('click', function() {
+            mobileMenuToggle.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+
+        // Close mobile menu when clicking on a link
+        const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+        mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                mobileMenuToggle.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            });
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const isClickInsideMenu = mobileMenu.contains(event.target);
+            const isClickOnToggle = mobileMenuToggle.contains(event.target);
+            
+            if (!isClickInsideMenu && !isClickOnToggle && mobileMenu.classList.contains('active')) {
+                mobileMenuToggle.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            }
+        });
+
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
@@ -694,9 +864,9 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
         window.addEventListener('scroll', function() {
             const header = document.querySelector('.header');
             if (window.scrollY > 100) {
-                header.style.background = 'rgba(102, 126, 234, 0.95)';
+                header.style.background = 'rgba(35, 69, 225, 0.95)';
             } else {
-                header.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                header.style.background = 'linear-gradient(135deg, #2345e1 0%, #667eea 100%)';
             }
         });
 
@@ -718,10 +888,4 @@ AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de ag
         // Observe benefit cards and product cards
         document.querySelectorAll('.benefit-card, .product-card').forEach(card => {
             card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = 'all 0.6s ease';
-            observer.observe(card);
-        });
-    </script>
-</body>
-</html>
+            card.style.transform = 'translate
