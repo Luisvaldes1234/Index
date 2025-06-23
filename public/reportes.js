@@ -1,5 +1,5 @@
 // =================================================================================
-// reportes.js - v5 (Definitiva, Completa y Corregida)
+// reportes.js - v5.1 (Corregido error en gráfica de Ranking)
 // =================================================================================
 
 // --- 1. CONFIGURACIÓN E INICIALIZACIÓN ---
@@ -105,7 +105,7 @@ async function loadReports() {
     contentEl.classList.add('hidden');
     
     try {
-        renderOperationalStatus(); // Renderiza KPIs que no dependen de la fecha
+        renderOperationalStatus();
 
         const filters = {
             desde: document.getElementById('desde').value,
@@ -306,20 +306,30 @@ function renderAdvancedCharts(sales) {
         backgroundColor: machineColors[serial]
     }));
     
-    updateChart('graficaVentasTiempo', 'line', chartLabels, salesDatasets, { scales: { x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd-MMM' }}} }});
+    updateChart('graficaVentasTiempo', 'line', chartLabels, salesDatasets, { scales: { x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd-MMM' } } } } });
     updateChart('graficaVolumenTiempo', 'bar', chartLabels, volumeDatasets, { scales: { x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd-MMM' }}, stacked: true }, y: { stacked: true } } });
 
-    // RESTAURADO: Lógica para la gráfica de Ranking
+    // --- CORRECCIÓN Y LÓGICA RESTAURADA PARA GRÁFICA DE RANKING ---
     const salesByMachine = {};
     sales.forEach(v => {
         const name = machineNameMap.get(v.serial) || v.serial;
         salesByMachine[name] = (salesByMachine[name] || 0) + parseFloat(v.precio_total);
     });
     const sortedMachines = Object.entries(salesByMachine).sort((a, b) => b[1] - a[1]);
-    updateChart('graficaRankingMaquinas', 'bar', sortedMachines.map(m => m[0]), sortedMachines.map(m => m[1]), { indexAxis: 'y', plugins: { legend: { display: false } } });
+    
+    // FIX: Envolvemos los datos del ranking en la estructura de dataset correcta
+    const rankingDatasets = [{
+        label: 'Ingresos por máquina',
+        data: sortedMachines.map(m => m[1]),
+        backgroundColor: colorPalette
+    }];
+
+    updateChart('graficaRankingMaquinas', 'bar', sortedMachines.map(m => m[0]), rankingDatasets, {
+        indexAxis: 'y', // Para hacerla horizontal
+        plugins: { legend: { display: false } }
+    });
 }
 
-// RESTAURADO: Renderiza la tabla de historial de cortes
 function renderCutsTable(cutsData, salesData) {
     const tbody = document.getElementById('tablaCortes');
     tbody.innerHTML = '';
@@ -382,12 +392,9 @@ function updateChart(canvasId, type, labels, datasets, extraOptions = {}) {
     if (!ctx) return;
     if (charts[canvasId]) charts[canvasId].destroy();
     
-    // Si los datasets no son un array (para el ranking), se convierte en uno
-    const finalDatasets = Array.isArray(datasets) ? datasets : [{ data: datasets }];
-
     charts[canvasId] = new Chart(ctx, {
         type: type,
-        data: { labels, datasets: finalDatasets },
+        data: { labels, datasets },
         options: { responsive: true, maintainAspectRatio: false, ...extraOptions }
     });
 }
@@ -412,4 +419,5 @@ function downloadCutsCSV() {
     link.href = URL.createObjectURL(blob);
     link.download = `historial_cortes_${document.getElementById('desde').value}_a_${document.getElementById('hasta').value}.csv`;
     link.click();
+    document.body.removeChild(link);
 }
