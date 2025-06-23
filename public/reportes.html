@@ -109,12 +109,12 @@
       <a href="#" class="logo">TrackMyVend</a>
       <nav>
         <ul class="nav-menu">
-          <li><a href="/dashboard.html">📊 Panel</a></li>
-          <li><a href="/reportes.html" class="active">📈 Reportes</a></li>
-          <li><a href="/subscripcion.html">💳 Suscripción</a></li>
-          <li><a href="/maquinas.html">🔧 Mis Máquinas</a></li>
-          <li><a href="/agenda.html">📅 Agenda</a></li>
-          <li><a href="#" id="btnLogout">🚪 Cerrar Sesión</a></li>
+          <li><a href="/dashboard.html"> Panel</a></li>
+          <li><a href="/reportes.html" class="active"> Reportes</a></li>
+          <li><a href="/subscripcion.html"> Suscripción</a></li>
+          <li><a href="/maquinas.html"> Mis Máquinas</a></li>
+          <li><a href="/agenda.html"> Agenda</a></li>
+          <li><a href="#" id="btnLogout"> Cerrar Sesión</a></li>
         </ul>
       </nav>
     </div>
@@ -124,7 +124,7 @@
     <div class="container">
       <!-- Filtros -->
       <div class="section-card filter-section">
-        <h2 class="subsection-title">🔍 Filtros de Análisis</h2>
+        <h2 class="subsection-title"> Filtros de Análisis</h2>
         <div class="flex-wrap">
           <div>
             <label class="form-label">📅 Desde:</label>
@@ -135,12 +135,12 @@
             <input type="date" id="hasta" class="form-input" />
           </div>
           <div>
-            <label class="form-label">🏭 Máquina:</label>
+            <label class="form-label"> Máquina:</label>
             <select id="maquinaFiltro" class="form-select">
               <option value="">Todas</option>
             </select>
           </div>
-          <button id="btnAplicar" class="modern-button">🔄 Aplicar Filtros</button>
+          <button id="btnAplicar" class="modern-button"> Aplicar Filtros</button>
         </div>
       </div>
 
@@ -149,27 +149,27 @@
         <h2 class="section-title">📊 Métricas Principales</h2>
         <div class="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
           <div class="kpi-card">
-            <p class="kpi-label">💰 Ventas totales</p>
+            <p class="kpi-label"> Ventas totales</p>
             <h2 class="kpi-value" id="kpiVentasTotales">$0</h2>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">🚰 Litros vendidos</p>
+            <p class="kpi-label"> Litros vendidos</p>
             <h2 class="kpi-value" id="kpiLitros">0 L</h2>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">🎫 Ticket promedio</p>
+            <p class="kpi-label"> Ticket promedio</p>
             <h2 class="kpi-value" id="kpiTicket">$0</h2>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">🔄 Transacciones</p>
+            <p class="kpi-label"> Transacciones</p>
             <h2 class="kpi-value" id="kpiTransacciones">0</h2>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">✂️ Cortes</p>
+            <p class="kpi-label">️ Cortes</p>
             <h2 class="kpi-value" id="kpiCortes">0</h2>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">📈 Promedio diario</p>
+            <p class="kpi-label"> Promedio diario</p>
             <h2 class="kpi-value" id="kpiPromedioDiario">$0</h2>
           </div>
         </div>
@@ -177,7 +177,7 @@
 
       <!-- Actividad y Uso -->
       <div class="section-card">
-        <h2 class="section-title">⚡ Actividad y Uso</h2>
+        <h2 class="section-title"> Actividad y Uso</h2>
         <div class="grid sm:grid-cols-2 md:grid-cols-3">
           <div class="kpi-card">
             <p class="kpi-label">🔢 Número de Ventas</p>
@@ -196,25 +196,25 @@
 
       <!-- Volumen Despachado -->
       <div class="section-card volume-section">
-        <h2 class="section-title">💧 Análisis de Volumen y Utilidad</h2>
+        <h2 class="section-title"> Análisis de Volumen y Utilidad</h2>
         <div class="flex-wrap mb-4">
           <div>
-            <label class="form-label">💵 Coste por m³ (MXN)</label>
+            <label class="form-label"> Coste por m³ (MXN)</label>
             <input type="number" id="costoMetro" class="form-input" placeholder="p.ej. 15" />
           </div>
           <div>
-            <label class="form-label">🏢 Gastos operativos (MXN)</label>
+            <label class="form-label"> Gastos operativos (MXN)</label>
             <input type="number" id="gastosOperativos" class="form-input" placeholder="p.ej. 200" />
           </div>
-          <button id="btnCalcularVolumen" class="modern-button success">🧮 Calcular Utilidad</button>
+          <button id="btnCalcularVolumen" class="modern-button success"> Calcular Utilidad</button>
         </div>
         <div class="grid sm:grid-cols-2 md:grid-cols-3">
           <div class="kpi-card">
-            <p class="kpi-label">🚰 Litros Totales</p>
+            <p class="kpi-label"> Litros Totales</p>
             <h2 class="kpi-value" id="kpiLitrosTotales">0 L</h2>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">📊 Litros por Transacción</p>
+            <p class="kpi-label"> Litros por Transacción</p>
             <h2 class="kpi-value" id="kpiLitrosPromedio">0 L</h2>
           </div>
           <div class="kpi-card">
@@ -236,9 +236,9 @@
           <table class="w-full text-left">
             <thead class="table-header">
               <tr>
-                <th class="px-4 py-3">🏭 Máquina</th>
+                <th class="px-4 py-3"> Máquina</th>
                 <th class="px-4 py-3">📅 Suscripción Hasta</th>
-                <th class="px-4 py-3">🔄 Estado</th>
+                <th class="px-4 py-3"> Estado</th>
               </tr>
             </thead>
             <tbody id="tablaSuscripciones" class="divide-y divide-gray-200">
@@ -257,7 +257,7 @@
           </div>
         </div>
         <div class="section-card">
-          <h2 class="subsection-title">🚰 Volumen en el tiempo</h2>
+          <h2 class="subsection-title"> Volumen en el tiempo</h2>
           <div class="chart-container">
             <canvas id="graficaVolumenTiempo"></canvas>
           </div>
@@ -266,7 +266,7 @@
 
       <!-- Ranking por máquina -->
       <div class="section-card">
-        <h2 class="section-title">🏆 Ranking por Máquina</h2>
+        <h2 class="section-title"> Ranking por Máquina</h2>
         <div class="chart-container">
           <canvas id="graficaRankingMaquinas"></canvas>
         </div>
@@ -274,16 +274,16 @@
 
       <!-- Historial de cortes -->
       <div class="section-card">
-        <h2 class="section-title">✂️ Historial de Cortes</h2>
+        <h2 class="section-title"> Historial de Cortes</h2>
         <div class="table-container">
           <table class="w-full text-left">
             <thead class="table-header">
               <tr>
                 <th class="px-4 py-3">📅 Fecha</th>
-                <th class="px-4 py-3">🏭 Máquina</th>
-                <th class="px-4 py-3">💰 Total Ventas</th>
-                <th class="px-4 py-3">🚰 Litros</th>
-                <th class="px-4 py-3">⏱️ Intervalo</th>
+                <th class="px-4 py-3"> Máquina</th>
+                <th class="px-4 py-3"> Total Ventas</th>
+                <th class="px-4 py-3"> Litros</th>
+                <th class="px-4 py-3">️ Intervalo</th>
               </tr>
             </thead>
             <tbody id="tablaCortes" class="divide-y divide-gray-200">
