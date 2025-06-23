@@ -152,7 +152,7 @@
     .modal.hidden { display: none; }
     .modal-content { background: white; border-radius: 20px; padding: 2rem; width: 90%; max-width: 500px; }
     
-    /* Mobile Responsive Breakpoints */
+    /* === General Mobile Breakpoints === */
     @media (max-width: 768px) {
       .nav-menu { 
         display: none; 
@@ -168,6 +168,58 @@
       }
       .grid { 
         grid-template-columns: 1fr; 
+      }
+      .section-title {
+        font-size: 1.75rem;
+      }
+      .event-form, .calendar-container, .events-list {
+        padding: 1.5rem;
+      }
+    }
+
+    /* === NEW: Mobile Calendar Adjustments === */
+    @media (max-width: 640px) {
+      .main-container {
+        padding-top: 1rem;
+      }
+      /* Make calendar header (buttons and title) more compact */
+      .calendar-header {
+        margin-bottom: 1rem;
+      }
+      .calendar-title {
+        font-size: 1.25rem; /* Reduce title font size */
+      }
+      .calendar-header .modern-button {
+          padding: 0.5rem 1rem; /* Smaller buttons */
+          font-size: 0.875rem;
+      }
+      /* Adjust day of the week headers */
+      .calendar-day-header {
+        padding: 0.5rem 0.1rem; /* Reduce padding */
+        font-size: 0.7rem;     /* Reduce font size for day names */
+        font-weight: 500;
+      }
+      /* Adjust individual calendar days */
+      .calendar-day {
+        min-height: 65px; /* Significantly reduce day height */
+        padding: 0.25rem;   /* Reduce day padding */
+      }
+      /* Make day numbers smaller */
+      .day-number {
+        font-size: 0.8rem; /* Smaller day numbers */
+        margin-bottom: 0.2rem;
+        text-align: center;
+      }
+      /* Adjust event indicator dot */
+      .event-indicator {
+        width: 6px;
+        height: 6px;
+        top: 4px;
+        right: 4px;
+      }
+      /* Hide event text inside the day to save space, the dot is enough */
+      .event-preview {
+        display: none;
       }
     }
   </style>
