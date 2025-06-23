@@ -1,70 +1,145 @@
-// auth.js
-const SUPA_URL = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…'; // tu anon key
-const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crear cuenta - AquaLink</title>
+  <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    input, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #10b981;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    a {
+      display: block;
+      text-align: center;
+      margin-top: 1rem;
+      color: #2563eb;
+      text-decoration: none;
+    }
+    #message {
+      margin-top: 1rem;
+      font-weight: bold;
+      text-align: center;
+    }
+    /* Ocultamos el campo OTP y el botón de verificar hasta que se envíe el código */
+    #otp, #verifyBtn {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Crear cuenta</h2>
+    <input type="email"    id="email"    placeholder="Correo electrónico" />
+    <input type="password" id="password" placeholder="Contraseña" />
+    <button id="signupBtn">Registrarme</button>
 
-const emailIn     = document.getElementById('email');
-const passIn      = document.getElementById('password');
-const otpIn       = document.getElementById('otp');
-const signupBtn   = document.getElementById('signupBtn');
-const verifyBtn   = document.getElementById('verifyBtn');
-const msg         = document.getElementById('message');
+    <input type="text" id="otp" placeholder="Código OTP" />
+    <button id="verifyBtn">Verificar código</button>
 
-function showMessage(text, color='black') {
-  msg.textContent = text;
-  msg.style.color = color;
-}
+    <div id="message"></div>
+    <a href="login.html">¿Ya tienes cuenta? Inicia sesión</a>
+  </div>
 
-signupBtn.addEventListener('click', async () => {
-  const email    = emailIn.value.trim();
-  const password = passIn.value.trim();
-  if (!email || !password) {
-    return showMessage('Ingresa email y contraseña.', 'red');
-  }
+  <script>
+    // Configuración de Supabase
+    const SUPA_URL = 'https://ikuouxllerfjnibjtlkl.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…'; // tu anon key aquí
+    const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-  // 1) Enviar OTP para "signup"
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin }
-  });
+    // Referencias a elementos
+    const emailIn     = document.getElementById('email');
+    const passIn      = document.getElementById('password');
+    const otpIn       = document.getElementById('otp');
+    const signupBtn   = document.getElementById('signupBtn');
+    const verifyBtn   = document.getElementById('verifyBtn');
+    const msg         = document.getElementById('message');
 
-  if (error) {
-    showMessage('Error enviando OTP: ' + error.message, 'red');
-  } else {
-    showMessage('OTP enviado. Revisa tu correo.', 'green');
-    // mostrar campo de OTP
-    otpIn.style.display     = 'block';
-    verifyBtn.style.display = 'block';
-    signupBtn.disabled      = true;
-  }
-});
+    function showMessage(text, color='black') {
+      msg.textContent = text;
+      msg.style.color = color;
+    }
 
-verifyBtn.addEventListener('click', async () => {
-  const email = emailIn.value.trim();
-  const otp   = otpIn.value.trim();
-  const password = passIn.value.trim();
+    // Paso 1: Enviar OTP
+    signupBtn.addEventListener('click', async () => {
+      const email    = emailIn.value.trim();
+      const password = passIn.value.trim();
+      if (!email || !password) {
+        return showMessage('Ingresa email y contraseña.', 'red');
+      }
 
-  if (!otp) {
-    return showMessage('Ingresa el código OTP.', 'red');
-  }
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin }
+      });
 
-  // 2) Verificar OTP (tipo "signup")
-  const { data, error } = await supabase.auth.verifyOtp({
-    email,
-    token: otp,
-    type: 'signup'
-  });
+      if (error) {
+        showMessage('Error enviando OTP: ' + error.message, 'red');
+      } else {
+        showMessage('OTP enviado. Revisa tu correo.', 'green');
+        otpIn.style.display     = 'block';
+        verifyBtn.style.display = 'block';
+        signupBtn.disabled      = true;
+      }
+    });
 
-  if (error) {
-    return showMessage('OTP inválido: ' + error.message, 'red');
-  }
+    // Paso 2: Verificar OTP y asignar contraseña
+    verifyBtn.addEventListener('click', async () => {
+      const email    = emailIn.value.trim();
+      const otp      = otpIn.value.trim();
+      const password = passIn.value.trim();
 
-  // 3) (Opcional) Asignar la contraseña que el usuario ingresó
-  const { error: upErr } = await supabase.auth.updateUser({ password });
-  if (upErr) {
-    return showMessage('No se pudo asignar contraseña: ' + upErr.message, 'red');
-  }
+      if (!otp) {
+        return showMessage('Ingresa el código OTP.', 'red');
+      }
 
-  showMessage('Cuenta verificada y creada exitosamente. ¡Bienvenido!', 'green');
-  setTimeout(() => window.location.href = '/dashboard.html', 1500);
-});
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'signup'
+      });
+
+      if (error) {
+        return showMessage('OTP inválido: ' + error.message, 'red');
+      }
+
+      // Asignar la contraseña real
+      const { error: upErr } = await supabase.auth.updateUser({ password });
+      if (upErr) {
+        return showMessage('No se pudo asignar contraseña: ' + upErr.message, 'red');
+      }
+
+      showMessage('Cuenta verificada y creada exitosamente. ¡Bienvenido!', 'green');
+      setTimeout(() => window.location.href = '/dashboard.html', 1500);
+    });
+  </script>
+</body>
+</html>
