@@ -5,39 +5,50 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // === VARIABLES GLOBALES ===
 let user = null;
-let machinesCache = []; // Para guardar las máquinas cargadas y usarlas en la edición
+let machinesCache = [];
 let pickerMap, pickerMarker, displayMap;
 
-// === LÓGICA DE NAVEGACIÓN (Consistente) ===
+// === INICIALIZACIÓN Y EVENTOS ===
 document.addEventListener('DOMContentLoaded', () => {
+    // Lógica de navegación móvil
     const hamburger = document.getElementById('hamburger');
     const mobileNav = document.getElementById('mobileNav');
     const mobileOverlay = document.getElementById('mobileOverlay');
-
     const toggleMobileNav = () => {
         hamburger.classList.toggle('active');
         mobileNav.classList.toggle('active');
         mobileOverlay.classList.toggle('active');
     };
-
     hamburger.addEventListener('click', toggleMobileNav);
     mobileOverlay.addEventListener('click', toggleMobileNav);
-    
-    // Asumiendo que hay una función de logout global o se manejará por separado
-    document.getElementById('btnLogout').addEventListener('click', () => console.log("Logout"));
-    document.getElementById('btnLogoutMobile').addEventListener('click', () => console.log("Logout Mobile"));
 
-    // Inicializar todo
+    // Lógica para mostrar/ocultar formulario de registro
+    const registrationFormContainer = document.getElementById('registration-form-container');
+    const showFormBtn = document.getElementById('show-form-btn');
+    const cancelFormBtn = document.getElementById('cancel-form-btn');
+    const showFormContainer = document.getElementById('show-form-button-container');
+
+    showFormBtn.addEventListener('click', () => {
+        registrationFormContainer.classList.remove('hidden');
+        showFormContainer.classList.add('hidden');
+        // Asegurarse de que el mapa se renderice correctamente al mostrarse
+        setTimeout(() => pickerMap.invalidateSize(), 0);
+    });
+
+    cancelFormBtn.addEventListener('click', () => {
+        registrationFormContainer.classList.add('hidden');
+        showFormContainer.classList.remove('hidden');
+    });
+    
+    // Autenticar e inicializar
     getUser();
 });
 
-
 // === AUTENTICACIÓN ===
 async function getUser() {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) {
-        alert('No estás autenticado. Redirigiendo a la página de login.');
-        // window.location.href = '/login.html'; // Descomentar para redirigir
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        alert('No estás autenticado.');
         return;
     }
     user = session.user;
@@ -48,28 +59,20 @@ async function getUser() {
 
 // === LÓGICA DE MAPAS ===
 function initializePickerMap() {
-    // Coordenadas iniciales (pueden ser de tu ciudad)
-    const initialCoords = [25.6694, -100.385]; 
+    const initialCoords = [20.6736, -103.344]; // Guadalajara, por ejemplo
     pickerMap = L.map('locationPickerMap').setView(initialCoords, 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(pickerMap);
-
-    pickerMap.on('click', function(e) {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pickerMap);
+    pickerMap.on('click', (e) => {
         const { lat, lng } = e.latlng;
         document.getElementById('latitude').value = lat;
         document.getElementById('longitude').value = lng;
-
-        if (pickerMarker) {
-            pickerMarker.setLatLng(e.latlng);
-        } else {
-            pickerMarker = L.marker(e.latlng).addTo(pickerMap);
-        }
+        if (pickerMarker) pickerMarker.setLatLng(e.latlng);
+        else pickerMarker = L.marker(e.latlng).addTo(pickerMap);
     });
 }
 
 function initializeDisplayMap() {
-    const initialCoords = [25.6694, -100.385]; 
+    const initialCoords = [20.6736, -103.344];
     displayMap = L.map('map').setView(initialCoords, 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(displayMap);
 }
@@ -77,20 +80,8 @@ function initializeDisplayMap() {
 // === REGISTRAR NUEVA MÁQUINA ===
 document.getElementById("machineForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-
-    const litros = [
-        document.getElementById("litros1").value || '0',
-        document.getElementById("litros2").value || '0',
-        document.getElementById("litros3").value || '0',
-        document.getElementById("litros4").value || '0'
-    ].join(',');
-
-    const precios = [
-        document.getElementById("precio1").value || '0',
-        document.getElementById("precio2").value || '0',
-        document.getElementById("precio3").value || '0',
-        document.getElementById("precio4").value || '0'
-    ].join(',');
+    const litros = [1, 2, 3, 4].map(i => document.getElementById(`litros${i}`).value || '0').join(',');
+    const precios = [1, 2, 3, 4].map(i => document.getElementById(`precio${i}`).value || '0').join(',');
 
     const newMachine = {
         serial: document.getElementById("serial").value,
@@ -110,48 +101,31 @@ document.getElementById("machineForm").addEventListener("submit", async (e) => {
     e.target.reset();
     document.getElementById('latitude').value = '';
     document.getElementById('longitude').value = '';
-    if (pickerMarker) {
-        pickerMarker.remove();
-        pickerMarker = null;
-    }
+    if (pickerMarker) pickerMarker.remove();
+    pickerMarker = null;
+    document.getElementById('cancel-form-btn').click(); // Ocultar formulario
     loadMachines();
 });
 
 // === CARGAR Y MOSTRAR MÁQUINAS ===
 async function loadMachines() {
-    const { data, error } = await supabase
-        .from("maquinas")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("maquinas").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+    if (error) return console.error("Error al cargar máquinas:", error);
 
-    if (error) {
-        console.error("Error al cargar máquinas:", error);
-        return;
-    }
-
-    machinesCache = data; // Guardar en caché
+    machinesCache = data;
     const machineListContainer = document.getElementById("machineList");
     machineListContainer.innerHTML = "";
     
-    // Limpiar marcadores anteriores del mapa
-    displayMap.eachLayer((layer) => {
-        if (layer instanceof L.Marker) {
-            layer.remove();
-        }
-    });
-
+    displayMap.eachLayer(layer => { if (layer instanceof L.Marker) layer.remove(); });
     const machineLocations = [];
 
     machinesCache.forEach(maquina => {
-        // Crear la tarjeta de la máquina
         const card = document.createElement('div');
         card.className = 'section-card machine-card';
         card.id = `machine-card-${maquina.id}`;
-        card.innerHTML = renderMachineView(maquina); // Usar función para renderizar
+        card.innerHTML = renderMachineView(maquina);
         machineListContainer.appendChild(card);
 
-        // Añadir marcador al mapa de visualización si tiene coordenadas
         if (maquina.latitude && maquina.longitude) {
             const location = [maquina.latitude, maquina.longitude];
             machineLocations.push(location);
@@ -161,13 +135,10 @@ async function loadMachines() {
         }
     });
 
-    // Ajustar el zoom del mapa para que se vean todas las máquinas
-    if (machineLocations.length > 0) {
-        displayMap.fitBounds(machineLocations, { padding: [50, 50] });
-    }
+    if (machineLocations.length > 0) displayMap.fitBounds(machineLocations, { padding: [50, 50] });
 }
 
-// === FUNCIONES DE RENDERIZADO ===
+// === RENDERIZADO DE VISTAS (NORMAL Y EDICIÓN) ===
 function renderMachineView(maquina) {
     const onlineStatus = `<span class="text-green-500 font-semibold">En línea</span>`; // Placeholder
     const prices = (maquina.prices || '0,0,0,0').split(',');
@@ -208,27 +179,23 @@ function renderEditView(id) {
     card.innerHTML = `
         <h3 class="text-xl font-bold text-gray-800 mb-4">Editando: ${maquina.nombre}</h3>
         <div class="space-y-4">
-            <div>
-                <label class="form-label">Nombre</label>
-                <input id="edit-name-${id}" class="form-input" value="${maquina.nombre}">
-            </div>
+            <div><label class="form-label">Nombre</label><input id="edit-name-${id}" class="form-input" value="${maquina.nombre}"></div>
             <div>
                 <label class="form-label">Ubicación</label>
                 <input id="edit-ubicacion-${id}" class="form-input" value="${maquina.ubicacion || ''}">
+                <p class="text-xs text-gray-500 mt-1">Nota: Para cambiar la ubicación en el mapa, es necesario eliminar y registrar la máquina de nuevo.</p>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 ${[0,1,2,3].map(i => `
                     <div class="p-2 bg-gray-50 rounded">
-                        <label class="form-label text-sm">B${i+1} Litros</label>
-                        <input id="edit-litro${i}-${id}" type="number" class="form-input" value="${liters[i] || ''}">
-                        <label class="form-label text-sm mt-2">B${i+1} Precio</label>
-                        <input id="edit-precio${i}-${id}" type="number" class="form-input" value="${prices[i] || ''}">
+                        <label class="form-label text-sm">B${i+1} Litros</label><input id="edit-litro${i}-${id}" type="number" class="form-input" value="${liters[i] || ''}">
+                        <label class="form-label text-sm mt-2">B${i+1} Precio</label><input id="edit-precio${i}-${id}" type="number" class="form-input" value="${prices[i] || ''}">
                     </div>
                 `).join('')}
             </div>
             <div class="flex gap-4 mt-4">
                 <button onclick="guardarCambios('${id}')" class="modern-button success">💾 Guardar Cambios</button>
-                <button onclick="loadMachines()" class="modern-button">✖️ Cancelar</button>
+                <button onclick="loadMachines()" class="modern-button secondary">✖️ Cancelar</button>
             </div>
         </div>
     `;
@@ -238,20 +205,14 @@ function renderEditView(id) {
 async function guardarCambios(id) {
     const updatedLiters = [0,1,2,3].map(i => document.getElementById(`edit-litro${i}-${id}`).value || '0').join(',');
     const updatedPrices = [0,1,2,3].map(i => document.getElementById(`edit-precio${i}-${id}`).value || '0').join(',');
-
     const updates = {
         nombre: document.getElementById(`edit-name-${id}`).value,
         ubicacion: document.getElementById(`edit-ubicacion-${id}`).value,
         liters: updatedLiters,
         prices: updatedPrices
     };
-
     const { error } = await supabase.from('maquinas').update(updates).eq('id', id);
-
-    if (error) {
-        alert("Error al guardar los cambios: " + error.message);
-    } else {
-        alert("Máquina actualizada con éxito.");
-        loadMachines(); // Recargar la lista para mostrar los cambios
-    }
+    if (error) return alert("Error al guardar: " + error.message);
+    alert("Máquina actualizada.");
+    loadMachines();
 }
