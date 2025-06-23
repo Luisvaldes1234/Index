@@ -1,410 +1,363 @@
-// === CONEXIÓN A SUPABASE ===
+// =================================================================================
+// reportes.js - v2 (Refactorizado, Eficiente y con Comparativas)
+// =================================================================================
+
+// --- 1. CONFIGURACIÓN E INICIALIZACIÓN ---
 const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+// --- VARIABLES GLOBALES ---
 let user = null;
-let mapaNombreMaquina = {};
+let activeMachines = new Map(); // Usamos un Map para un acceso más fácil a los nombres
+let charts = {}; // Para almacenar las instancias de las gráficas
 
-// Inicialización
-document.addEventListener('DOMContentLoaded', getUser);
+// --- PUNTO DE ENTRADA ---
+document.addEventListener('DOMContentLoaded', initializePage);
 
-async function getUser() {
-  const { data: { user: currentUser }, error } = await supabase.auth.getUser();
-  if (error || !currentUser) {
-    alert('No estás autenticado.');
-    return;
-  }
-  user = currentUser;
-  await cargarFiltros();
-  setDefaultDates();
-  cargarReportes();
 
-  document.getElementById('btnAplicar').addEventListener('click', cargarReportes);
-  document.getElementById('btnDescargarCortes').addEventListener('click', descargarCSV);
-  document.getElementById('btnLogout').addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/login.html';
-  });
+// --- 2. SETUP INICIAL DE LA PÁGINA ---
+async function initializePage() {
+    setupNavigation();
+    
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session) {
+        alert('No estás autenticado. Redirigiendo a login...');
+        window.location.href = '/login.html';
+        return;
+    }
+    user = session.user;
+    
+    await loadMachineFilters();
+    setDefaultDates();
+    setupEventListeners();
+    
+    await loadReports();
 }
 
-// Carga la lista de máquinas en el filtro
-async function cargarFiltros() {
-  const nowISO = new Date().toISOString();
-
-  // Sólo máquinas activas
-  const { data: maquinas, error } = await supabase
-    .from('maquinas')
-    .select('serial, nombre')
-    .eq('user_id', user.id)
-    .gt('suscripcion_hasta', nowISO);
-
-  if (error) { console.error(error); return; }
-
-  const select = document.getElementById('maquinaFiltro');
-  select.innerHTML = '<option value="">Todas</option>';
-
-  maquinas.forEach(m => {
-    mapaNombreMaquina[m.serial] = m.nombre || m.serial;
-    const opt = document.createElement('option');
-    opt.value = m.serial;
-    opt.textContent = m.nombre || m.serial;
-    select.appendChild(opt);
-  });
+function setupNavigation() {
+    const hamburger = document.getElementById('hamburger');
+    const mobileNav = document.getElementById('mobileNav');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const toggleMobileNav = () => {
+        hamburger.classList.toggle('active');
+        mobileNav.classList.toggle('active');
+        mobileOverlay.classList.toggle('active');
+    };
+    hamburger.addEventListener('click', toggleMobileNav);
+    mobileOverlay.addEventListener('click', toggleMobileNav);
+    
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/login.html';
+    };
+    document.getElementById('btnLogout').addEventListener('click', handleLogout);
+    document.getElementById('btnLogoutMobile').addEventListener('click', handleLogout);
 }
 
-// Fija fechas por defecto (inicio de mes - hoy)
+function setupEventListeners() {
+    document.getElementById('btnAplicar').addEventListener('click', loadReports);
+    document.getElementById('btnDescargarCortes').addEventListener('click', downloadCutsCSV);
+}
+
 function setDefaultDates() {
-  const ahora = new Date();
-  const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
-  document.getElementById('desde').value    = inicioMes.toISOString().split('T')[0];
-  document.getElementById('hasta').value    = ahora.toISOString().split('T')[0];
+    const ahora = new Date();
+    const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+    document.getElementById('desde').value = inicioMes.toISOString().split('T')[0];
+    document.getElementById('hasta').value = ahora.toISOString().split('T')[0];
 }
 
-// Orquesta la carga de todas las secciones
-async function cargarReportes() {
-  const desde  = document.getElementById('desde').value;
-  const hasta  = document.getElementById('hasta').value;
-  const serial = document.getElementById('maquinaFiltro').value;
-  if (!desde || !hasta) return;
-
-  await cargarKPIs(desde, hasta, serial);
-  await cargarActividadUso(desde, hasta, serial); 
-  await cargarGraficasVentas(desde, hasta, serial);
-  await cargarGraficasVolumen(desde, hasta, serial);
-  await cargarGraficaRanking(desde, hasta, serial);
-  await cargarTablaCortes(desde, hasta, serial);
-  await cargarEstadoSuscripciones();
-
-}
-
-// KPIs principales
-async function cargarKPIs(desde, hasta, serial) {
-  const desdeISO = new Date(desde).toISOString();
-  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
-
-  // Ventas
-  let ventasQ = supabase
-    .from('ventas')
-    .select('precio_total, litros')
-    .eq('user_id', user.id)
-    .gte('created_at', desdeISO)
-    .lte('created_at', hastaISO);
-  if (serial) ventasQ = ventasQ.eq('serial', serial);
-  const { data: ventas, error: errV } = await ventasQ;
-  if (errV) { console.error(errV); return; }
-
-  const totalVentas = ventas.reduce((acc, v) => acc + parseFloat(v.precio_total), 0);
-  const totalLitros = ventas.reduce((acc, v) => acc + parseFloat(v.litros), 0);
-  const transacciones = ventas.length;
-  const ticketProm   = transacciones ? totalVentas / transacciones : 0;
-  const dias         = (new Date(hasta) - new Date(desde)) / 86400000 + 1;
-  const promDiario   = dias > 0 ? totalVentas / dias : 0;
-
-  // Cortes
-  let cortesQ = supabase
-    .from('cortes')
-    .select('*')
-    .eq('user_id', user.id)
-    .gte('fecha_corte', desdeISO)
-    .lte('fecha_corte', hastaISO);
-  if (serial) cortesQ = cortesQ.eq('serial', serial);
-  const { data: cortes } = await cortesQ;
-
-  // Renderizar
-  document.getElementById('kpiVentasTotales').textContent     = `$${totalVentas.toFixed(2)}`;
-  document.getElementById('kpiLitros').textContent             = `${totalLitros.toFixed(1)} L`;
-  document.getElementById('kpiTicket').textContent             = `$${ticketProm.toFixed(2)}`;
-  document.getElementById('kpiTransacciones').textContent     = `${transacciones}`;
-  document.getElementById('kpiCortes').textContent            = `${cortes.length}`;
-  document.getElementById('kpiPromedioDiario').textContent     = `$${promDiario.toFixed(2)}`;
-}
-
-// Gráfica de ventas por día
-async function cargarGraficasVentas(desde, hasta, serial) {
-  const desdeISO = new Date(desde).toISOString();
-  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
-
-  let { data: ventas } = await supabase
-    .from('ventas')
-    .select('precio_total, created_at')
-    .eq('user_id', user.id)
-    .gte('created_at', desdeISO)
-    .lte('created_at', hastaISO);
-  if (serial) ventas = ventas.filter(v => v.serial === serial);
-
-  const mapa = {};
-  ventas.forEach(v => {
-    const day = new Date(v.created_at).toLocaleDateString('es-MX');
-    mapa[day] = (mapa[day] || 0) + parseFloat(v.precio_total);
-  });
-
-  const labels = Object.keys(mapa);
-  const dataPts = labels.map(d => mapa[d]);
-
-  const ctx = document.getElementById('graficaVentasTiempo');
-  if (window.chartVentasTiempo) window.chartVentasTiempo.destroy();
-  window.chartVentasTiempo = new Chart(ctx, {
-    type: 'line',
-    data: { labels, datasets: [{ label: 'Ventas ($)', data: dataPts }] }
-  });
-}
-
-// Gráfica de volumen por día
-async function cargarGraficasVolumen(desde, hasta, serial) {
-  const desdeISO = new Date(desde).toISOString();
-  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
-
-  let { data: ventas } = await supabase
-    .from('ventas')
-    .select('litros, created_at')
-    .eq('user_id', user.id)
-    .gte('created_at', desdeISO)
-    .lte('created_at', hastaISO);
-  if (serial) ventas = ventas.filter(v => v.serial === serial);
-
-  const mapa = {};
-  ventas.forEach(v => {
-    const day = new Date(v.created_at).toLocaleDateString('es-MX');
-    mapa[day] = (mapa[day] || 0) + parseFloat(v.litros);
-  });
-
-  const labels = Object.keys(mapa);
-  const dataPts = labels.map(d => mapa[d]);
-
-  const ctx = document.getElementById('graficaVolumenTiempo');
-  if (window.chartVolumenTiempo) window.chartVolumenTiempo.destroy();
-  window.chartVolumenTiempo = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets: [{ label: 'Litros vendidos', data: dataPts }] }
-  });
-}
-
-// Ranking de máquinas por ventas
-async function cargarGraficaRanking(desde, hasta, serial) {
-  const desdeISO = new Date(desde).toISOString();
-  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
-
-  let { data: ventas } = await supabase
-    .from('ventas')
-    .select('serial, precio_total')
-    .eq('user_id', user.id)
-    .gte('created_at', desdeISO)
-    .lte('created_at', hastaISO);
-  if (serial) ventas = ventas.filter(v => v.serial === serial);
-
-  const mapa = {};
-  ventas.forEach(v => {
-    mapa[v.serial] = (mapa[v.serial] || 0) + parseFloat(v.precio_total);
-  });
-
-  const labels = Object.keys(mapa).map(s => mapaNombreMaquina[s] || s);
-  const dataPts = Object.values(mapa);
-
-  const ctx = document.getElementById('graficaRankingMaquinas');
-  if (window.chartRanking) window.chartRanking.destroy();
-  window.chartRanking = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets: [{ label: 'Ventas por máquina ($)', data: dataPts }] }
-  });
-}
-
-// Historial de cortes con litros e intervalo
-async function cargarTablaCortes(desde, hasta, serial) {
-  const desdeISO = new Date(desde).toISOString();
-  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
-
-  let cortesQ = supabase
-    .from('cortes')
-    .select('*')
-    .eq('user_id', user.id)
-    .gte('fecha_corte', desdeISO)
-    .lte('fecha_corte', hastaISO)
-    .order('fecha_corte', { ascending: false });
-  if (serial) cortesQ = cortesQ.eq('serial', serial);
-
-  const { data: cortes, error } = await cortesQ;
-  if (error) { console.error(error); return; }
-
-  const tbody = document.getElementById('tablaCortes');
-  tbody.innerHTML = '';
-
-  for (let i = 0; i < cortes.length; i++) {
-    const corte   = cortes[i];
-    const prev    = cortes[i + 1];
-    const current = new Date(corte.fecha_corte);
-
-    // Intervalo
-    let intervalo = '-';
-    if (prev) {
-      const diff = current - new Date(prev.fecha_corte);
-      const dias = Math.floor(diff / 86400000);
-      const horas = Math.floor((diff % 86400000) / 3600000);
-      intervalo = `${dias}d ${horas}h`;
+async function loadMachineFilters() {
+    const { data, error } = await supabase
+        .from('maquinas')
+        .select('serial, nombre')
+        .eq('user_id', user.id);
+    
+    if (error) {
+        console.error('Error cargando filtros de máquinas:', error);
+        return;
     }
+    
+    const select = document.getElementById('maquinaFiltro');
+    select.innerHTML = '<option value="">Todas</option>';
+    data.forEach(m => {
+        activeMachines.set(m.serial, m.nombre || m.serial);
+        const opt = document.createElement('option');
+        opt.value = m.serial;
+        opt.textContent = m.nombre || m.serial;
+        select.appendChild(opt);
+    });
+}
 
-    // Litros sumados entre cortes
-    let litrosSum = '-';
-    if (prev) {
-      const { data: ventasC, error: errC } = await supabase
-        .from('ventas')
-        .select('litros')
+
+// --- 3. LÓGICA PRINCIPAL DE CARGA Y PROCESAMIENTO ---
+
+async function loadReports() {
+    const loadingEl = document.getElementById('loading');
+    const contentEl = document.getElementById('report-content');
+    loadingEl.classList.remove('hidden');
+    contentEl.classList.add('hidden');
+    
+    try {
+        const filters = {
+            desde: document.getElementById('desde').value,
+            hasta: document.getElementById('hasta').value,
+            serial: document.getElementById('maquinaFiltro').value,
+        };
+
+        if (!filters.desde || !filters.hasta) return;
+        
+        // 1. Obtener todos los datos necesarios en una sola llamada
+        const reportData = await fetchReportData(filters);
+
+        // 2. Renderizar todas las secciones con los datos obtenidos
+        renderAllSections(reportData);
+
+    } catch (error) {
+        console.error('Error general al cargar reportes:', error);
+        alert('No se pudieron cargar los reportes. Revise la consola para más detalles.');
+    } finally {
+        loadingEl.classList.add('hidden');
+        contentEl.classList.remove('hidden');
+    }
+}
+
+async function fetchReportData(filters) {
+    // Primero, obtener los serials de las máquinas con suscripción activa
+    const nowISO = new Date().toISOString();
+    const { data: activeSubs, error: subError } = await supabase
+        .from('maquinas')
+        .select('serial')
         .eq('user_id', user.id)
-        .eq('serial', corte.serial)
-        .gte('created_at', prev.fecha_corte)
-        .lt('created_at', corte.fecha_corte);
-      litrosSum = errC ? '-' : ventasC.reduce((a, v) => a + parseFloat(v.litros), 0).toFixed(1);
+        .gt('suscripcion_hasta', nowISO);
+    
+    if (subError) throw subError;
+    const activeSerials = activeSubs.map(m => m.serial);
+    if (activeSerials.length === 0) return { current: {}, previous: {} }; // No hay máquinas activas, no hay datos que mostrar
+
+    // Calcular período anterior
+    const previousPeriod = getPreviousPeriod(filters.desde, filters.hasta);
+
+    // Función para obtener los datos de un período
+    const fetchDataForPeriod = async (start, end) => {
+        const from = new Date(start).toISOString();
+        const to = new Date(end + 'T23:59:59').toISOString();
+        
+        let salesQuery = supabase
+            .from('ventas')
+            .select('serial, precio_total, litros, created_at')
+            .eq('user_id', user.id)
+            .in('serial', activeSerials) // Solo ventas de máquinas activas
+            .gte('created_at', from)
+            .lte('created_at', to);
+        
+        let cutsQuery = supabase
+            .from('cortes')
+            .select('*')
+            .eq('user_id', user.id)
+            .in('serial', activeSerials) // Solo cortes de máquinas activas
+            .gte('fecha_corte', from)
+            .lte('fecha_corte', to);
+
+        if (filters.serial) {
+            salesQuery = salesQuery.eq('serial', filters.serial);
+            cutsQuery = cutsQuery.eq('serial', filters.serial);
+        }
+
+        const [{ data: sales }, { data: cuts }] = await Promise.all([
+            salesQuery,
+            cutsQuery
+        ]);
+
+        return { sales: sales || [], cuts: cuts || [] };
+    };
+
+    // Obtener datos para ambos períodos
+    const [current, previous] = await Promise.all([
+        fetchDataForPeriod(filters.desde, filters.hasta),
+        fetchDataForPeriod(previousPeriod.start, previousPeriod.end)
+    ]);
+
+    return { current, previous };
+}
+
+
+// --- 4. FUNCIONES DE RENDERIZADO ---
+
+function renderAllSections({ current, previous }) {
+    // Procesar datos
+    const currentTotals = processSalesData(current.sales);
+    const previousTotals = processSalesData(previous.sales);
+
+    // Renderizar cada sección
+    renderKPIs(currentTotals, previousTotals, current.cuts, current.sales);
+    renderCharts(current.sales);
+    renderCutsTable(current.cuts, current.sales);
+}
+
+function processSalesData(sales) {
+    if (!sales || sales.length === 0) return { totalSales: 0, totalLiters: 0, transactionCount: 0 };
+    
+    const totalSales = sales.reduce((sum, v) => sum + (parseFloat(v.precio_total) || 0), 0);
+    const totalLiters = sales.reduce((sum, v) => sum + (parseFloat(v.litros) || 0), 0);
+    
+    return {
+        totalSales,
+        totalLiters,
+        transactionCount: sales.length,
+    };
+}
+
+function renderKPIs(current, previous, cuts, sales) {
+    const { totalSales, totalLiters, transactionCount } = current;
+
+    const ticketProm = transactionCount > 0 ? totalSales / transactionCount : 0;
+    const dias = (new Date(document.getElementById('hasta').value) - new Date(document.getElementById('desde').value)) / 86400000 + 1;
+    const promDiario = dias > 0 ? totalSales / dias : 0;
+
+    document.getElementById('kpiVentasTotales').textContent = `$${totalSales.toFixed(2)}`;
+    document.getElementById('kpiLitros').textContent = `${totalLiters.toFixed(1)} L`;
+    document.getElementById('kpiTransacciones').textContent = transactionCount;
+    document.getElementById('kpiTicket').textContent = `$${ticketProm.toFixed(2)}`;
+    document.getElementById('kpiPromedioDiario').textContent = `$${promDiario.toFixed(2)}`;
+    document.getElementById('kpiCortes').textContent = cuts.length;
+
+    // Renderizar comparativas
+    renderComparison(totalSales, previous.totalSales, 'kpiVentasTotales_comp');
+    renderComparison(totalLiters, previous.totalLiters, 'kpiLitros_comp');
+    renderComparison(transactionCount, previous.transactionCount, 'kpiTransacciones_comp');
+}
+
+function renderCharts(sales) {
+    // Datos para gráficas
+    const salesByDay = {};
+    const litersByDay = {};
+    sales.forEach(v => {
+        const day = new Date(v.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+        salesByDay[day] = (salesByDay[day] || 0) + parseFloat(v.precio_total);
+        litersByDay[day] = (litersByDay[day] || 0) + parseFloat(v.litros);
+    });
+
+    const salesByMachine = {};
+    sales.forEach(v => {
+        const name = activeMachines.get(v.serial) || v.serial;
+        salesByMachine[name] = (salesByMachine[name] || 0) + parseFloat(v.precio_total);
+    });
+
+    // Renderizar o actualizar gráficas
+    updateChart('graficaVentasTiempo', 'line', Object.keys(salesByDay), Object.values(salesByDay), 'Ventas ($)');
+    updateChart('graficaVolumenTiempo', 'bar', Object.keys(litersByDay), Object.values(litersByDay), 'Litros vendidos');
+    updateChart('graficaRankingMaquinas', 'bar', Object.keys(salesByMachine), Object.values(salesByMachine), 'Ventas por máquina ($)');
+}
+
+function renderCutsTable(cutsData, salesData) {
+    const tbody = document.getElementById('tablaCortes');
+    tbody.innerHTML = '';
+    if (!cutsData) return;
+
+    const sortedCuts = cutsData.sort((a, b) => new Date(b.fecha_corte) - new Date(a.fecha_corte));
+
+    sortedCuts.forEach((corte, i) => {
+        const prevCorte = sortedCuts[i + 1];
+        const current = new Date(corte.fecha_corte);
+        
+        let intervalo = '-';
+        if (prevCorte) {
+            const diff = current - new Date(prevCorte.fecha_corte);
+            const dias = Math.floor(diff / 86400000);
+            intervalo = `${dias}d`;
+        }
+        
+        let litrosSum = 0;
+        if (prevCorte) {
+            litrosSum = salesData
+                .filter(v => v.serial === corte.serial && new Date(v.created_at) > new Date(prevCorte.fecha_corte) && new Date(v.created_at) <= current)
+                .reduce((sum, v) => sum + parseFloat(v.litros), 0);
+        }
+
+        const row = `<tr>
+            <td class="p-3">${current.toLocaleString('es-MX')}</td>
+            <td class="p-3">${activeMachines.get(corte.serial) || corte.serial}</td>
+            <td class="p-3">$${parseFloat(corte.total_ventas).toFixed(2)}</td>
+            <td class="p-3">${litrosSum.toFixed(1)} L</td>
+            <td class="p-3">${intervalo}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+
+// --- 5. FUNCIONES DE AYUDA (Helpers) ---
+
+function getPreviousPeriod(startDate, endDate) {
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T23:59:59');
+    const duration = end.getTime() - start.getTime();
+    const previousEnd = new Date(start.getTime() - 1);
+    const previousStart = new Date(previousEnd.getTime() - duration);
+    return {
+        start: previousStart.toISOString().split('T')[0],
+        end: previousEnd.toISOString().split('T')[0]
+    };
+}
+
+function renderComparison(current, previous, elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    if (previous === 0) {
+        element.textContent = current > 0 ? '(Nuevo)' : '';
+        element.style.color = '#3b82f6'; // Azul
+        return;
     }
-
-    const row = `<tr>
-      <td class="px-4 py-2">${current.toLocaleString('es-MX')}</td>
-      <td class="px-4 py-2">${mapaNombreMaquina[corte.serial] || corte.serial}</td>
-      <td class="px-4 py-2">$${parseFloat(corte.total_ventas).toFixed(2)}</td>
-      <td class="px-4 py-2">${litrosSum}</td>
-      <td class="px-4 py-2">${intervalo}</td>
-    </tr>`;
-    tbody.insertAdjacentHTML('beforeend', row);
-  }
+    
+    const change = ((current - previous) / previous) * 100;
+    
+    if (change > 0) {
+        element.textContent = `(+${change.toFixed(1)}%)`;
+        element.style.color = '#10b981'; // Verde
+    } else if (change < 0) {
+        element.textContent = `(${change.toFixed(1)}%)`;
+        element.style.color = '#ef4444'; // Rojo
+    } else {
+        element.textContent = '(0.0%)';
+        element.style.color = '#6b7280'; // Gris
+    }
 }
 
-// Descarga CSV del historial de cortes
-function descargarCSV() {
-  const rows = Array.from(document.querySelectorAll('#tablaCortes tr'));
-  let csv = 'Fecha,Máquina,Total Ventas,Litros,Intervalo\n';
-  rows.forEach(tr => {
-    const vals = Array.from(tr.children).map(td => td.textContent.replace(/\$/g, ''));
-    csv += vals.join(',') + '\n';
-  });
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `cortes_${document.getElementById('desde').value}_${document.getElementById('hasta').value}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-// 3. Actividad y Uso
-async function cargarActividadUso(desde, hasta, serial) {
-  const desdeISO = new Date(desde).toISOString();
-  const hastaISO = new Date(hasta + 'T23:59:59').toISOString();
-
-  let { data: ventas } = await supabase
-    .from('ventas')
-    .select('created_at')
-    .eq('user_id', user.id)
-    .gte('created_at', desdeISO)
-    .lte('created_at', hastaISO);
-  if (serial) ventas = ventas.filter(v => v.serial === serial);
-
-  // Número de ventas
-  document.getElementById('kpiNumVentas').textContent = ventas.length;
-
-  // Hora Pico
-  const horas = {};
-  ventas.forEach(v => {
-    const h = new Date(v.created_at).getHours();
-    horas[h] = (horas[h] || 0) + 1;
-  });
-  const pico = Object.entries(horas).sort((a,b) => b[1]-a[1])[0]?.[0] || 0;
-  document.getElementById('kpiHoraPico').textContent = `${String(pico).padStart(2,'0')}:00`;
-
-  // Intervalo Medio entre ventas (minutos)
-  const tiempos = ventas.map(v => new Date(v.created_at).getTime()).sort();
-  const diffs = tiempos.slice(1).map((t,i) => (t - tiempos[i]) / 60000);
-  const promedio = diffs.length
-    ? Math.round(diffs.reduce((a,b) => a + b, 0) / diffs.length)
-    : 0;
-  document.getElementById('kpiIntervaloMedio').textContent = `${promedio} min`;
+function updateChart(canvasId, type, labels, data, label) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    if (charts[canvasId]) {
+        charts[canvasId].destroy();
+    }
+    charts[canvasId] = new Chart(ctx, {
+        type: type,
+        data: {
+            labels,
+            datasets: [{
+                label,
+                data,
+                backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                borderColor: 'rgba(102, 126, 234, 1)',
+                borderWidth: 2,
+                tension: 0.1
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
 }
 
-// Volumen Despachado + Utilidad
-document.getElementById('btnCalcularVolumen').addEventListener('click', async () => {
-  const costoMetro = parseFloat(document.getElementById('costoMetro').value) || 0;
-  const gastosOp  = parseFloat(document.getElementById('gastosOperativos').value) || 0;
-  const desde     = document.getElementById('desde').value;
-  const hasta     = document.getElementById('hasta').value;
-  const serial    = document.getElementById('maquinaFiltro').value;
-  const desdeISO  = new Date(desde).toISOString();
-  const hastaISO  = new Date(hasta + 'T23:59:59').toISOString();
-
-  // 1) Traer ventas con litros y precio
-  let { data: ventas } = await supabase
-    .from('ventas')
-    .select('litros, precio_total')
-    .eq('user_id', user.id)
-    .gte('created_at', desdeISO)
-    .lte('created_at', hastaISO);
-  if (serial) ventas = ventas.filter(v => v.serial === serial);
-
-  // 2) Cálculo de litros
-  const litrosTotales = ventas.reduce((sum, v) => sum + parseFloat(v.litros), 0);
-  const transCount     = ventas.length;
-  const litrosProm     = transCount ? (litrosTotales / transCount) : 0;
-
-  // 3) Distribución
-  const cnt5  = ventas.filter(v => parseFloat(v.litros) === 5).length;
-  const cnt10 = ventas.filter(v => parseFloat(v.litros) === 10).length;
-  const cnt20 = ventas.filter(v => parseFloat(v.litros) === 20).length;
-  const dist5  = transCount ? ((cnt5  / transCount) * 100).toFixed(1) : 0;
-  const dist10 = transCount ? ((cnt10 / transCount) * 100).toFixed(1) : 0;
-  const dist20 = transCount ? ((cnt20 / transCount) * 100).toFixed(1) : 0;
-
-  // 4) Cálculo de costes y utilidad
-  const costeAguaTotal = (costoMetro / 1000) * litrosTotales;
-  const totalVentas    = ventas.reduce((sum, v) => sum + parseFloat(v.precio_total), 0);
-  const utilidad       = totalVentas - (costeAguaTotal + gastosOp);
-
-  // 5) Renderizar en DOM
-  document.getElementById('kpiLitrosTotales').textContent   = `${litrosTotales.toFixed(1)} L`;
-  document.getElementById('kpiLitrosPromedio').textContent  = `${litrosProm.toFixed(1)} L`;
-  document.getElementById('kpiDistribucion').innerHTML      = `
-    <li>5 L: ${dist5} %</li>
-    <li>10 L: ${dist10} %</li>
-    <li>20 L: ${dist20} %</li>
-  `;
-  document.getElementById('volumenCostes').innerHTML = `
-    <div>Coste de agua: $${costeAguaTotal.toFixed(2)}</div>
-    <div>Gastos operativos: $${gastosOp.toFixed(2)}</div>
-    <div class="font-semibold">Utilidad estimada: $${utilidad.toFixed(2)}</div>
-  `;
-});
-// 4. Estado de Suscripción por Máquina
-async function cargarEstadoSuscripciones() {
-  // Trae todas las máquinas del usuario, con nombre y fecha de expiración
-  const { data: maquinas, error } = await supabase
-    .from('maquinas')
-    .select('serial, nombre, suscripcion_hasta')
-    .eq('user_id', user.id);
-
-  if (error) {
-    console.error('Error cargando suscripciones:', error);
-    return;
-  }
-
-  const tbody = document.getElementById('tablaSuscripciones');
-  tbody.innerHTML = '';
-
-  const ahora = new Date();
-
-  maquinas.forEach(m => {
-    const vencimiento = new Date(m.suscripcion_hasta);
-    const estaVigente = vencimiento > ahora;
-    const estadoText  = estaVigente
-      ? 'Activa'
-      : 'Vencida';
-
-    const row = `
-      <tr>
-        <td class="px-4 py-2">${m.nombre || m.serial}</td>
-        <td class="px-4 py-2">${vencimiento.toLocaleDateString('es-MX')}</td>
-        <td class="px-4 py-2 font-semibold ${estaVigente ? 'text-green-600' : 'text-red-600'}">
-          ${estadoText}
-        </td>
-      </tr>`;
-    tbody.insertAdjacentHTML('beforeend', row);
-  });
+function downloadCutsCSV() {
+    const table = document.getElementById('tablaCortes');
+    let csv = 'Fecha,Máquina,Total Ventas,Litros,Intervalo\n';
+    table.querySelectorAll('tr').forEach(tr => {
+        const cells = Array.from(tr.querySelectorAll('td')).map(td => `"${td.textContent.trim()}"`);
+        csv += cells.join(',') + '\n';
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `historial_cortes_${document.getElementById('desde').value}_a_${document.getElementById('hasta').value}.csv`;
+    link.click();
 }
-
-// Asegúrate de llamar a esta función dentro de cargarReportes():
-// await cargarEstadoSuscripciones();
-
