@@ -14,7 +14,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* Estilos consistentes (sin cambios) */
+        /* Estilos consistentes con reportes.html y agenda.html */
         * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -102,7 +102,11 @@
             bottom: 125%; left: 50%; margin-left: -125px;
             opacity: 0; transition: opacity 0.3s;
         }
-        .tooltip-text::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #2d3748 transparent transparent transparent; }
+        .tooltip-text::after { /* Flecha del tooltip */
+            content: ""; position: absolute; top: 100%; left: 50%;
+            margin-left: -5px; border-width: 5px; border-style: solid;
+            border-color: #2d3748 transparent transparent transparent;
+        }
         .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
 
         /* Estilos para el Modal de Edición de Mapa */
@@ -127,16 +131,115 @@
     </style>
 </head>
 <body class="min-h-screen">
-    <header class="header"></header>
-    <nav class="mobile-nav" id="mobileNav"></nav>
+    <header class="header">
+        <div class="nav-container">
+            <a href="/dashboard.html" class="logo">TrackMyVend</a>
+            <nav class="hidden md:block">
+                <ul class="nav-menu">
+                    <li><a href="/dashboard.html">📊 Panel</a></li>
+                    <li><a href="/reportes.html">📈 Reportes</a></li>
+                    <li><a href="/subscripcion.html">💳 Suscripcion</a></li>
+                    <li><a href="/maquinas.html" class="active">🔧 Mis Máquinas</a></li>
+                    <li><a href="/agenda.html">📅 Agenda</a></li>
+                    <li><a href="#" id="btnLogout">🚪 Cerrar Sesión</a></li>
+                </ul>
+            </nav>
+            <div class="hamburger" id="hamburger">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </header>
+    <nav class="mobile-nav" id="mobileNav">
+        <ul>
+            <li><a href="/dashboard.html">📊 Panel</a></li>
+            <li><a href="/reportes.html">📈 Reportes</a></li>
+            <li><a href="/subscripcion.html">💳 Suscripcion</a></li>
+            <li><a href="/maquinas.html" class="active">🔧 Mis Máquinas</a></li>
+            <li><a href="/agenda.html">📅 Agenda</a></li>
+            <li><a href="#" id="btnLogoutMobile">🚪 Cerrar Sesión</a></li>
+        </ul>
+    </nav>
     <div class="mobile-overlay" id="mobileOverlay"></div>
 
     <main class="main-container">
-        <div id="registration-form-container" class="section-card hidden"></div>
-        <div id="show-form-button-container" class="mb-8"></div>
+        <div id="registration-form-container" class="section-card hidden">
+            <h2 class="section-title">Registrar Nueva Máquina</h2>
+            <form id="machineForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="serial" class="form-label">Número de Serie</label>
+                        <input type="text" id="serial" class="form-input" required>
+                    </div>
+                    <div>
+                        <label for="name" class="form-label">Nombre / Alias de la Máquina</label>
+                        <input type="text" id="name" class="form-input" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="ubicacion" class="form-label inline-flex items-center">
+                        Ubicación (Opcional)
+                        <span class="tooltip-container">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip-text">Navega en el mapa y haz un solo clic en el punto exacto para fijar la ubicación de tu máquina.</span>
+                        </span>
+                    </label>
+                    <input type="text" id="ubicacion" class="form-input" placeholder="Ej: Tienda de la esquina, Av. Siempreviva 123">
+                    <div id="locationPickerMap"></div>
+                    <input type="hidden" id="latitude"><input type="hidden" id="longitude">
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Configuración de Botones</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <label class="form-label">B1 Litros</label>
+                            <input type="number" step="any" id="litros1" class="form-input">
+                            <label class="form-label mt-2">B1 Precio</label>
+                            <input type="number" step="any" id="precio1" class="form-input">
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <label class="form-label">B2 Litros</label>
+                            <input type="number" step="any" id="litros2" class="form-input">
+                            <label class="form-label mt-2">B2 Precio</label>
+                            <input type="number" step="any" id="precio2" class="form-input">
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <label class="form-label">B3 Litros</label>
+                            <input type="number" step="any" id="litros3" class="form-input">
+                            <label class="form-label mt-2">B3 Precio</label>
+                            <input type="number" step="any" id="precio3" class="form-input">
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg border-2 border-dashed">
+                            <label class="form-label">B4 Litros</label>
+                            <input type="number" step="any" id="litros4" class="form-input">
+                            <label class="form-label mt-2">B4 Precio</label>
+                            <input type="number" step="any" id="precio4" class="form-input">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="modern-button success">💾 Registrar Máquina</button>
+                    <button type="button" id="cancel-form-btn" class="modern-button secondary">✖️ Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="show-form-button-container" class="mb-8">
+            <button id="show-form-btn" class="modern-button">➕ Agregar Nueva Máquina</button>
+        </div>
         
-        <div class="section-card"></div>
-        <div class="section-card"></div>
+        <div class="section-card">
+            <h2 class="section-title">Mapa de Máquinas</h2>
+            <div id="map"></div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Mis Máquinas Registradas</h2>
+            <div id="machineList" class="space-y-6">
+                <p class="text-center text-gray-500">Cargando máquinas...</p>
+            </div>
+        </div>
     </main>
 
     <div id="location-modal" class="modal-container hidden">
