@@ -1,176 +1,149 @@
-// === 1) CONEXIÓN A SUPABASE ===
-const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
+// =================================================================================
+// suscripcion.js - Lógica para la página de suscripciones
+// =================================================================================
 
-// CREAMOS una sola vez tu cliente y lo guardamos en global
-const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+// --- 1. CONFIGURACIÓN E INICIALIZACIÓN ---
 
-// Ya no existe ninguna variable llamada "supabase", a partir de ahora todo va en supabaseClient
-let usuario = null;
-let maquinasActivas = [];
-let ventas = [];
+// Inicialización segura del cliente de Supabase
+const supabaseKey = window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'FALLBACK_KEY_SI_ES_NECESARIO';
+const supabase = window.supabase.createClient('https://ikuouxllerfjnibjtlkl.supabase.co', supabaseKey);
 
-// Referencias UI
-const loadingEl  = () => document.getElementById('loading');
-const errorModal = () => document.getElementById('errorModal');
-const errorMsg   = () => document.getElementById('errorMessage');
+// --- VARIABLES GLOBALES Y REFERENCIAS UI ---
+let user = null;
+const loadingEl = () => document.getElementById('loading');
+const subscriptionListEl = () => document.getElementById('subscriptionList');
 
-// —————————————————————————
-// 2) Helpers: Loading & Error
-// —————————————————————————
-function showLoading()  { loadingEl().classList.remove('hidden'); }
-function hideLoading()  { loadingEl().classList.add('hidden'); }
-function showError(msg) {
-  errorMsg().textContent = msg;
-  errorModal().classList.remove('hidden');
-  console.error(msg);
-}
-
-// —————————————————————————
-// 3) Autenticación
-// —————————————————————————
-async function initSession() {
-  const { data, error } = await supabaseClient.auth.getSession();
-  if (error || !data.session) {
-    window.location.href = '/login.html';
-    return false;
-  }
-  usuario = data.session.user;
-
-  // Configurar logout
-  const btnLogout = document.getElementById('btnLogout');
-  if (btnLogout) {
-    btnLogout.addEventListener('click', async () => {
-      await supabaseClient.auth.signOut();
-      window.location.href = '/login.html';
-    });
-  }
-  return true;
-}
-
-// —————————————————————————
-// 4) Carga de Máquinas Activas
-// —————————————————————————
-async function obtenerMaquinasActivas() {
-  const hoyISO = new Date().toISOString().split('T')[0];
-  const { data, error } = await supabaseClient
-    .from('maquinas')
-    .select('id, nombre')
-    .eq('user_id', usuario.id)
-    .gt('suscripcion_hasta', hoyISO);
-
-  if (error) {
-    showError('Error al cargar máquinas: ' + error.message);
-    maquinasActivas = [];
-  } else {
-    maquinasActivas = data || [];
-  }
-
-  // Llenar selector
-  const sel = document.getElementById('filtroMaquinaCSV');
-  sel.innerHTML = '<option value="">Todas</option>';
-  maquinasActivas.forEach(m => {
-    sel.innerHTML += `<option value="${m.id}">${m.nombre}</option>`;
-  });
-}
-
-// —————————————————————————
-// 5) Carga de Ventas
-// —————————————————————————
-async function obtenerVentas() {
-  if (!maquinasActivas.length) {
-    ventas = [];
-    return;
-  }
-
-  const desdeStr = document.getElementById('fechaDesde').value;
-  const hastaStr = document.getElementById('fechaHasta').value;
-
-  // Validar fechas
-  if (!desdeStr || !hastaStr ||
-      isNaN(Date.parse(desdeStr)) ||
-      isNaN(Date.parse(hastaStr))) {
-    ventas = [];
-    return;
-  }
-
-  const desde = new Date(desdeStr);
-  const hasta = new Date(hastaStr);
-  hasta.setDate(hasta.getDate() + 1);
-
-  let query = supabaseClient
-    .from('ventas')
-    .select('*')
-    .eq('user_id', usuario.id)
-    .gte('created_at', desde.toISOString())
-    .lt ('created_at', hasta.toISOString());
-
-  const filtro = document.getElementById('filtroMaquinaCSV').value;
-  if (filtro) {
-    query = query.eq('id_maquina', filtro);
-  } else {
-    const ids = maquinasActivas.map(m => m.id);
-    query = query.in('id_maquina', ids);
-  }
-
-  const { data, error } = await query.order('created_at', { ascending: true });
-  if (error) {
-    showError('Error al cargar ventas: ' + error.message);
-    ventas = [];
-  } else {
-    ventas = (data || []).map(v => ({
-      ...v,
-      importe: parseFloat(v.precio_total) || 0,
-      unidades: parseFloat(v.litros)       || 0,
-      fechaHora: new Date(v.created_at)
-    }));
-  }
-}
-
-// —————————————————————————
-// 6) Render Resumen y Gráficas...
-//    (mantén tu código de renderización aquí)
-// —————————————————————————
-
-// —————————————————————————
-// Orquestador
-// —————————————————————————
-async function actualizarDashboard() {
-  showLoading();
-  try {
-    if (!(await initSession())) return;
-    await obtenerMaquinasActivas();
-    await obtenerVentas();
-    renderResumen();
-    renderGraficaHoras();
-    renderGraficaDias();
-    renderGraficaVolumen();
-    renderGraficaMaquinas();
-  } catch (e) {
-    showError(e.message);
-  } finally {
-    hideLoading();
-  }
-}
-
-// —————————————————————————
-// Inicialización
-// —————————————————————————
-window.addEventListener('DOMContentLoaded', () => {
-  // Pre-llenar fechas al mes actual
-  const fd = document.getElementById('fechaDesde'),
-        fh = document.getElementById('fechaHasta');
-  const hoy    = new Date(),
-        inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-  fd.value = inicio.toISOString().split('T')[0];
-  fh.value = hoy   .toISOString().split('T')[0];
-
-  // Listeners
-  fd.addEventListener('change', actualizarDashboard);
-  fh.addEventListener('change', actualizarDashboard);
-  document.getElementById('filtroMaquinaCSV')
-          .addEventListener('change', actualizarDashboard);
-
-  // Arrancar
-  actualizarDashboard();
+// --- PUNTO DE ENTRADA PRINCIPAL ---
+document.addEventListener('DOMContentLoaded', () => {
+    setupNavigation();
+    loadPageData();
 });
+
+// --- 2. SETUP Y FUNCIONES AUXILIARES ---
+
+function setupNavigation() {
+    // Lógica del menú de hamburguesa
+    const hamburger = document.getElementById('hamburger');
+    const mobileNav = document.getElementById('mobileNav');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const toggleMobileNav = () => {
+        hamburger.classList.toggle('active');
+        mobileNav.classList.toggle('active');
+        mobileOverlay.classList.toggle('active');
+    };
+    hamburger.addEventListener('click', toggleMobileNav);
+    mobileOverlay.addEventListener('click', toggleMobileNav);
+
+    // Lógica de Logout
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/login.html';
+    };
+    document.getElementById('btnLogout').addEventListener('click', handleLogout);
+    document.getElementById('btnLogoutMobile').addEventListener('click', handleLogout);
+}
+
+function showLoading() { loadingEl().classList.remove('hidden'); }
+function hideLoading() { loadingEl().classList.add('hidden'); }
+
+
+// --- 3. LÓGICA PRINCIPAL ---
+
+async function loadPageData() {
+    showLoading();
+    subscriptionListEl().innerHTML = '';
+
+    try {
+        // Autenticar usuario
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session) {
+            window.location.href = '/login.html';
+            return;
+        }
+        user = session.user;
+
+        // Cargar máquinas del usuario
+        const { data: maquinas, error: machinesError } = await supabase
+            .from("maquinas")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("nombre", { ascending: true });
+
+        if (machinesError) {
+            throw machinesError;
+        }
+
+        if (maquinas.length === 0) {
+            subscriptionListEl().innerHTML = '<p class="text-center text-gray-500">No tienes máquinas registradas.</p>';
+        } else {
+            maquinas.forEach(maquina => {
+                const card = document.createElement('div');
+                card.className = 'section-card subscription-card p-6'; // Usando clases del tema
+                card.innerHTML = renderSubscriptionCard(maquina);
+                subscriptionListEl().appendChild(card);
+            });
+        }
+
+    } catch (error) {
+        console.error("Error cargando la página:", error);
+        subscriptionListEl().innerHTML = `<p class="text-center text-red-500">Error al cargar los datos: ${error.message}</p>`;
+    } finally {
+        hideLoading();
+    }
+}
+
+// Función para iniciar el proceso de pago con una función de Netlify
+async function subscribe(serial, plan) {
+    try {
+        // Podríamos añadir un spinner al botón específico que se clickeó
+        const res = await fetch("/.netlify/functions/create-checkout-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ serial, plan, userId: user.id }) // Es buena idea pasar el userId
+        });
+
+        if (!res.ok) throw new Error(`El servidor respondió con un error: ${res.statusText}`);
+
+        const data = await res.json();
+        if (data.url) {
+            window.location.href = data.url; // Redirigir a la pasarela de pago (Stripe)
+        } else {
+            throw new Error("No se recibió una URL de pago del servidor.");
+        }
+    } catch (err) {
+        console.error("Error al suscribirse:", err);
+        alert("Hubo un error al intentar procesar la suscripción. Por favor, intenta de nuevo.");
+    }
+}
+
+// Exponer la función al objeto window para que los botones 'onclick' puedan encontrarla
+window.subscribe = subscribe;
+
+
+// --- 4. RENDERIZADO ---
+
+function renderSubscriptionCard(maquina) {
+    const isSubscribed = maquina.suscripcion_hasta && new Date(maquina.suscripcion_hasta) > new Date();
+    const expirationDate = isSubscribed 
+        ? new Date(maquina.suscripcion_hasta).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
+        : 'Inactiva';
+
+    const statusHTML = isSubscribed
+        ? `<span class="px-3 py-1 text-sm font-semibold text-green-800 bg-green-200 rounded-full">Activa hasta ${expirationDate}</span>`
+        : `<span class="px-3 py-1 text-sm font-semibold text-red-800 bg-red-200 rounded-full">Inactiva</span>`;
+
+    return `
+        <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+            <div>
+                <h3 class="text-xl font-bold text-gray-800">${maquina.nombre || "Sin nombre"}</h3>
+                <p class="text-sm text-gray-500">Serial: ${maquina.serial}</p>
+                <p class="mt-2 font-semibold">Estado: ${statusHTML}</p>
+            </div>
+            <div class="flex flex-wrap gap-2 items-center">
+                <button onclick="subscribe('${maquina.serial}', 'mensual')" class="modern-button text-sm">Mensual</button>
+                <button onclick="subscribe('${maquina.serial}', 'semestral')" class="modern-button secondary text-sm">Semestral</button>
+                <button onclick="subscribe('${maquina.serial}', 'anual')" class="modern-button success text-sm">Anual</button>
+            </div>
+        </div>
+    `;
+}
