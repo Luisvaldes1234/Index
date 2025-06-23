@@ -5,8 +5,10 @@
 // --- 1. CONFIGURACIÓN E INICIALIZACIÓN ---
 
 // Inicialización segura del cliente de Supabase
-const supabaseKey = window.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'FALLBACK_KEY_SI_ES_NECESARIO';
-const supabase = window.supabase.createClient('https://ikuouxllerfjnibjtlkl.supabase.co', supabaseKey);
+const supabaseUrl = 'https://ikuouxllerfjnibjtlkl.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrdW91eGxsZXJmam5pYmp0bGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzQ5ODIsImV4cCI6MjA2MTY1MDk4Mn0.ofmYTPFMfRrHOI2YQxjIb50uB_uO8UaHuiQ0T1kbv2U';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
 
 // --- VARIABLES GLOBALES Y REFERENCIAS UI ---
 let user = null;
