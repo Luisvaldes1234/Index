@@ -5,122 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mis Máquinas - TrackMyVend</title>
     <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <style>
-        /* Estilos consistentes con reportes.html y agenda.html */
         * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-        .header {
-            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
-            color: white; padding: 1rem 0; position: fixed;
-            width: 100%; top: 0; z-index: 1000;
-            box-shadow: 0 4px 30px rgba(0,0,0,0.1);
-        }
-        .nav-container {
-            width: 100%; margin: 0 auto; display: flex;
-            justify-content: space-between; align-items: center; padding: 0 2rem;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+        .header { background: linear-gradient(135deg, #2345e1 0%, #667eea 100%); color: white; padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; box-shadow: 0 4px 30px rgba(0,0,0,0.1); }
+        .nav-container { width: 100%; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
         .logo { font-size: 1.8rem; font-weight: bold; color: white; text-decoration: none; }
         .nav-menu { display: flex; list-style: none; gap: 1.5rem; align-items: center; }
-        .nav-menu a {
-            color: white; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 25px;
-            font-weight: 500; transition: all 0.3s ease;
-        }
+        .nav-menu a { color: white; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 25px; font-weight: 500; transition: all 0.3s ease; }
         .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.2); }
         .hamburger { display: none; flex-direction: column; cursor: pointer; padding: 4px; z-index: 1001; }
         .hamburger span { width: 25px; height: 3px; background: white; margin: 3px 0; transition: all 0.3s ease; border-radius: 2px; }
         .hamburger.active span:nth-child(1) { transform: rotate(-45deg) translate(-5px, 6px); }
         .hamburger.active span:nth-child(2) { opacity: 0; }
         .hamburger.active span:nth-child(3) { transform: rotate(45deg) translate(-5px, -6px); }
-        .mobile-nav {
-            position: fixed; top: 0; right: 0; height: 100vh; width: 280px;
-            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
-            transform: translateX(100%); transition: transform 0.3s ease;
-            z-index: 1000; padding-top: 80px; box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-        }
+        .mobile-nav { position: fixed; top: 0; right: 0; height: 100vh; width: 280px; background: linear-gradient(135deg, #2345e1 0%, #667eea 100%); transform: translateX(100%); transition: transform 0.3s ease; z-index: 1000; padding-top: 80px; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
         .mobile-nav.active { transform: translateX(0); }
         .mobile-nav ul { list-style: none; padding: 0; margin: 0; }
-        .mobile-nav a {
-            display: block; color: white; text-decoration: none; padding: 1rem 2rem;
-            font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
+        .mobile-nav a { display: block; color: white; text-decoration: none; padding: 1rem 2rem; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .mobile-nav a.active, .mobile-nav a:hover { background: rgba(255,255,255,0.2); }
-        .mobile-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 999;
-            opacity: 0; visibility: hidden; transition: all 0.3s ease;
-        }
+        .mobile-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
         .mobile-overlay.active { opacity: 1; visibility: visible; }
         .main-container { margin-top: 80px; padding: 2rem; }
-        .section-card {
-            background: white; border-radius: 20px; padding: 2rem;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 2rem;
-        }
+        .section-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 2rem; }
         .section-title { font-size: 2rem; font-weight: bold; color: #2345e1; margin-bottom: 1.5rem; }
         .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
-        .form-input {
-            width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb;
-            border-radius: 12px; transition: border-color 0.3s;
-        }
+        .form-input { width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 12px; transition: border-color 0.3s; }
         .form-input:focus { border-color: #667eea; outline: none; }
-        .modern-button {
-            background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 0.8rem 1.5rem;
-            border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
-        }
+        .modern-button { background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
         .modern-button.success { background: linear-gradient(45deg, #10b981, #059669); }
         .modern-button.secondary { background: linear-gradient(45deg, #6b7280, #4b5563); }
-        
-        /* Estilos de Mapas y Tarjetas */
-        #locationPickerMap, #map, #edit-map { height: 350px; border-radius: 12px; border: 2px solid #e5e7eb; margin-top: 1rem; z-index: 1; }
-        .machine-card {
-            border-left: 5px solid #667eea; transition: all 0.3s ease;
-        }
+        #locationPickerMap, #map { height: 350px; border-radius: 12px; border: 2px solid #e5e7eb; margin-top: 1rem; z-index: 1; }
+        .machine-card { border-left: 5px solid #667eea; transition: all 0.3s ease; }
         .machine-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        
-        /* Estilo para el tooltip de ayuda (?) */
         .tooltip-container { position: relative; display: inline-block; cursor: pointer; }
-        .tooltip-icon {
-            background-color: #9ca3af; color: white; border-radius: 50%;
-            width: 1.25rem; height: 1.25rem; display: inline-flex;
-            align-items: center; justify-content: center; font-weight: bold;
-            font-size: 0.8rem; margin-left: 0.5rem;
-        }
-        .tooltip-text {
-            visibility: hidden; width: 250px; background-color: #2d3748;
-            color: #fff; text-align: center; border-radius: 6px;
-            padding: 8px; position: absolute; z-index: 10;
-            bottom: 125%; left: 50%; margin-left: -125px;
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .tooltip-text::after { /* Flecha del tooltip */
-            content: ""; position: absolute; top: 100%; left: 50%;
-            margin-left: -5px; border-width: 5px; border-style: solid;
-            border-color: #2d3748 transparent transparent transparent;
-        }
+        .tooltip-icon { background-color: #9ca3af; color: white; border-radius: 50%; width: 1.25rem; height: 1.25rem; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; margin-left: 0.5rem; }
+        .tooltip-text { visibility: hidden; width: 250px; background-color: #2d3748; color: #fff; text-align: center; border-radius: 6px; padding: 8px; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -125px; opacity: 0; transition: opacity 0.3s; }
+        .tooltip-text::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #2d3748 transparent transparent transparent; }
         .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
-
-        /* Estilos para el Modal de Edición de Mapa */
-        .modal-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); z-index: 2000;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .modal-content {
-            background: white; padding: 2rem; border-radius: 20px;
-            width: 90%; max-width: 800px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-        }
-
-
         @media (max-width: 768px) {
             .nav-menu { display: none; }
             .hamburger { display: flex; }
@@ -175,7 +101,6 @@
                         <input type="text" id="name" class="form-input" required>
                     </div>
                 </div>
-
                 <div>
                     <label for="ubicacion" class="form-label inline-flex items-center">
                         Ubicación (Opcional)
@@ -188,34 +113,13 @@
                     <div id="locationPickerMap"></div>
                     <input type="hidden" id="latitude"><input type="hidden" id="longitude">
                 </div>
-
                 <div>
                     <h3 class="text-lg font-semibold text-gray-700 mb-2">Configuración de Botones</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="p-4 bg-gray-50 rounded-lg">
-                            <label class="form-label">B1 Litros</label>
-                            <input type="number" step="any" id="litros1" class="form-input">
-                            <label class="form-label mt-2">B1 Precio</label>
-                            <input type="number" step="any" id="precio1" class="form-input">
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg">
-                            <label class="form-label">B2 Litros</label>
-                            <input type="number" step="any" id="litros2" class="form-input">
-                            <label class="form-label mt-2">B2 Precio</label>
-                            <input type="number" step="any" id="precio2" class="form-input">
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg">
-                            <label class="form-label">B3 Litros</label>
-                            <input type="number" step="any" id="litros3" class="form-input">
-                            <label class="form-label mt-2">B3 Precio</label>
-                            <input type="number" step="any" id="precio3" class="form-input">
-                        </div>
-                        <div class="p-4 bg-gray-50 rounded-lg border-2 border-dashed">
-                            <label class="form-label">B4 Litros</label>
-                            <input type="number" step="any" id="litros4" class="form-input">
-                            <label class="form-label mt-2">B4 Precio</label>
-                            <input type="number" step="any" id="precio4" class="form-input">
-                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg"><label class="form-label">B1 Litros</label><input type="number" step="any" id="litros1" class="form-input"><label class="form-label mt-2">B1 Precio</label><input type="number" step="any" id="precio1" class="form-input"></div>
+                        <div class="p-4 bg-gray-50 rounded-lg"><label class="form-label">B2 Litros</label><input type="number" step="any" id="litros2" class="form-input"><label class="form-label mt-2">B2 Precio</label><input type="number" step="any" id="precio2" class="form-input"></div>
+                        <div class="p-4 bg-gray-50 rounded-lg"><label class="form-label">B3 Litros</label><input type="number" step="any" id="litros3" class="form-input"><label class="form-label mt-2">B3 Precio</label><input type="number" step="any" id="precio3" class="form-input"></div>
+                        <div class="p-4 bg-gray-50 rounded-lg border-2 border-dashed"><label class="form-label">B4 Litros</label><input type="number" step="any" id="litros4" class="form-input"><label class="form-label mt-2">B4 Precio</label><input type="number" step="any" id="precio4" class="form-input"></div>
                     </div>
                 </div>
                 <div class="flex gap-4">
@@ -241,18 +145,6 @@
             </div>
         </div>
     </main>
-
-    <div id="location-modal" class="modal-container hidden">
-        <div class="modal-content">
-            <h3 class="section-title text-left mb-4">Editar Ubicación en Mapa</h3>
-            <p class="text-gray-600 mb-4">Mueve el mapa y haz clic en la nueva ubicación para colocar el pin. Presiona "Confirmar" para guardar temporalmente las coordenadas.</p>
-            <div id="edit-map"></div>
-            <div class="flex gap-4 mt-6 justify-end">
-                <button id="confirm-location-btn" class="modern-button success">Confirmar Ubicación</button>
-                <button id="cancel-location-btn" class="modern-button secondary">Cancelar</button>
-            </div>
-        </div>
-    </div>
 
     <script src="maquinas.js"></script>
 </body>
