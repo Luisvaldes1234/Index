@@ -17,7 +17,7 @@ exports.handler = async ({ body, headers }) => {
     const sig = headers['stripe-signature'];
     event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
   } catch (err) {
-    console.error(`Error en la verificación de la firma del webhook: ${err.message}`);
+    console.error(`Error en la verificación de la firma: ${err.message}`);
     return { statusCode: 400, body: `Webhook Error: ${err.message}` };
   }
   
@@ -27,24 +27,31 @@ exports.handler = async ({ body, headers }) => {
     const invoice = event.data.object;
     const subscriptionDetails = invoice.parent?.subscription_details;
 
-    // --- ¡LA CORRECCIÓN FINAL ESTÁ AQUÍ! ---
-    // Comprobamos si el 'status' es 'paid', que es lo que realmente nos manda Stripe.
     if (invoice.status === 'paid' && subscriptionDetails?.subscription) {
-      console.log('Factura pagada y con suscripción. Procesando actualización...');
+      console.log('Factura pagada. Procesando actualización...');
 
       try {
         const subscriptionId = subscriptionDetails.subscription;
         const serial = subscriptionDetails.metadata?.serial;
 
         if (!serial) {
-          console.error('El serial de la máquina no se encontró en los metadatos. Abortando.');
-          return { statusCode: 200, body: 'Serial no encontrado en metadatos.' };
+          throw new Error('El serial de la máquina no se encontró en los metadatos.');
         }
         
+        // Obtenemos los detalles completos de la suscripción desde Stripe
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+        // --- ¡LA CORRECCIÓN FINAL ESTÁ AQUÍ! ---
+        // Verificamos que 'current_period_end' exista antes de usarlo.
+        if (!subscription.current_period_end) {
+            throw new Error(`La suscripción ${subscriptionId} no tiene una fecha de fin de periodo (current_period_end).`);
+        }
+
+        // Si la fecha existe, la creamos y la usamos.
         const subscriptionEndDate = new Date(subscription.current_period_end * 1000);
         
-        console.log(`Intentando actualizar la máquina con serial: "${serial}"`);
+        console.log(`Intentando actualizar la máquina con serial: "${serial}" con la fecha: ${subscriptionEndDate.toISOString()}`);
+        
         const { data, error: updateError } = await supabase
           .from('maquinas')
           .update({ suscripcion_hasta: subscriptionEndDate.toISOString() })
@@ -56,9 +63,9 @@ exports.handler = async ({ body, headers }) => {
         }
         
         if (data && data.length > 0) {
-          console.log(`¡ÉXITO! Se actualizó la suscripción para la máquina con serial "${serial}" hasta ${subscriptionEndDate.toLocaleDateString()}`);
+          console.log(`¡ÉXITO TOTAL! Se actualizó la suscripción para la máquina con serial "${serial}" hasta ${subscriptionEndDate.toLocaleDateString()}`);
         } else {
-          console.warn(`ADVERTENCIA: La consulta se ejecutó, pero no se encontró ninguna máquina con el serial "${serial}". Revisa que el serial en Supabase sea idéntico.`);
+          console.warn(`ADVERTENCIA: La consulta se ejecutó, pero no se encontró ninguna máquina con el serial "${serial}".`);
         }
 
       } catch (err) {
@@ -66,7 +73,7 @@ exports.handler = async ({ body, headers }) => {
         return { statusCode: 500, body: `Error interno: ${err.message}` };
       }
     } else {
-        console.warn("La condición no se cumplió. Status de la factura:", invoice.status, "Detalles de suscripción existen:", !!subscriptionDetails?.subscription);
+        console.warn("La condición no se cumplió. Status:", invoice.status, "Suscripción existe:", !!subscriptionDetails?.subscription);
     }
   }
 
