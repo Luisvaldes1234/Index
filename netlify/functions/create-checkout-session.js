@@ -19,7 +19,7 @@ exports.handler = async (event) => {
     }
 
     const prices = {
-      mensual: 'price_1RMoRrLPG9Lo6pOsUodPtxXN',
+      mensual: 'prod_SZLaReK4GmSdeE',
       trimestral: 'price_1RMoWiLPG9Lo6pOs4jojGv0q',
       semestral: 'price_1RMoX9LPG9Lo6pOspcvGjXsQ',
       anual: 'price_1RMoaQLPG9Lo6pOsCkJY3hh5',
