@@ -39,7 +39,7 @@ exports.handler = async ({ body, headers }) => {
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
         
         // Extraemos el serial de la máquina que guardamos en los metadatos
-        const machineSerial = subscription.metadata.machine_serial;
+        const Serial = subscription.metadata.serial;
         // Extraemos la fecha en que termina el periodo que se acaba de pagar
         const subscriptionEndDate = new Date(subscription.current_period_end * 1000);
 
