@@ -250,7 +250,7 @@ async function cargarDistribucionVolumen() {
       volumeCounts["10L"]++;
     } else if (litros === 5) {
       volumeCounts["5L"]++;
-    } else if (litros === 3.785) { // Gallon in liters
+    } else if (litros === 3.75) { // Gallon in liters
       volumeCounts["Galón"]++;
     } else {
       volumeCounts["Otros"]++;
