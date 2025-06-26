@@ -43,7 +43,7 @@ exports.handler = async ({ body, headers }) => {
         // Extraemos la fecha en que termina el periodo que se acaba de pagar
         const subscriptionEndDate = new Date(subscription.current_period_end * 1000);
 
-        if (serial) {
+        if (!serial) {
           throw new Error('El serial de la máquina no se encontró en los metadatos de la suscripción.');
         }
 
@@ -57,7 +57,7 @@ exports.handler = async ({ body, headers }) => {
           throw new Error(`Error al actualizar Supabase: ${updateError.message}`);
         }
 
-        console.log(`Suscripción actualizada para la máquina con serial ${Serial} hasta ${subscriptionEndDate.toLocaleDateString()}`);
+        console.log(`Suscripción actualizada para la máquina con serial ${serial} hasta ${subscriptionEndDate.toLocaleDateString()}`);
 
       } catch (err) {
         console.error('Error procesando el webhook:', err.message);
