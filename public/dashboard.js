@@ -151,56 +151,101 @@ async function hacerCorteDeCaja(serial) {
 }
 
 async function cargarResumen() {
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const resumen = { litros: 0, total: 0, ultima: null, ticket: 0, activas: 0, cantidad: 0 };
-
-  const { data: maquinas } = await supabase.from("maquinas").select("serial, last_seen").eq("user_id", user.id);
-  const { data: ventas } = await supabase
-  .from("ventas")
-  .select("*")
-  .eq("user_id", user.id);   // ← sólo tus ventas
-
   const ahora = new Date();
-  resumen.cantidad = maquinas.length;
-  resumen.activas = maquinas.filter(m => (new Date() - new Date(m.last_seen)) / 60000 < 10).length;
-
-  const hoyVentas = ventas.filter(v => new Date(v.created_at) >= hoy);
-
-  if (hoyVentas.length) {
-    resumen.litros = hoyVentas.reduce((s, v) => s + (parseFloat(v.litros) || 0), 0);
-    resumen.total = hoyVentas.reduce((s, v) => s + (parseFloat(v.precio_total) || 0), 0);
-    resumen.ticket = resumen.total / hoyVentas.length;
-    resumen.ultima = hoyVentas[hoyVentas.length - 1].created_at;
-  }
-
-  renderResumen(resumen);
-
-  const semanaInicio = new Date();
-  semanaInicio.setDate(semanaInicio.getDate() - semanaInicio.getDay());
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const semanaInicio = new Date(ahora);
+  semanaInicio.setDate(semanaInicio.getDate() - semanaInicio.getDay() + (semanaInicio.getDay() === 0 ? -6 : 1)); // Lunes como inicio de semana
   semanaInicio.setHours(0, 0, 0, 0);
-  const mesInicio = new Date();
-  mesInicio.setDate(1);
+  const mesInicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
   mesInicio.setHours(0, 0, 0, 0);
 
-  const totalSemana = ventas.filter(v => new Date(v.created_at) >= semanaInicio)
-    .reduce((s, v) => s + parseFloat(v.precio_total || 0), 0);
-  const totalMes = ventas.filter(v => new Date(v.created_at) >= mesInicio)
-    .reduce((s, v) => s + parseFloat(v.precio_total || 0), 0);
+  // 1. Obtenemos todos los datos necesarios una sola vez
+  const { data: maquinas } = await supabase.from("maquinas").select("serial, nombre, last_seen").eq("user_id", user.id);
+  const { data: ventas } = await supabase.from("ventas").select("created_at, precio_total, litros, serial").eq("user_id", user.id);
 
+  // 2. Calculamos los totales generales
+  const resumen = { litrosHoy: 0, totalHoy: 0, ultimaVenta: null, ticketMes: 0, activas: 0, cantidad: 0 };
+  resumen.cantidad = maquinas.length;
+  resumen.activas = maquinas.filter(m => (ahora - new Date(m.last_seen)) / 60000 < 10).length;
+
+  const hoyVentas = ventas.filter(v => new Date(v.created_at) >= hoy);
+  const semanaVentas = ventas.filter(v => new Date(v.created_at) >= semanaInicio);
+  const mesVentas = ventas.filter(v => new Date(v.created_at) >= mesInicio);
+
+  if (hoyVentas.length > 0) {
+    resumen.litrosHoy = hoyVentas.reduce((s, v) => s + (parseFloat(v.litros) || 0), 0);
+    resumen.totalHoy = hoyVentas.reduce((s, v) => s + (parseFloat(v.precio_total) || 0), 0);
+  }
+
+  if (ventas.length > 0) {
+      // Ordenamos para encontrar la última venta de todas
+      ventas.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+      resumen.ultimaVenta = ventas[0].created_at;
+  }
+  
+  // *** CAMBIO: Ticket promedio ahora es mensual ***
+  if (mesVentas.length > 0) {
+    const totalMes = mesVentas.reduce((s, v) => s + (parseFloat(v.precio_total) || 0), 0);
+    resumen.ticketMes = totalMes / mesVentas.length;
+    document.getElementById("ventasMes").textContent = `$${totalMes.toFixed(2)}`;
+  } else {
+    document.getElementById("ventasMes").textContent = `$0.00`;
+  }
+  
+  const totalSemana = semanaVentas.reduce((s, v) => s + (parseFloat(v.precio_total) || 0), 0);
   document.getElementById("ventasSemana").textContent = `$${totalSemana.toFixed(2)}`;
-  document.getElementById("ventasMes").textContent = `$${totalMes.toFixed(2)}`;
+
+  renderResumen(resumen); // Renderiza las tarjetas de totales
+
+  // 3. *** NUEVO: Calculamos y renderizamos las tarjetas por cada máquina ***
+  const contenedorMaquinas = document.getElementById("resumenMaquinas");
+  contenedorMaquinas.innerHTML = ''; // Limpiamos el contenedor
+
+  maquinas.forEach(m => {
+    const ventasMaquina = ventas.filter(v => v.serial === m.serial);
+    
+    const ventasHoyMaquina = ventasMaquina.filter(v => new Date(v.created_at) >= hoy);
+    const ventasSemanaMaquina = ventasMaquina.filter(v => new Date(v.created_at) >= semanaInicio);
+    const ventasMesMaquina = ventasMaquina.filter(v => new Date(v.created_at) >= mesInicio);
+
+    const resumenMaquina = {
+      nombre: m.nombre || m.serial,
+      totalHoy: ventasHoyMaquina.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0),
+      totalSemana: ventasSemanaMaquina.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0),
+      totalMes: ventasMesMaquina.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0),
+    };
+
+    renderResumenPorMaquina(resumenMaquina, contenedorMaquinas);
+  });
 }
 
+
+
+// REEMPLAZA tu función renderResumen actual por esta:
 function renderResumen(r) {
-  document.getElementById("resumen").innerHTML = `
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Litros vendidos hoy</p><h2>${r.litros.toFixed(1)} L</h2></div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Ventas totales hoy</p><h2>$${r.total.toFixed(2)}</h2></div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Ticket promedio</p><h2>$${r.ticket.toFixed(2)}</h2></div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Máquinas activas</p><h2>${r.activas}/${r.cantidad}</h2></div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Última venta</p><h2>${r.ultima ? new Date(r.ultima).toLocaleString("es-MX") : "N/A"}</h2></div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Ventas esta semana</p><h2 id="ventasSemana">$0.00</h2></div>
-    <div class="bg-white dark:bg-gray-800 p-4 rounded shadow"><p>Ventas este mes</p><h2 id="ventasMes">$0.00</h2></div>
-  `;
+    // Solo actualizamos el contenido de las tarjetas, ya no las creamos aquí
+    document.getElementById("litrosHoy").textContent = `${r.litrosHoy.toFixed(1)} L`;
+    document.getElementById("ventasHoy").textContent = `$${r.totalHoy.toFixed(2)}`;
+    document.getElementById("ticketPromedio").textContent = `$${r.ticketMes.toFixed(2)}`; // Ahora es mensual
+    document.getElementById("maquinasActivas").textContent = `${r.activas}/${r.cantidad}`;
+    document.getElementById("ultimaVenta").textContent = r.ultimaVenta ? new Date(r.ultimaVenta).toLocaleString("es-MX") : "N/A";
+}
+
+
+// AÑADE esta función nueva a tu archivo .js
+function renderResumenPorMaquina(r, contenedor) {
+    const div = document.createElement('div');
+    div.className = 'section-card kpi-machine-card'; // Usamos una nueva clase para estilo opcional
+    div.innerHTML = `
+        <h3 class="text-lg font-bold text-blue-600 mb-3">${r.nombre}</h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between"><span>Ventas Hoy:</span> <span class="font-semibold">$${r.totalHoy.toFixed(2)}</span></div>
+            <div class="flex justify-between"><span>Ventas Semana:</span> <span class="font-semibold">$${r.totalSemana.toFixed(2)}</span></div>
+            <div class="flex justify-between"><span>Ventas Mes:</span> <span class="font-semibold">$${r.totalMes.toFixed(2)}</span></div>
+        </div>
+    `;
+    contenedor.appendChild(div);
 }
 
 async function cargarDistribucionVolumen() {
