@@ -27,8 +27,8 @@ exports.handler = async (event) => {
     const priceIDs = {
       mensual: 'price_1ReCt4LPG9Lo6pOs9VwtBHZ1',
       trimestral: 'price_1RMoWiLPG9Lo6pOs4jojGv0q',
-      semestral: 'price_1ReDrNLPG9Lo6pOs8RQB0m1p',
-      anual: 'price_1ReDvLLPG9Lo6pOsxYcSPdsx',
+      semestral: 'price_1ReFROLPG9Lo6pOstnT622Al',
+      anual: 'price_1ReFSpLPG9Lo6pOsH4Y9Fl3R',
     };
 
     const priceId = priceIDs[plan];
