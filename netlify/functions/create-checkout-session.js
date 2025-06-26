@@ -26,7 +26,7 @@ exports.handler = async (event) => {
     // 2. --- MAPEO DE PLANES A PRECIOS DE STRIPE ---
     // ¡REEMPLAZA ESTO CON TUS IDS DE PRECIOS REALES DE STRIPE!
     const priceIDs = {
-      mensual: 'prod_SZLaReK4GmSdeE',
+      mensual: 'price_1ReCt4LPG9Lo6pOs9VwtBHZ1',
       trimestral: 'price_1RMoWiLPG9Lo6pOs4jojGv0q',
       semestral: 'price_1RMoX9LPG9Lo6pOspcvGjXsQ',
       anual: 'price_1RMoaQLPG9Lo6pOsCkJY3hh5',
