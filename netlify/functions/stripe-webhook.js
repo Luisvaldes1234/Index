@@ -27,44 +27,13 @@ exports.handler = async ({ body, headers }) => {
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object;
 
+    // --- ¡NUEVA LÍNEA DE DEPURACIÓN! ---
+    // Imprimimos el contenido completo de la factura para inspeccionarla.
+    console.log("Contenido del objeto 'invoice':", JSON.stringify(invoice, null, 2));
+
     if (invoice.paid && invoice.subscription) {
-      console.log('Factura de suscripción pagada. Procesando actualización...');
-
-      try {
-        const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-        
-        const serial = subscription.metadata.serial; 
-        const subscriptionEndDate = new Date(subscription.current_period_end * 1000);
-        
-        console.log(`Serial extraído de los metadatos de Stripe: "${serial}"`);
-
-        if (!serial) {
-          console.error('El serial de la máquina no se encontró en los metadatos. Abortando.');
-          return { statusCode: 200, body: 'Serial no encontrado en metadatos.' };
-        }
-
-        console.log(`Intentando actualizar la máquina con serial: "${serial}"`);
-        const { data, error: updateError } = await supabase
-          .from('maquinas')
-          .update({ suscripcion_hasta: subscriptionEndDate.toISOString() })
-          .eq('serial', serial)
-          .select();
-
-        if (updateError) {
-          throw new Error(`Error al actualizar Supabase: ${updateError.message}`);
-        }
-        
-        if (data && data.length > 0) {
-          // --- ¡CORRECCIÓN APLICADA AQUÍ! ---
-          console.log(`¡ÉXITO! Se actualizó la suscripción para la máquina con serial "${serial}" hasta ${subscriptionEndDate.toLocaleDateString()}`);
-        } else {
-          console.warn(`ADVERTENCIA: La consulta se ejecutó, pero no se encontró ninguna máquina con el serial "${serial}".`);
-        }
-
-      } catch (err) {
-        console.error('Error durante el procesamiento de la suscripción:', err.message);
-        return { statusCode: 500, body: `Error interno: ${err.message}` };
-      }
+      // El resto del código...
+      // ...
     }
   }
 
