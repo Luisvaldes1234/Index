@@ -245,6 +245,73 @@ function renderActivityKPIs(sales) {
     const busiestDayIndex = Object.keys(dayCounts).reduce((a, b) => dayCounts[a] > dayCounts[b] ? a : b);
     const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
     document.getElementById('kpiDiaFuerte').textContent = dayNames[busiestDayIndex];
+}// REEMPLAZA tu función renderActivityKPIs actual por esta:
+
+function renderActivityKPIs(sales) {
+    const horasContainer = document.getElementById('actividadHoras');
+    const diasContainer = document.getElementById('actividadDias');
+
+    // Si no hay ventas, mostramos un mensaje por defecto y salimos.
+    if (!sales || sales.length === 0) {
+        horasContainer.innerHTML = '<p class="text-gray-500">No hay datos de ventas para analizar las horas.</p>';
+        diasContainer.innerHTML = '<p class="text-gray-500">No hay datos de ventas para analizar los días.</p>';
+        return;
+    }
+
+    // --- 1. LÓGICA PARA EL ANÁLISIS DE HORAS ---
+    const salesByHour = Array(24).fill(0).map((_, i) => ({ hora: i, total: 0 }));
+
+    sales.forEach(v => {
+        const hora = new Date(v.created_at).getHours();
+        salesByHour[hora].total += parseFloat(v.precio_total || 0);
+    });
+
+    // Ordenamos las horas de mayor a menor venta
+    const sortedHours = [...salesByHour].sort((a, b) => b.total - a.total);
+
+    // Filtramos para encontrar las peores horas que SÍ tuvieron ventas
+    const productiveHours = sortedHours.filter(h => h.total > 0);
+    const worstHours = productiveHours.slice(-2).reverse(); // Tomamos las 2 últimas y las invertimos para que la peor quede al final
+
+    // Generamos el HTML para mostrar las horas
+    let horasHTML = `
+        <div class="font-semibold text-green-600">Mejores Horas de Venta:</div>
+        <p>1. ${sortedHours[0].hora.toString().padStart(2, '0')}:00 - $${sortedHours[0].total.toFixed(2)}</p>
+        ${sortedHours[1] ? `<p>2. ${sortedHours[1].hora.toString().padStart(2, '0')}:00 - $${sortedHours[1].total.toFixed(2)}</p>` : ''}
+        
+        <div class="font-semibold text-red-600 mt-4">Horas de Menor Venta (con actividad):</div>
+        ${worstHours.length > 0
+            ? worstHours.map(h => `<p>· ${h.hora.toString().padStart(2, '0')}:00 - $${h.total.toFixed(2)}</p>`).join('')
+            : '<p>No hay suficientes datos para determinar las peores horas.</p>'
+        }
+    `;
+    horasContainer.innerHTML = horasHTML;
+
+
+    // --- 2. LÓGICA PARA EL RANKING DE DÍAS ---
+    const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const salesByDay = dayNames.map(name => ({ dia: name, total: 0 }));
+
+    sales.forEach(v => {
+        const dayIndex = new Date(v.created_at).getDay();
+        salesByDay[dayIndex].total += parseFloat(v.precio_total || 0);
+    });
+
+    // Ordenamos los días de mayor a menor venta
+    const rankedDays = salesByDay.sort((a, b) => b.total - a.total);
+
+    // Generamos una lista ordenada (ranking) en HTML
+    let diasHTML = `
+        <ol class="list-decimal list-inside space-y-1">
+            ${rankedDays.map(d => `
+                <li>
+                    <span class="font-semibold">${d.dia}:</span>
+                    <span class="float-right">$${d.total.toFixed(2)}</span>
+                </li>
+            `).join('')}
+        </ol>
+    `;
+    diasContainer.innerHTML = diasHTML;
 }
 
 function renderUtilityCalculator() {
