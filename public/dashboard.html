@@ -380,19 +380,50 @@
         </div>
       </div>
 
-      <div class="section-card">
-        <h2 class="section-title"> Resumen de Ventas</h2>
-        <div id="resumen" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
-          <div class="kpi-card">
-            <p class="kpi-label">📅 Ventas esta semana</p>
-            <h2 class="kpi-value" id="ventasSemana">$0.00</h2>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label">📆 Ventas este mes</p>
-            <h2 class="kpi-value" id="ventasMes">$0.00</h2>
-          </div>
+      <!-- En tu archivo dashboard.html, reemplaza tu sección de "Resumen de Ventas" por esto: -->
+
+<!-- Sección de Resumen General -->
+<div class="section-card">
+    <h2 class="section-title">Resumen General</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
+        <div class="kpi-card">
+            <p class="kpi-label">Litros vendidos hoy</p>
+            <h2 class="kpi-value" id="litrosHoy">0 L</h2>
         </div>
-      </div>
+        <div class="kpi-card">
+            <p class="kpi-label">Ventas totales hoy</p>
+            <h2 class="kpi-value" id="ventasHoy">$0.00</h2>
+        </div>
+        <div class="kpi-card">
+            <p class="kpi-label">Ticket promedio (Mensual)</p> <!-- Texto actualizado -->
+            <h2 class="kpi-value" id="ticketPromedio">$0.00</h2>
+        </div>
+        <div class="kpi-card">
+            <p class="kpi-label">Máquinas activas</p>
+            <h2 class="kpi-value" id="maquinasActivas">0/0</h2>
+        </div>
+        <div class="kpi-card">
+            <p class="kpi-label">Última venta</p>
+            <h2 class="kpi-value" id="ultimaVenta">N/A</h2>
+        </div>
+        <div class="kpi-card">
+            <p class="kpi-label">Ventas esta semana</p>
+            <h2 class="kpi-value" id="ventasSemana">$0.00</h2>
+        </div>
+         <div class="kpi-card">
+            <p class="kpi-label">Ventas este mes</p>
+            <h2 class="kpi-value" id="ventasMes">$0.00</h2>
+        </div>
+    </div>
+</div>
+
+<!-- NUEVA SECCIÓN para el resumen por máquina -->
+<div class="section-card">
+    <h2 class="section-title">Resumen por Máquina</h2>
+    <div id="resumenMaquinas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <!-- Las tarjetas de cada máquina se insertarán aquí con JavaScript -->
+    </div>
+</div>
 
       <div id="dineroMaquina" class="section-card dinero-maquina-card hidden">
       </div>
