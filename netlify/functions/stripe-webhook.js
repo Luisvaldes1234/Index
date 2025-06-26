@@ -25,31 +25,17 @@ exports.handler = async ({ body, headers }) => {
 
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object;
-    // ...
-if (event.type === 'invoice.paid') {
-    const invoice = event.data.object;
 
-    // --- AÑADE ESTA LÍNEA DE NUEVO ---
+    // --- LÍNEA DE DEPURACIÓN AÑADIDA ---
+    // Imprimimos el contenido completo de la factura para inspeccionarla.
     console.log("INSPECCIONANDO INVOICE:", JSON.stringify(invoice, null, 2));
-    // ----------------------------------
 
     const subscriptionDetails = invoice.parent?.subscription_details;
 
-    if (invoice.paid && subscriptionDetails?.subscription) {
-// ... resto del código
-
-
-    // --- ¡CORRECCIÓN CLAVE! ---
-    // Buscamos los datos en la ruta correcta que vimos en tus logs.
-    // Usamos '?' (optional chaining) por seguridad, por si 'parent' o 'subscription_details' no vinieran.
-    const subscriptionDetails = invoice.parent?.subscription_details;
-
-    // Ahora la condición SÍ debería funcionar.
     if (invoice.paid && subscriptionDetails?.subscription) {
       console.log('Factura de suscripción pagada. Procesando actualización...');
 
       try {
-        // Obtenemos los datos de la ubicación correcta.
         const subscriptionId = subscriptionDetails.subscription;
         const serial = subscriptionDetails.metadata?.serial;
 
@@ -61,7 +47,6 @@ if (event.type === 'invoice.paid') {
           return { statusCode: 200, body: 'Serial no encontrado en metadatos.' };
         }
         
-        // Para la fecha de fin, sí necesitamos consultar el objeto de suscripción completo.
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const subscriptionEndDate = new Date(subscription.current_period_end * 1000);
         console.log(`Nueva fecha de vencimiento calculada: ${subscriptionEndDate.toISOString()}`);
