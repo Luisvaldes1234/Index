@@ -3,20 +3,15 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 
-// --- Configuración ---
-// Vamos a necesitar la URL de Supabase y la clave "service_role" para poder modificar datos.
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// La clave secreta del webhook, que obtendremos de Stripe más adelante.
 const endpointSecret = process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
 
-
-// --- Lógica Principal ---
 exports.handler = async ({ body, headers }) => {
-  // 1. VERIFICAR QUE LA PETICIÓN VIENE REALMENTE DE STRIPE
-  // Esto es crucial para la seguridad.
+  console.log('Función stripe-webhook iniciada.');
+
   const sig = headers['stripe-signature'];
   let event;
 
@@ -27,46 +22,51 @@ exports.handler = async ({ body, headers }) => {
     return { statusCode: 400, body: `Webhook Error: ${err.message}` };
   }
   
-  // 2. PROCESAR EL EVENTO SI LA FIRMA ES VÁLIDA
-  // El evento 'invoice.paid' se dispara CADA VEZ que una suscripción se paga con éxito.
+  console.log(`Evento recibido: ${event.type}`);
+
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object;
 
-    // Solo actuamos si la factura está pagada y pertenece a una suscripción
     if (invoice.paid && invoice.subscription) {
+      console.log('Factura de suscripción pagada. Procesando actualización...');
+
       try {
-        // Para obtener los metadatos, necesitamos recuperar el objeto de la suscripción completo
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
         
-        // Extraemos el serial de la máquina que guardamos en los metadatos
-        const serial = subscription.metadata.serial;
-        // Extraemos la fecha en que termina el periodo que se acaba de pagar
+        const serial = subscription.metadata.serial; 
         const subscriptionEndDate = new Date(subscription.current_period_end * 1000);
+        
+        console.log(`Serial extraído de los metadatos de Stripe: "${serial}"`);
 
         if (!serial) {
-          throw new Error('El serial de la máquina no se encontró en los metadatos de la suscripción.');
+          console.error('El serial de la máquina no se encontró en los metadatos. Abortando.');
+          return { statusCode: 200, body: 'Serial no encontrado en metadatos.' };
         }
 
-        // 3. ACTUALIZAR LA BASE DE DATOS DE SUPABASE
-        const { error: updateError } = await supabase
+        console.log(`Intentando actualizar la máquina con serial: "${serial}"`);
+        const { data, error: updateError } = await supabase
           .from('maquinas')
           .update({ suscripcion_hasta: subscriptionEndDate.toISOString() })
-          .eq('serial', serial); // ¡Actualizamos la máquina por su 'serial'!
+          .eq('serial', serial)
+          .select();
 
         if (updateError) {
           throw new Error(`Error al actualizar Supabase: ${updateError.message}`);
         }
-
-        console.log(`Suscripción actualizada para la máquina con serial ${serial} hasta ${subscriptionEndDate.toLocaleDateString()}`);
+        
+        if (data && data.length > 0) {
+          // --- ¡CORRECCIÓN APLICADA AQUÍ! ---
+          console.log(`¡ÉXITO! Se actualizó la suscripción para la máquina con serial "${serial}" hasta ${subscriptionEndDate.toLocaleDateString()}`);
+        } else {
+          console.warn(`ADVERTENCIA: La consulta se ejecutó, pero no se encontró ninguna máquina con el serial "${serial}".`);
+        }
 
       } catch (err) {
-        console.error('Error procesando el webhook:', err.message);
+        console.error('Error durante el procesamiento de la suscripción:', err.message);
         return { statusCode: 500, body: `Error interno: ${err.message}` };
       }
     }
   }
 
-  // 4. DEVOLVER RESPUESTA A STRIPE
-  // Enviamos una respuesta exitosa para que Stripe sepa que recibimos el evento y no lo siga enviando.
   return { statusCode: 200, body: JSON.stringify({ received: true }) };
 };
