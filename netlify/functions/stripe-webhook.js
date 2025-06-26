@@ -23,57 +23,51 @@ exports.handler = async ({ body, headers }) => {
   
   console.log(`Evento recibido: ${event.type}`);
 
-  if (event.type === 'invoice.paid') {
+  if (event.type === 'invoice.paid' && event.data.object.status === 'paid') {
     const invoice = event.data.object;
-    const subscriptionDetails = invoice.parent?.subscription_details;
+    
+    // --- LÓGICA SIMPLIFICADA Y CORREGIDA ---
+    // Extraemos el primer item de la factura, que contiene todo lo que necesitamos.
+    const lineItem = invoice.lines.data[0];
 
-    if (invoice.status === 'paid' && subscriptionDetails?.subscription) {
-      console.log('Factura pagada. Procesando actualización...');
+    if (!lineItem) {
+      console.error("La factura no contiene items (line items).");
+      return { statusCode: 200, body: 'Factura sin items.' };
+    }
 
-      try {
-        const subscriptionId = subscriptionDetails.subscription;
-        const serial = subscriptionDetails.metadata?.serial;
+    try {
+      const serial = lineItem.metadata?.serial;
+      const periodEnd = lineItem.period?.end;
 
-        if (!serial) {
-          throw new Error('El serial de la máquina no se encontró en los metadatos.');
-        }
-        
-        // Obtenemos los detalles completos de la suscripción desde Stripe
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      console.log(`Datos extraídos de la factura: Serial -> "${serial}", Fin de Periodo -> ${periodEnd}`);
 
-        // --- ¡LA CORRECCIÓN FINAL ESTÁ AQUÍ! ---
-        // Verificamos que 'current_period_end' exista antes de usarlo.
-        if (!subscription.current_period_end) {
-            throw new Error(`La suscripción ${subscriptionId} no tiene una fecha de fin de periodo (current_period_end).`);
-        }
-
-        // Si la fecha existe, la creamos y la usamos.
-        const subscriptionEndDate = new Date(subscription.current_period_end * 1000);
-        
-        console.log(`Intentando actualizar la máquina con serial: "${serial}" con la fecha: ${subscriptionEndDate.toISOString()}`);
-        
-        const { data, error: updateError } = await supabase
-          .from('maquinas')
-          .update({ suscripcion_hasta: subscriptionEndDate.toISOString() })
-          .eq('serial', serial)
-          .select();
-
-        if (updateError) {
-          throw new Error(`Error al actualizar Supabase: ${updateError.message}`);
-        }
-        
-        if (data && data.length > 0) {
-          console.log(`¡ÉXITO TOTAL! Se actualizó la suscripción para la máquina con serial "${serial}" hasta ${subscriptionEndDate.toLocaleDateString()}`);
-        } else {
-          console.warn(`ADVERTENCIA: La consulta se ejecutó, pero no se encontró ninguna máquina con el serial "${serial}".`);
-        }
-
-      } catch (err) {
-        console.error('Error durante el procesamiento de la suscripción:', err.message);
-        return { statusCode: 500, body: `Error interno: ${err.message}` };
+      if (!serial || !periodEnd) {
+        throw new Error(`No se encontró 'serial' o 'period.end' en el primer item de la factura.`);
       }
-    } else {
-        console.warn("La condición no se cumplió. Status:", invoice.status, "Suscripción existe:", !!subscriptionDetails?.subscription);
+      
+      const subscriptionEndDate = new Date(periodEnd * 1000);
+      
+      console.log(`Intentando actualizar la máquina con serial: "${serial}" con la fecha: ${subscriptionEndDate.toISOString()}`);
+      
+      const { data, error: updateError } = await supabase
+        .from('maquinas')
+        .update({ suscripcion_hasta: subscriptionEndDate.toISOString() })
+        .eq('serial', serial)
+        .select();
+
+      if (updateError) {
+        throw new Error(`Error al actualizar Supabase: ${updateError.message}`);
+      }
+      
+      if (data && data.length > 0) {
+        console.log(`¡ÉXITO TOTAL! Se actualizó la suscripción para la máquina con serial "${serial}"`);
+      } else {
+        console.warn(`ADVERTENCIA: La consulta se ejecutó, pero no se encontró ninguna máquina con el serial "${serial}". Revisa que el serial en Supabase sea idéntico.`);
+      }
+
+    } catch (err) {
+      console.error('Error durante el procesamiento de la factura:', err.message);
+      return { statusCode: 500, body: `Error interno: ${err.message}` };
     }
   }
 
