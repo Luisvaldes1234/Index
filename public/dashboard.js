@@ -372,22 +372,102 @@ function renderGraficaHoras(ventas) {
 }
 
 function renderGraficaDias(ventas) {
-  const mapa = {};
+  // Paleta de colores para las líneas de la gráfica
+  const colores = [
+    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+    '#06b6d4', '#d946ef', '#ec4899', '#65a30d', '#f97316'
+  ];
+
+  const mapaVentas = {}; // { "26/6/2025": { "serial_1": 100, "serial_2": 50 }, ... }
+  const maquinasUnicas = new Set();
+  const fechasUnicas = new Set();
+
+  // 1. Procesamos todas las ventas para agruparlas por fecha y por máquina
   ventas.forEach(v => {
-    const fecha = new Date(v.created_at).toLocaleDateString("es-MX");
-    mapa[fecha] = (mapa[fecha] || 0) + parseFloat(v.precio_total || 0);
+    const fecha = new Date(v.created_at).toLocaleDateString("es-MX", { year: '2-digit', month: '2-digit', day: '2-digit' });
+    const serial = v.serial;
+    const totalVenta = parseFloat(v.precio_total || 0);
+
+    fechasUnicas.add(fecha);
+    maquinasUnicas.add(serial);
+
+    if (!mapaVentas[fecha]) {
+      mapaVentas[fecha] = {};
+    }
+    if (!mapaVentas[fecha][serial]) {
+      mapaVentas[fecha][serial] = 0;
+    }
+
+    mapaVentas[fecha][serial] += totalVenta;
   });
 
-  const labels = Object.keys(mapa);
-  const valores = labels.map(k => mapa[k]);
+  // 2. Preparamos las etiquetas (labels) para el eje X, ordenadas por fecha
+  const labels = Array.from(fechasUnicas).sort((a, b) => {
+    const [dayA, monthA, yearA] = a.split('/');
+    const [dayB, monthB, yearB] = b.split('/');
+    return new Date(`20${yearA}-${monthA}-${dayA}`) - new Date(`20${yearB}-${monthB}-${dayB}`);
+  });
 
-  const ctx = document.getElementById("graficaDias");
-  if (window.chartDias) window.chartDias.destroy();
+  // 3. Creamos un "dataset" (un conjunto de datos) para cada máquina
+  const datasets = Array.from(maquinasUnicas).map((serial, index) => {
+    const datosMaquina = labels.map(fecha => mapaVentas[fecha][serial] || 0);
+    const color = colores[index % colores.length]; // Reutilizamos colores si hay muchas máquinas
+
+    return {
+      label: mapaNombreMaquina[serial] || serial, // Usamos el nombre de la máquina si existe
+      data: datosMaquina,
+      borderColor: color,
+      backgroundColor: `${color}33`, // Mismo color pero con transparencia
+      fill: false,
+      tension: 0.1
+    };
+  });
+
+  // 4. (Opcional) Creamos un dataset para las ventas totales
+  const datosTotales = labels.map(fecha => {
+    return Object.values(mapaVentas[fecha]).reduce((total, venta) => total + venta, 0);
+  });
+
+  datasets.unshift({ // .unshift() lo añade al principio de la lista
+    label: 'Ventas Totales ($)',
+    data: datosTotales,
+    borderColor: '#1e40af',
+    backgroundColor: '#1e40af33',
+    borderWidth: 3, // Hacemos la línea de totales más gruesa
+    fill: false,
+    tension: 0.1
+  });
+
+
+  // 5. Renderizamos la gráfica con los nuevos datasets
+  const ctx = document.getElementById("graficaDias").getContext('2d');
+  if (window.chartDias) {
+    window.chartDias.destroy(); // Destruimos la gráfica anterior si existe
+  }
+
   window.chartDias = new Chart(ctx, {
-    type: "line",
+    type: 'line',
     data: {
-      labels,
-      datasets: [{ label: "Ventas por día ($)", data: valores, borderColor: "#3b82f6", backgroundColor: "#bfdbfe" }]
+      labels: labels,
+      datasets: datasets // Usamos nuestro nuevo array de datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'Ventas Diarias por Máquina'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
     }
   });
 }
