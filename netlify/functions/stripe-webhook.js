@@ -25,7 +25,20 @@ exports.handler = async ({ body, headers }) => {
 
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object;
-    
+    // ...
+if (event.type === 'invoice.paid') {
+    const invoice = event.data.object;
+
+    // --- AÑADE ESTA LÍNEA DE NUEVO ---
+    console.log("INSPECCIONANDO INVOICE:", JSON.stringify(invoice, null, 2));
+    // ----------------------------------
+
+    const subscriptionDetails = invoice.parent?.subscription_details;
+
+    if (invoice.paid && subscriptionDetails?.subscription) {
+// ... resto del código
+
+
     // --- ¡CORRECCIÓN CLAVE! ---
     // Buscamos los datos en la ruta correcta que vimos en tus logs.
     // Usamos '?' (optional chaining) por seguridad, por si 'parent' o 'subscription_details' no vinieran.
