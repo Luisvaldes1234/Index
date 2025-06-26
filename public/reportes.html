@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -93,6 +92,7 @@
         </div>
         
         <div id="report-content" class="hidden">
+            <!-- Sección de Filtros -->
             <div class="section-card filter-section">
                 <h2 class="subsection-title">Filtros de Análisis</h2>
                 <div class="flex flex-wrap gap-4 items-end">
@@ -103,16 +103,40 @@
                 </div>
             </div>
 
+            <!-- Contenedor Principal de la Rejilla (Grid) -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                
+                <!-- Columna Izquierda -->
                 <div class="lg:col-span-1 space-y-6">
                     <div class="section-card p-6">
                         <h2 class="subsection-title">Salud Operativa</h2>
                         <div class="kpi-card mb-4"><p class="kpi-label">Conectividad de la Red</p><h2 class="kpi-value" id="kpiMaquinasOnline">0 / 0</h2></div>
                         <div class="kpi-card"><p class="kpi-label">Suscripciones Activas</p><h2 class="kpi-value" id="kpiSuscripcionesActivas">0 / 0</h2></div>
                     </div>
-                    <div class="section-card p-6">
 
-                    
+                    <!-- === INICIO DEL BLOQUE CORREGIDO === -->
+                    <div class="section-card p-6">
+                        <h2 class="subsection-title">Análisis de Actividad</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="font-bold text-gray-700 mb-2">Rendimiento por Hora</h3>
+                                <div id="actividadHoras" class="text-sm space-y-2">
+                                    <p class="text-gray-400">Calculando...</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-700 mb-2">Ranking de Días</h3>
+                                <div id="actividadDias" class="text-sm space-y-2">
+                                    <p class="text-gray-400">Calculando...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- === FIN DEL BLOQUE CORREGIDO === -->
+
+                </div>
+                
+                <!-- Columna Derecha -->
                 <div class="lg:col-span-2 section-card">
                     <h2 class="subsection-title text-center">Métricas Principales</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -126,38 +150,13 @@
                 </div>
             </div>
 
+            <!-- Gráficas de Tiempo -->
             <div class="grid lg:grid-cols-2 gap-8 mb-8">
                 <div class="section-card"><h2 class="subsection-title">Ventas en el tiempo (Total vs. Máquinas)</h2><div class="chart-container"><canvas id="graficaVentasTiempo"></canvas></div></div>
                 <div class="section-card"><h2 class="subsection-title">Volumen en el tiempo (Total vs. Máquinas)</h2><div class="chart-container"><canvas id="graficaVolumenTiempo"></canvas></div></div>
             </div>
-
-              <h2 class="subsection-title">Análisis de Actividad</h2>
-    
-
-        
-        <!-- Columna para las Horas -->
-        <div>
-            <h3 class="font-bold text-gray-700 mb-2">Rendimiento por Hora</h3>
-            <div id="actividadHoras" class="text-sm space-y-2">
-                <!-- El JS insertará aquí las mejores/peores horas -->
-                <p class="text-gray-400">Calculando...</p>
-            </div>
-        </div>
-
-        <!-- Columna para los Días -->
-        <div>
-            <h3 class="font-bold text-gray-700 mb-2">Ranking de Días</h3>
-            <div id="actividadDias" class="text-sm space-y-2">
-                 <!-- El JS insertará aquí la lista de días ordenados -->
-                <p class="text-gray-400">Calculando...</p>
-            </div>
-        </div>
-
-    </div>
-</div>
-</div>
-
             
+            <!-- Análisis de Utilidad -->
             <div class="section-card">
                 <h2 class="section-title">Análisis de Utilidad</h2>
                 <div class="flex flex-wrap gap-4 items-end mb-4 p-4 bg-gray-50 rounded-lg">
@@ -168,11 +167,13 @@
                 <div id="volumenCostes" class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center"></div>
             </div>
 
+            <!-- Ranking por Máquina -->
             <div class="section-card">
                 <h2 class="section-title">Ranking por Máquina (Ingresos)</h2>
                 <div class="chart-container"><canvas id="graficaRankingMaquinas"></canvas></div>
             </div>
 
+            <!-- Estado de Suscripciones -->
             <div class="section-card">
                 <h2 class="section-title">Estado de Suscripciones</h2>
                 <div class="table-container">
@@ -183,6 +184,7 @@
                 </div>
             </div>
 
+            <!-- Historial de Cortes -->
             <div class="section-card">
                 <h2 class="section-title">Historial de Cortes</h2>
                 <div class="flex justify-end mb-4">
@@ -195,13 +197,9 @@
                     </table>
                 </div>
             </div>
-<div class="section-card p-6">
-           
-
         </div>
     </main>
 
     <script src="reportes.js"></script>
 </body>
 </html>
-```
