@@ -354,19 +354,87 @@ async function cargarGraficas() {
 }
 
 function renderGraficaHoras(ventas) {
-  const horas = Array(24).fill(0);
+  // 1. Paleta de colores para las barras
+  const colores = [
+    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+    '#06b6d4', '#d946ef', '#ec4899', '#65a30d', '#f97316'
+  ];
+
+  const mapaVentas = {}; // { 0: { "serial_1": 100, "serial_2": 50 }, 1: {...}, ... }
+  const maquinasUnicas = new Set();
+
+  // 2. Procesamos las ventas para agruparlas por hora y por máquina
   ventas.forEach(v => {
-    const h = new Date(v.created_at).getHours();
-    horas[h] += parseFloat(v.precio_total || 0);
+    const hora = new Date(v.created_at).getHours();
+    const serial = v.serial;
+    const totalVenta = parseFloat(v.precio_total || 0);
+
+    maquinasUnicas.add(serial);
+
+    if (!mapaVentas[hora]) {
+      mapaVentas[hora] = {};
+    }
+    if (!mapaVentas[hora][serial]) {
+      mapaVentas[hora][serial] = 0;
+    }
+
+    mapaVentas[hora][serial] += totalVenta;
   });
 
-  const ctx = document.getElementById("graficaHoras");
-  if (window.chartHoras) window.chartHoras.destroy();
+  // 3. Preparamos las etiquetas para el eje X (0:00 a 23:00)
+  const labels = [...Array(24).keys()].map(h => `${h}:00`);
+
+  // 4. Creamos un "dataset" para cada máquina
+  const datasets = Array.from(maquinasUnicas).map((serial, index) => {
+    const datosMaquina = labels.map((label, horaIndex) => {
+      // Obtenemos las ventas de esa hora para esa máquina, o 0 si no hubo
+      return (mapaVentas[horaIndex] && mapaVentas[horaIndex][serial]) || 0;
+    });
+    
+    const color = colores[index % colores.length];
+
+    return {
+      label: mapaNombreMaquina[serial] || serial,
+      data: datosMaquina,
+      backgroundColor: color,
+      borderColor: color,
+      borderWidth: 1
+    };
+  });
+
+  // 5. Renderizamos la nueva gráfica agrupada
+  const ctx = document.getElementById("graficaHoras").getContext('2d');
+  if (window.chartHoras) {
+    window.chartHoras.destroy();
+  }
+
   window.chartHoras = new Chart(ctx, {
-    type: "bar",
+    type: 'bar', // Mantenemos el tipo de gráfica de barras
     data: {
-      labels: [...Array(24).keys()].map(h => `${h}:00`),
-      datasets: [{ label: "Ventas por hora ($)", data: horas, backgroundColor: "#60a5fa" }]
+      labels: labels,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'Ventas por Hora por Máquina'
+        }
+      },
+      scales: {
+        x: {
+          stacked: false, // false para agrupar las barras, true para apilarlas
+        },
+        y: {
+          stacked: false,
+          beginAtZero: true
+        }
+      }
     }
   });
 }
