@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuenta Verificada - TrackMyVend</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+            text-align: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        .confirmation-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            padding: 40px 20px;
+        }
+
+        .checkmark-icon {
+            font-size: 4rem;
+            line-height: 1;
+            color: white;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .card-body {
+            padding: 40px 30px;
+        }
+
+        .card-body h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .card-body p {
+            font-size: 1.1rem;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .btn-login {
+            display: inline-block;
+            width: 100%;
+            max-width: 300px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 1rem;
+            border: none;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.4);
+            cursor: pointer;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255,107,107,0.6);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="confirmation-card">
+            <div class="card-header">
+                <div class="checkmark-icon">✓</div>
+            </div>
+            <div class="card-body">
+                <h1>¡Cuenta Verificada!</h1>
+                <p>Felicidades, tu correo ha sido confirmado exitosamente. Ya estás listo para transformar tu negocio con TrackMyVend.</p>
+                <a href="/login.html" class="btn-login">Iniciar Sesión</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
