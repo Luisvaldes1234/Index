@@ -39,11 +39,11 @@ exports.handler = async ({ body, headers }) => {
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
         
         // Extraemos el serial de la máquina que guardamos en los metadatos
-        const Serial = subscription.metadata.serial;
+        const serial = subscription.metadata.serial;
         // Extraemos la fecha en que termina el periodo que se acaba de pagar
         const subscriptionEndDate = new Date(subscription.current_period_end * 1000);
 
-        if (!machineSerial) {
+        if (serial) {
           throw new Error('El serial de la máquina no se encontró en los metadatos de la suscripción.');
         }
 
@@ -51,13 +51,13 @@ exports.handler = async ({ body, headers }) => {
         const { error: updateError } = await supabase
           .from('maquinas')
           .update({ suscripcion_hasta: subscriptionEndDate.toISOString() })
-          .eq('serial', machineSerial); // ¡Actualizamos la máquina por su 'serial'!
+          .eq('serial', serial); // ¡Actualizamos la máquina por su 'serial'!
 
         if (updateError) {
           throw new Error(`Error al actualizar Supabase: ${updateError.message}`);
         }
 
-        console.log(`Suscripción actualizada para la máquina con serial ${machineSerial} hasta ${subscriptionEndDate.toLocaleDateString()}`);
+        console.log(`Suscripción actualizada para la máquina con serial ${Serial} hasta ${subscriptionEndDate.toLocaleDateString()}`);
 
       } catch (err) {
         console.error('Error procesando el webhook:', err.message);
