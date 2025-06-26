@@ -52,11 +52,11 @@ exports.handler = async (event) => {
       cancel_url: cancelUrl,
       
       // 4. --- ¡LA PARTE MÁS IMPORTANTE! ---
-      // Aquí "etiquetamos" la suscripción con el serial de la máquina.
+      // Aquí "etiquetamos" la suscripción con el  de la máquina.
       // Estos metadatos nos llegarán en el webhook más tarde.
       subscription_data: {
         metadata: {
-          machine_serial: serial 
+          serial: serial 
         }
       },
       // Para asociar el pago con el usuario de Supabase
