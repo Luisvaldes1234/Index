@@ -1,5 +1,4 @@
 // Ruta: netlify/functions/create-checkout-session.js 
-
 // 1. --- CONFIGURACIÓN INICIAL ---
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
