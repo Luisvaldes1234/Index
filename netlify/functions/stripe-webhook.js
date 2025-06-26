@@ -1,6 +1,6 @@
 // Ruta: netlify/functions/stripe-webhook.js
 
-const stripe = require('stripe')(process.env.STRIPE_API_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 
 // --- Configuración ---
