@@ -10,6 +10,7 @@
   "dependencies": {
     "@algolia/autocomplete-js": "^1.17.1",
     "@algolia/autocomplete-theme-classic": "^1.17.1",
+    "@supabase/supabase-js": "^2.43.5", 
     "algoliasearch": "^4.24.0",
     "classnames": "^2.5.1",
     "dayjs": "^1.11.11",
