@@ -25,22 +25,16 @@ exports.handler = async ({ body, headers }) => {
 
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object;
-
-    // --- LÍNEA DE DEPURACIÓN AÑADIDA ---
-    // Imprimimos el contenido completo de la factura para inspeccionarla.
-    console.log("INSPECCIONANDO INVOICE:", JSON.stringify(invoice, null, 2));
-
     const subscriptionDetails = invoice.parent?.subscription_details;
 
-    if (invoice.paid && subscriptionDetails?.subscription) {
-      console.log('Factura de suscripción pagada. Procesando actualización...');
+    // --- ¡LA CORRECCIÓN FINAL ESTÁ AQUÍ! ---
+    // Comprobamos si el 'status' es 'paid', que es lo que realmente nos manda Stripe.
+    if (invoice.status === 'paid' && subscriptionDetails?.subscription) {
+      console.log('Factura pagada y con suscripción. Procesando actualización...');
 
       try {
         const subscriptionId = subscriptionDetails.subscription;
         const serial = subscriptionDetails.metadata?.serial;
-
-        console.log(`ID de la suscripción: "${subscriptionId}"`);
-        console.log(`Serial extraído de los metadatos: "${serial}"`);
 
         if (!serial) {
           console.error('El serial de la máquina no se encontró en los metadatos. Abortando.');
@@ -49,8 +43,7 @@ exports.handler = async ({ body, headers }) => {
         
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const subscriptionEndDate = new Date(subscription.current_period_end * 1000);
-        console.log(`Nueva fecha de vencimiento calculada: ${subscriptionEndDate.toISOString()}`);
-
+        
         console.log(`Intentando actualizar la máquina con serial: "${serial}"`);
         const { data, error: updateError } = await supabase
           .from('maquinas')
@@ -73,7 +66,7 @@ exports.handler = async ({ body, headers }) => {
         return { statusCode: 500, body: `Error interno: ${err.message}` };
       }
     } else {
-        console.warn("La factura no está pagada o no contiene detalles de suscripción en la ruta esperada. Se ignora el evento.");
+        console.warn("La condición no se cumplió. Status de la factura:", invoice.status, "Detalles de suscripción existen:", !!subscriptionDetails?.subscription);
     }
   }
 
