@@ -247,130 +247,44 @@ function renderResumenPorMaquina(r, contenedor) {
 }
 
 async function cargarDistribucionVolumen() {
-  const desde = document.getElementById("fechaDesde").value;
-  const hasta = document.getElementById("fechaHasta").value;
-  const serial = document.getElementById("filtroMaquinaCSV").value;
+    const { desdeISO, hastaISO, serial } = obtenerFiltros();
+    if (!desdeISO || !hastaISO) return;
 
-  if (!desde || !hasta) return;
-
-  const desdeISO = new Date(desde).toISOString();
-  const hastaISO = new Date(hasta + "T23:59:59").toISOString();
-
-  // Get sales data
-  let query = supabase
-    .from("ventas")
-    .select("litros")
-    .eq("user_id", user.id)
-    .gte("created_at", desdeISO)
-    .lte("created_at", hastaISO);
-
-  if (serial) {
-    query = query.eq("serial", serial);
-  }
-
-  const { data: ventas, error } = await query;
-  
-  if (error) {
-    console.error("Error loading volume distribution:", error);
-    return;
-  }
-
-  // Count volumes
-  const volumeCounts = {
-    "20L": 0,
-    "10L": 0,
-    "5L": 0,
-    "Galón": 0,
-    "Otros": 0
-  };
-
-  ventas.forEach(venta => {
-    const litros = parseFloat(venta.litros);
+    let query = supabase.from("ventas").select("litros").eq("user_id", user.id).gte("created_at", desdeISO).lte("created_at", hastaISO);
+    if (serial) query = query.eq("serial", serial);
     
-    if (litros === 20) {
-      volumeCounts["20L"]++;
-    } else if (litros === 10) {
-      volumeCounts["10L"]++;
-    } else if (litros === 5) {
-      volumeCounts["5L"]++;
-    } else if (litros === 3.75) { // Gallon in liters
-      volumeCounts["Galón"]++;
-    } else {
-      volumeCounts["Otros"]++;
-    }
-  });
+    const { data: ventas } = await query;
+    if (!ventas) return;
 
-  // Update or create the volume distribution cards
-  renderVolumeCards(volumeCounts);
+    const volumeCounts = { "20L": 0, "10L": 0, "5L": 0, "Galón": 0, "Otros": 0 };
+    ventas.forEach(v => {
+        const litros = parseFloat(v.litros);
+        if (litros === 20) volumeCounts["20L"]++;
+        else if (litros === 10) volumeCounts["10L"]++;
+        else if (litros === 5) volumeCounts["5L"]++;
+        else if (litros === 3.7) volumeCounts["Galón"]++; // Valor más preciso para galón
+        else volumeCounts["Otros"]++;
+    });
+    renderVolumeCards(volumeCounts);
 }
 
 function renderVolumeCards(volumeCounts) {
-  // Check if container exists, if not create it
-  let container = document.getElementById("volumeDistribution");
-  
-  if (!container) {
-    // Create container after the resumen section
-    container = document.createElement("div");
-    container.id = "volumeDistribution";
-    container.className = "mt-8";
-    
-    // Add title
-    const title = document.createElement("h2");
-    title.className = "text-xl font-bold mb-4";
-    title.textContent = "Distribución por Volumen";
-    container.appendChild(title);
-    
-    // Add cards container
-    const cardsContainer = document.createElement("div");
-    cardsContainer.id = "volumeCards";
-    cardsContainer.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4";
-    container.appendChild(cardsContainer);
-    
-    // Insert after resumen
-    const resumen = document.getElementById("resumen");
-    resumen.parentNode.insertBefore(container, resumen.nextSibling);
-  }
-  
-  // Update cards
-  const cardsContainer = document.getElementById("volumeCards");
-  cardsContainer.innerHTML = "";
-  
-  // Define colors for each volume type
-  const colors = {
-    "20L": "bg-blue-500",
-    "10L": "bg-green-500",
-    "5L": "bg-yellow-500",
-    "Galón": "bg-purple-500",
-    "Otros": "bg-gray-500"
-  };
-  
-  // Create cards for each volume type
-  Object.entries(volumeCounts).forEach(([volume, count]) => {
-    const card = document.createElement("div");
-    card.className = "bg-white dark:bg-gray-800 p-4 rounded shadow text-center";
-    
-    const volumeLabel = document.createElement("p");
-    volumeLabel.className = "text-gray-500 dark:text-gray-400 text-sm mb-2";
-    volumeLabel.textContent = volume;
-    
-    const countDisplay = document.createElement("div");
-    countDisplay.className = `${colors[volume]} text-white rounded-full w-16 h-16 mx-auto flex items-center justify-center text-xl font-bold mb-2`;
-    countDisplay.textContent = count;
-    
-    const percentageDisplay = document.createElement("p");
-    const total = Object.values(volumeCounts).reduce((sum, val) => sum + val, 0);
-    const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
-    percentageDisplay.className = "text-sm text-gray-600 dark:text-gray-300";
-    percentageDisplay.textContent = `${percentage}%`;
-    
-    card.appendChild(volumeLabel);
-    card.appendChild(countDisplay);
-    card.appendChild(percentageDisplay);
-    
-    cardsContainer.appendChild(card);
-  });
-}
+    const container = document.getElementById("volumeDistribution");
+    container.innerHTML = ""; // Limpiar antes de renderizar
+    const colors = { "20L": "bg-blue-500", "10L": "bg-green-500", "5L": "bg-yellow-500", "Galón": "bg-purple-500", "Otros": "bg-gray-500" };
+    const totalVentas = Object.values(volumeCounts).reduce((s, c) => s + c, 0);
 
+    for (const [volume, count] of Object.entries(volumeCounts)) {
+        const percentage = totalVentas > 0 ? ((count / totalVentas) * 100).toFixed(1) : 0;
+        container.innerHTML += `
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
+                <p class="text-gray-500 dark:text-gray-400 text-sm mb-2">${volume}</p>
+                <div class="${colors[volume]} text-white rounded-full w-16 h-16 mx-auto flex items-center justify-center text-xl font-bold mb-2">${count}</div>
+                <p class="text-sm text-gray-600 dark:text-gray-300">${percentage}%</p>
+            </div>
+        `;
+    }
+}
 async function cargarGraficas() {
   const desde = document.getElementById("fechaDesde").value;
   const hasta = document.getElementById("fechaHasta").value;
