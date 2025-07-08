@@ -117,58 +117,71 @@ async function hacerCorteDeCaja(serial) {
 }
 
 async function cargarResumen() {
+    // 1. Definir los rangos de fecha de manera consistente
     const ahora = new Date();
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const semanaInicio = new Date(ahora);
-    semanaInicio.setDate(semanaInicio.getDate() - semanaInicio.getDay() + (semanaInicio.getDay() === 0 ? -6 : 1));
-    semanaInicio.setHours(0, 0, 0, 0);
-    const mesInicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+    const hoy_inicio = new Date();
+    hoy_inicio.setHours(0, 0, 0, 0); // Inicio del día de hoy (medianoche)
 
-    const { data: maquinas } = await supabase.from("maquinas").select("serial, nombre, last_seen").eq("user_id", user.id);
-    const { data: ventas } = await supabase.from("ventas").select("created_at, precio_total, litros, serial").eq("user_id", user.id).gte('created_at', mesInicio.toISOString());
+    const semana_inicio = new Date(ahora);
+    // Lógica para que la semana siempre empiece en Lunes
+    semana_inicio.setDate(semana_inicio.getDate() - semana_inicio.getDay() + (semana_inicio.getDay() === 0 ? -6 : 1));
+    semana_inicio.setHours(0, 0, 0, 0);
+
+    const mes_inicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+
+    // 2. CORRECCIÓN: Realizar consultas específicas y en paralelo para cada métrica
+    const [
+        ventasHoyData,
+        ventasSemanaData,
+        ventasMesData,
+        ultimaVentaData,
+        maquinasData
+    ] = await Promise.all([
+        supabase.from("ventas").select("precio_total, litros").eq("user_id", user.id).gte("created_at", hoy_inicio.toISOString()),
+        supabase.from("ventas").select("precio_total").eq("user_id", user.id).gte("created_at", semana_inicio.toISOString()),
+        supabase.from("ventas").select("precio_total").eq("user_id", user.id).gte("created_at", mes_inicio.toISOString()),
+        supabase.from("ventas").select("created_at").eq("user_id", user.id).order('created_at', { ascending: false }).limit(1).single(),
+        supabase.from("maquinas").select("serial, nombre, last_seen").eq("user_id", user.id)
+    ]);
+
+    // 3. Procesar los resultados de las consultas
+    const ventasHoy = ventasHoyData.data || [];
+    const ventasSemana = ventasSemanaData.data || [];
+    const ventasMes = ventasMesData.data || [];
+    const ultimaVenta = ultimaVentaData.data;
+    const maquinas = maquinasData.data || [];
 
     const resumen = {
-        litrosHoy: 0, totalHoy: 0, ultimaVenta: null, ticketMes: 0,
+        litrosHoy: ventasHoy.reduce((sum, v) => sum + parseFloat(v.litros || 0), 0),
+        totalHoy: ventasHoy.reduce((sum, v) => sum + parseFloat(v.precio_total || 0), 0),
+        totalSemana: ventasSemana.reduce((sum, v) => sum + parseFloat(v.precio_total || 0), 0),
+        totalMes: ventasMes.reduce((sum, v) => sum + parseFloat(v.precio_total || 0), 0),
+        ticketMes: ventasMes.length > 0 ? (ventasMes.reduce((sum, v) => sum + parseFloat(v.precio_total || 0), 0) / ventasMes.length) : 0,
+        ultimaVenta: ultimaVenta ? ultimaVenta.created_at : null,
         activas: maquinas.filter(m => (ahora - new Date(m.last_seen)) / 60000 < 10).length,
-        cantidad: maquinas.length, totalSemana: 0, totalMes: 0
+        cantidad: maquinas.length,
     };
-    
-    ventas.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-    if (ventas.length > 0) resumen.ultimaVenta = ventas[0].created_at;
 
-    ventas.forEach(v => {
-        const fechaVenta = new Date(v.created_at);
-        const precio = parseFloat(v.precio_total || 0);
-        
-        resumen.totalMes += precio;
-        if (fechaVenta >= semanaInicio) resumen.totalSemana += precio;
-        if (fechaVenta >= hoy) {
-            resumen.litrosHoy += parseFloat(v.litros || 0);
-            resumen.totalHoy += precio;
-        }
-    });
-
-    if (ventas.length > 0) {
-        resumen.ticketMes = resumen.totalMes / ventas.length;
-    }
-    
+    // 4. Renderizar los KPIs y las tarjetas por máquina
     renderResumen(resumen);
 
     const contenedorMaquinas = document.getElementById("resumenMaquinas");
     contenedorMaquinas.innerHTML = '';
+    
+    // Obtener todas las ventas del mes para el resumen por máquina sin consultar de nuevo
+    const ventasDelMesCompleto = (await supabase.from("ventas").select("serial, precio_total, created_at").eq("user_id", user.id).gte('created_at', mes_inicio.toISOString())).data || [];
+
     maquinas.forEach(m => {
-        const ventasMaquina = ventas.filter(v => v.serial === m.serial);
+        const ventasMaquina = ventasDelMesCompleto.filter(v => v.serial === m.serial);
         const resumenMaquina = {
             nombre: m.nombre || m.serial,
-            totalHoy: ventasMaquina.filter(v => new Date(v.created_at) >= hoy).reduce((s, v) => s + parseFloat(v.precio_total || 0), 0),
-            totalSemana: ventasMaquina.filter(v => new Date(v.created_at) >= semanaInicio).reduce((s, v) => s + parseFloat(v.precio_total || 0), 0),
+            totalHoy: ventasMaquina.filter(v => new Date(v.created_at) >= hoy_inicio).reduce((s, v) => s + parseFloat(v.precio_total || 0), 0),
+            totalSemana: ventasMaquina.filter(v => new Date(v.created_at) >= semana_inicio).reduce((s, v) => s + parseFloat(v.precio_total || 0), 0),
             totalMes: ventasMaquina.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0),
         };
         renderResumenPorMaquina(resumenMaquina, contenedorMaquinas);
     });
 }
-
 function renderResumen(r) {
     document.getElementById("litrosHoy").textContent = `${r.litrosHoy.toFixed(1)} L`;
     document.getElementById("ventasHoy").textContent = `$${r.totalHoy.toFixed(2)}`;
