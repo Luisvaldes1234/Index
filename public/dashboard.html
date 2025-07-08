@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,46 +8,317 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
         /* Estilos Globales */
-        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; color: #333; }
-        .header { background: linear-gradient(135deg, #2345e1 0%, #667eea 100%); color: white; padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; box-shadow: 0 4px 30px rgba(0,0,0,0.1); }
-        .nav-container { width: 100%; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
-        .logo { font-size: 1.8rem; font-weight: bold; color: white; text-decoration: none; }
-        .nav-menu { display: none; } @media (min-width: 768px) { .nav-menu { display: flex; list-style: none; gap: 1.5rem; align-items: center; } }
-        .nav-menu a { color: white; text-decoration: none; padding: 0.7rem 1.2rem; border-radius: 25px; font-weight: 500; transition: all 0.3s ease; }
-        .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.2); }
-        .hamburger { display: block; cursor: pointer; z-index: 1001; background:none; border:none; } .hamburger span { display:block; width:25px; height:3px; margin:5px; background-color:white; transition: all 0.3s; } @media (min-width: 768px) { .hamburger { display: none; } }
-        .main-container { margin-top: 80px; padding: 2rem; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        .section-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 2rem; }
-        .section-title { font-size: 2rem; font-weight: bold; color: #2345e1; margin-bottom: 1.5rem; text-align: center; }
-        .subsection-title { font-size: 1.5rem; font-weight: bold; color: #2345e1; margin-bottom: 1rem; }
-        .kpi-card { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 16px; border-left: 5px solid #667eea; transition: all 0.3s ease; }
-        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .kpi-label { color: #64748b; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
-        .kpi-value { color: #2345e1; font-size: 1.5rem; font-weight: bold; }
-        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
-        .form-input, .form-select { width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 12px; background: white; }
-        .modern-button { background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
-        .modern-button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); }
-        .modern-button.success { background: linear-gradient(45deg, #10b981, #059669); }
-        .chart-container { background: white; padding: 1.5rem; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .loading-spinner { border: 4px solid rgba(102,126,234,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #667eea; animation: spin 1s linear infinite; }
-        canvas { width:100% !important; height:300px !important; }
-        .hidden { display: none !important; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            scroll-behavior: smooth; 
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            line-height: 1.6; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+            min-height: 100vh; 
+            color: #333; 
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%); 
+            color: white; 
+            padding: 1rem 0; 
+            position: fixed; 
+            width: 100%; 
+            top: 0; 
+            z-index: 1000; 
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1); 
+        }
+        
+        .nav-container { 
+            width: 100%; 
+            margin: 0 auto; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 0 2rem; 
+        }
+        
+        .logo { 
+            font-size: 1.8rem; 
+            font-weight: bold; 
+            color: white; 
+            text-decoration: none; 
+        }
+        
+        .nav-menu { 
+            display: none; 
+            list-style: none; 
+            gap: 1.5rem; 
+            align-items: center; 
+        }
+        
+        .nav-menu.active {
+            display: flex;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            flex-direction: column;
+            padding: 1rem;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+        }
+        
+        @media (min-width: 768px) { 
+            .nav-menu { 
+                display: flex; 
+                position: static;
+                flex-direction: row;
+                background: none;
+                box-shadow: none;
+                padding: 0;
+            }
+            
+            .nav-menu.active {
+                display: flex;
+                position: static;
+                flex-direction: row;
+                background: none;
+                box-shadow: none;
+                padding: 0;
+            }
+        }
+        
+        .nav-menu a { 
+            color: white; 
+            text-decoration: none; 
+            padding: 0.7rem 1.2rem; 
+            border-radius: 25px; 
+            font-weight: 500; 
+            transition: all 0.3s ease; 
+        }
+        
+        .nav-menu a.active, 
+        .nav-menu a:hover { 
+            background: rgba(255,255,255,0.2); 
+        }
+        
+        .hamburger { 
+            display: block; 
+            cursor: pointer; 
+            z-index: 1001; 
+            background: none; 
+            border: none; 
+        }
+        
+        .hamburger span { 
+            display: block; 
+            width: 25px; 
+            height: 3px; 
+            margin: 5px 0; 
+            background-color: white; 
+            transition: all 0.3s; 
+        }
+        
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+        
+        @media (min-width: 768px) { 
+            .hamburger { 
+                display: none; 
+            } 
+        }
+        
+        .main-container { 
+            margin-top: 80px; 
+            padding: 2rem; 
+        }
+        
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+        }
+        
+        .section-card { 
+            background: white; 
+            border-radius: 20px; 
+            padding: 2rem; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            margin-bottom: 2rem; 
+        }
+        
+        .section-title { 
+            font-size: 2rem; 
+            font-weight: bold; 
+            color: #2345e1; 
+            margin-bottom: 1.5rem; 
+            text-align: center; 
+        }
+        
+        .subsection-title { 
+            font-size: 1.5rem; 
+            font-weight: bold; 
+            color: #2345e1; 
+            margin-bottom: 1rem; 
+        }
+        
+        .kpi-card { 
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+            padding: 1.5rem; 
+            border-radius: 16px; 
+            border-left: 5px solid #667eea; 
+            transition: all 0.3s ease; 
+        }
+        
+        .kpi-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+        }
+        
+        .kpi-label { 
+            color: #64748b; 
+            font-size: 0.875rem; 
+            font-weight: 500; 
+            margin-bottom: 0.5rem; 
+        }
+        
+        .kpi-value { 
+            color: #2345e1; 
+            font-size: 1.5rem; 
+            font-weight: bold; 
+        }
+        
+        .form-label { 
+            display: block; 
+            margin-bottom: 0.5rem; 
+            font-weight: 600; 
+            color: #374151; 
+        }
+        
+        .form-input, 
+        .form-select { 
+            width: 100%; 
+            padding: 0.75rem 1rem; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 12px; 
+            background: white; 
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .modern-button { 
+            background: linear-gradient(45deg, #667eea, #764ba2); 
+            color: white; 
+            padding: 0.8rem 1.5rem; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            font-size: 1rem;
+        }
+        
+        .modern-button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); 
+        }
+        
+        .modern-button:active {
+            transform: translateY(0);
+        }
+        
+        .modern-button.success { 
+            background: linear-gradient(45deg, #10b981, #059669); 
+        }
+        
+        .modern-button.success:hover {
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .chart-container { 
+            background: white; 
+            padding: 1.5rem; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+        }
+        
+        .loading-spinner { 
+            border: 4px solid rgba(102,126,234,0.1); 
+            width: 36px; 
+            height: 36px; 
+            border-radius: 50%; 
+            border-left-color: #667eea; 
+            animation: spin 1s linear infinite; 
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        canvas { 
+            width: 100% !important; 
+            height: 300px !important; 
+        }
+        
+        .hidden { 
+            display: none !important; 
+        }
+        
+        .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: end;
+        }
+        
+        .filter-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        @media (max-width: 768px) {
+            .filter-item {
+                min-width: 100%;
+            }
+            
+            .main-container {
+                padding: 1rem;
+            }
+            
+            .section-card {
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
     <header class="header">
         <div class="nav-container">
             <a href="/dashboard.html" class="logo">TrackMyVend</a>
-            <button class="hamburger" id="hamburgerMenu">
-                <span></span><span></span><span></span>
+            <button class="hamburger" id="hamburgerMenu" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
             </button>
             <nav>
                 <ul class="nav-menu" id="mainNavMenu">
@@ -62,69 +333,148 @@
         </div>
     </header>
 
-    <div class="main-container">
+    <main class="main-container">
         <div class="container">
-
-            <div id="loading" class="flex justify-center py-8 hidden"><div class="loading-spinner"></div></div>
-
-            <div class="section-card">
-                <h2 class="subsection-title">Filtros y Descargas</h2>
-                <div class="flex flex-wrap items-center gap-4">
-                    <div><label class="form-label">Desde:</label><input type="date" id="fechaDesde" class="form-input" /></div>
-                    <div><label class="form-label">Hasta:</label><input type="date" id="fechaHasta" class="form-input" /></div>
-                    <div><label class="form-label">Máquina:</label><select id="filtroMaquinaCSV" class="form-select"><option value="">Todas</option></select></div>
-                    <button id="btnDescargarCSV" class="modern-button success mt-6">📥 Descargar CSV</button>
+            <div id="loading" class="hidden">
+                <div class="flex justify-center py-8">
+                    <div class="loading-spinner"></div>
                 </div>
             </div>
 
-            <div class="section-card">
+            <section class="section-card">
+                <h2 class="subsection-title">Filtros y Descargas</h2>
+                <div class="filter-container">
+                    <div class="filter-item">
+                        <label class="form-label" for="fechaDesde">Desde:</label>
+                        <input type="date" id="fechaDesde" class="form-input" />
+                    </div>
+                    <div class="filter-item">
+                        <label class="form-label" for="fechaHasta">Hasta:</label>
+                        <input type="date" id="fechaHasta" class="form-input" />
+                    </div>
+                    <div class="filter-item">
+                        <label class="form-label" for="filtroMaquinaCSV">Máquina:</label>
+                        <select id="filtroMaquinaCSV" class="form-select">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <button id="btnDescargarCSV" class="modern-button success">
+                            📥 Descargar CSV
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-card">
                 <h2 class="section-title">Realizar Cortes de Caja</h2>
                 <div id="listaMaquinasCorte" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
-            </div>
+            </section>
             
-            <div class="section-card">
+            <section class="section-card">
                 <h2 class="section-title">Resumen General</h2>
                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                    <div class="kpi-card"><p class="kpi-label">Litros vendidos hoy</p><h2 class="kpi-value" id="litrosHoy">0 L</h2></div>
-                    <div class="kpi-card"><p class="kpi-label">Ventas totales hoy</p><h2 class="kpi-value" id="ventasHoy">$0.00</h2></div>
-                    <div class="kpi-card"><p class="kpi-label">Ticket promedio (Mensual)</p><h2 class="kpi-value" id="ticketPromedio">$0.00</h2></div>
-                    <div class="kpi-card"><p class="kpi-label">Máquinas activas</p><h2 class="kpi-value" id="maquinasActivas">0/0</h2></div>
-                    <div class="kpi-card"><p class="kpi-label">Última venta</p><h2 class="kpi-value" id="ultimaVenta">N/A</h2></div>
-                    <div class="kpi-card"><p class="kpi-label">Ventas esta semana</p><h2 class="kpi-value" id="ventasSemana">$0.00</h2></div>
-                    <div class="kpi-card"><p class="kpi-label">Ventas este mes</p><h2 class="kpi-value" id="ventasMes">$0.00</h2></div>
+                    <div class="kpi-card">
+                        <p class="kpi-label">Litros vendidos hoy</p>
+                        <h3 class="kpi-value" id="litrosHoy">0 L</h3>
+                    </div>
+                    <div class="kpi-card">
+                        <p class="kpi-label">Ventas totales hoy</p>
+                        <h3 class="kpi-value" id="ventasHoy">$0.00</h3>
+                    </div>
+                    <div class="kpi-card">
+                        <p class="kpi-label">Ticket promedio (Mensual)</p>
+                        <h3 class="kpi-value" id="ticketPromedio">$0.00</h3>
+                    </div>
+                    <div class="kpi-card">
+                        <p class="kpi-label">Máquinas activas</p>
+                        <h3 class="kpi-value" id="maquinasActivas">0/0</h3>
+                    </div>
+                    <div class="kpi-card">
+                        <p class="kpi-label">Última venta</p>
+                        <h3 class="kpi-value" id="ultimaVenta">N/A</h3>
+                    </div>
+                    <div class="kpi-card">
+                        <p class="kpi-label">Ventas esta semana</p>
+                        <h3 class="kpi-value" id="ventasSemana">$0.00</h3>
+                    </div>
+                    <div class="kpi-card">
+                        <p class="kpi-label">Ventas este mes</p>
+                        <h3 class="kpi-value" id="ventasMes">$0.00</h3>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="section-card">
+            <section class="section-card">
                 <h2 class="section-title">Resumen por Máquina</h2>
                 <div id="resumenMaquinas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
-            </div>
+            </section>
             
-            <div class="section-card">
+            <section class="section-card">
                 <h2 class="section-title">Distribución por Volumen</h2>
                 <div id="volumeDistribution" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                     <!-- Las tarjetas de volumen se insertarán aquí con JavaScript -->
                 </div>
-            </div>
+            </section>
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="section-card"><h2 class="subsection-title">Ventas por Hora</h2><div class="chart-container"><canvas id="graficaHoras"></canvas></div></div>
-                <div class="section-card"><h2 class="subsection-title">Ventas por Día</h2><div class="chart-container"><canvas id="graficaDias"></canvas></div></div>
-                <div class="section-card"><h2 class="subsection-title">Volumen Vendido</h2><div class="chart-container"><canvas id="graficaVolumen"></canvas></div></div>
-                <div class="section-card"><h2 class="subsection-title">Rendimiento por Máquina</h2><div class="chart-container"><canvas id="graficaMaquinas"></canvas></div></div>
+                <section class="section-card">
+                    <h2 class="subsection-title">Ventas por Hora</h2>
+                    <div class="chart-container">
+                        <canvas id="graficaHoras" role="img" aria-label="Gráfica de ventas por hora"></canvas>
+                    </div>
+                </section>
+                
+                <section class="section-card">
+                    <h2 class="subsection-title">Ventas por Día</h2>
+                    <div class="chart-container">
+                        <canvas id="graficaDias" role="img" aria-label="Gráfica de ventas por día"></canvas>
+                    </div>
+                </section>
+                
+                <section class="section-card">
+                    <h2 class="subsection-title">Volumen Vendido</h2>
+                    <div class="chart-container">
+                        <canvas id="graficaVolumen" role="img" aria-label="Gráfica de volumen vendido"></canvas>
+                    </div>
+                </section>
+                
+                <section class="section-card">
+                    <h2 class="subsection-title">Rendimiento por Máquina</h2>
+                    <div class="chart-container">
+                        <canvas id="graficaMaquinas" role="img" aria-label="Gráfica de rendimiento por máquina"></canvas>
+                    </div>
+                </section>
             </div>
-            
         </div>
-    </div>
+    </main>
 
     <script src="/dashboard.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const hamburgerButton = document.getElementById('hamburgerMenu');
             const mainNavMenu = document.getElementById('mainNavMenu');
+            
             if (hamburgerButton && mainNavMenu) {
                 hamburgerButton.addEventListener('click', () => {
+                    hamburgerButton.classList.toggle('active');
                     mainNavMenu.classList.toggle('active');
+                });
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!hamburgerButton.contains(e.target) && !mainNavMenu.contains(e.target)) {
+                        hamburgerButton.classList.remove('active');
+                        mainNavMenu.classList.remove('active');
+                    }
+                });
+                
+                // Close menu when window is resized to desktop size
+                window.addEventListener('resize', () => {
+                    if (window.innerWidth >= 768) {
+                        hamburgerButton.classList.remove('active');
+                        mainNavMenu.classList.remove('active');
+                    }
                 });
             }
         });
