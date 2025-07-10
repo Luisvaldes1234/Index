@@ -689,26 +689,365 @@
     <section class="product-showcase">
         <div class="showcase-container">
             
-            <div class="carousel-container">
-                <div class="carousel-slide">
-                    <img src="images/dashboard.png" alt="Dashboard de Monitoreo">
-                    <img src="images/reportes.png" alt="Reportes de Ventas">
-                    <img src="images/dashboard2.png" alt="Dashboard2">
-                    <img src="images/dashboard1.png" alt="Dashboard3">
-                </div>
-                
-                <a class="carousel-prev" onclick="moveSlide(-1)">&#10094;</a>
-                <a class="carousel-next" onclick="moveSlide(1)">&#10095;</a>
-                
-                <div class="carousel-dots">
-                    <span class="carousel-dot" onclick="currentSlide(0)"></span>
-                    <span class="carousel-dot" onclick="currentSlide(1)"></span>
-                    <span class="carousel-dot" onclick="currentSlide(2)"></span>
-                    <span class="carousel-dot" onclick="currentSlide(3)"></span>
-
-                </div>
+            <section class="product-showcase">
+    <div class="showcase-container">
+        
+        <div class="carousel-container">
+            <div class="carousel-slide">
+                <img src="images/dashboard.png" alt="Dashboard de Monitoreo">
+                <img src="images/reportes.png" alt="Reportes de Ventas">
+                <img src="images/dashboard2.png" alt="Dashboard Analytics">
+                <img src="images/dashboard1.png" alt="Panel de Control">
             </div>
+            
+            <div class="slide-counter">
+                <span id="current-slide">1</span> / <span id="total-slides">4</span>
+            </div>
+            
+            <div class="slide-title" id="slide-title">
+                Dashboard de Monitoreo
+            </div>
+            
+            <a class="carousel-prev" onclick="moveSlide(-1)">&#10094;</a>
+            <a class="carousel-next" onclick="moveSlide(1)">&#10095;</a>
+            
+            <div class="carousel-dots">
+                <span class="carousel-dot active" onclick="currentSlide(0)"></span>
+                <span class="carousel-dot" onclick="currentSlide(1)"></span>
+                <span class="carousel-dot" onclick="currentSlide(2)"></span>
+                <span class="carousel-dot" onclick="currentSlide(3)"></span>
+            </div>
+        </div>
 
+        <div class="showcase-content">
+            <h2>Tecnología que transforma tu negocio</h2>
+            <p>Convierte cualquier máquina de agua en un sistema inteligente conectado.
+                Monitorea ventas en tiempo real, controla tu operación desde la nube y escala con eficiencia y transparencia.</p>
+            <a href="#productos" class="cta-button">Conoce Más</a>
+        </div>
+    </div>
+</section>
+
+<style>
+/* --- ESTILOS MEJORADOS DEL CARRUSEL --- */
+.product-showcase {
+    padding: 100px 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.showcase-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.carousel-container {
+    position: relative;
+    max-width: 100%;
+    margin: auto;
+    overflow: hidden;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+    background: white;
+}
+
+.carousel-slide {
+    display: flex;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 400%;
+}
+
+.carousel-slide img {
+    width: 25%;
+    height: 400px;
+    object-fit: cover;
+    flex-shrink: 0;
+    display: block;
+    filter: brightness(0.95) contrast(1.05);
+    transition: filter 0.3s ease;
+}
+
+.carousel-slide img:hover {
+    filter: brightness(1) contrast(1.1);
+}
+
+.carousel-prev, .carousel-next {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+    user-select: none;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px);
+    z-index: 10;
+}
+
+.carousel-prev {
+    left: 15px;
+}
+
+.carousel-next {
+    right: 15px;
+}
+
+.carousel-prev:hover, .carousel-next:hover {
+    background: rgba(0,0,0,0.8);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+
+.carousel-dot {
+    cursor: pointer;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.carousel-dot.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+.carousel-dot:hover {
+    background: rgba(255,255,255,0.8);
+    transform: scale(1.1);
+}
+
+.slide-counter {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10;
+}
+
+.slide-title {
+    position: absolute;
+    bottom: 60px;
+    left: 20px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    backdrop-filter: blur(5px);
+    z-index: 10;
+}
+
+.showcase-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    color: #333;
+    background: linear-gradient(135deg, #2345e1, #667eea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.showcase-content p {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .showcase-container {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 2rem;
+    }
+    
+    .carousel-slide img {
+        height: 250px;
+    }
+    
+    .carousel-prev, .carousel-next {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .carousel-prev {
+        left: 10px;
+    }
+    
+    .carousel-next {
+        right: 10px;
+    }
+    
+    .slide-title {
+        font-size: 14px;
+        padding: 8px 15px;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.carousel-container {
+    animation: slideIn 0.8s ease-out;
+}
+</style>
+
+<script>
+// --- SCRIPT MEJORADO DEL CARRUSEL ---
+let currentSlideIndex = 0;
+const totalSlides = 4;
+
+const slideTitles = [
+    "Dashboard de Monitoreo",
+    "Reportes de Ventas", 
+    "Dashboard Analytics",
+    "Panel de Control"
+];
+
+function moveSlide(direction) {
+    const carousel = document.querySelector('.carousel-slide');
+    const dots = document.querySelectorAll('.carousel-dot');
+    
+    // Remover clase active de todos los dots
+    dots.forEach(dot => dot.classList.remove('active'));
+    
+    // Actualizar índice
+    currentSlideIndex += direction;
+    
+    // Wrap around
+    if (currentSlideIndex >= totalSlides) {
+        currentSlideIndex = 0;
+    } else if (currentSlideIndex < 0) {
+        currentSlideIndex = totalSlides - 1;
+    }
+    
+    // Aplicar transformación
+    const translateX = -currentSlideIndex * 25;
+    carousel.style.transform = `translateX(${translateX}%)`;
+    
+    // Activar dot correspondiente
+    dots[currentSlideIndex].classList.add('active');
+    
+    // Actualizar contador y título
+    updateSlideInfo();
+}
+
+function currentSlide(index) {
+    const carousel = document.querySelector('.carousel-slide');
+    const dots = document.querySelectorAll('.carousel-dot');
+    
+    // Remover clase active de todos los dots
+    dots.forEach(dot => dot.classList.remove('active'));
+    
+    // Actualizar índice
+    currentSlideIndex = index;
+    
+    // Aplicar transformación
+    const translateX = -currentSlideIndex * 25;
+    carousel.style.transform = `translateX(${translateX}%)`;
+    
+    // Activar dot correspondiente
+    dots[currentSlideIndex].classList.add('active');
+    
+    // Actualizar contador y título
+    updateSlideInfo();
+}
+
+function updateSlideInfo() {
+    const currentSlideEl = document.getElementById('current-slide');
+    const slideTitleEl = document.getElementById('slide-title');
+    
+    if (currentSlideEl) {
+        currentSlideEl.textContent = currentSlideIndex + 1;
+    }
+    if (slideTitleEl) {
+        slideTitleEl.textContent = slideTitles[currentSlideIndex];
+    }
+}
+
+// Auto-play del carousel
+setInterval(() => {
+    moveSlide(1);
+}, 5000);
+
+// Soporte para navegación con teclado
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') {
+        moveSlide(-1);
+    } else if (e.key === 'ArrowRight') {
+        moveSlide(1);
+    }
+});
+
+// Soporte para gestos táctiles
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleGesture();
+});
+
+function handleGesture() {
+    const threshold = 50;
+    
+    if (touchEndX < touchStartX - threshold) {
+        moveSlide(1);
+    }
+    
+    if (touchEndX > touchStartX + threshold) {
+        moveSlide(-1);
+    }
+}
+
+// Inicializar contador
+document.addEventListener('DOMContentLoaded', () => {
+    updateSlideInfo();
+});
+</script>
             <div class="showcase-content">
                 <h2>Tecnología que transforma tu negocio</h2>
                 <p>Convierte cualquier máquina de agua en un sistema inteligente conectado.
