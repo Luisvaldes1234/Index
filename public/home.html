@@ -71,11 +71,11 @@
 
         /* Hamburger Menu Button */
         .hamburger {
-            display: none; /* Hidden by default for desktop */
+            display: none;
             flex-direction: column;
             cursor: pointer;
             padding: 4px;
-            z-index: 1001; /* Ensure it's above other content when active */
+            z-index: 1001;
         }
 
         .hamburger span {
@@ -87,18 +87,11 @@
             border-radius: 2px;
         }
 
-        /* Hamburger animation */
-        .hamburger.active span:nth-child(1) {
-            transform: rotate(-45deg) translate(-5px, 6px);
-        }
-        .hamburger.active span:nth-child(2) {
-            opacity: 0;
-        }
-        .hamburger.active span:nth-child(3) {
-            transform: rotate(45deg) translate(-5px, -6px);
-        }
+        .hamburger.active span:nth-child(1) { transform: rotate(-45deg) translate(-5px, 6px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(45deg) translate(-5px, -6px); }
 
-        /* Mobile Navigation Overlay */
+        /* Mobile Navigation */
         .mobile-nav {
             position: fixed;
             top: 0;
@@ -106,27 +99,14 @@
             height: 100vh;
             width: 280px;
             background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
-            transform: translateX(100%); /* Start off-screen */
+            transform: translateX(100%);
             transition: transform 0.3s ease;
             z-index: 1000;
-            padding-top: 80px; /* Space for fixed header */
+            padding-top: 80px;
             box-shadow: -5px 0 15px rgba(0,0,0,0.1);
         }
-
-        .mobile-nav.active {
-            transform: translateX(0); /* Slide in */
-        }
-
-        .mobile-nav ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .mobile-nav li {
-            margin: 0;
-        }
-
+        .mobile-nav.active { transform: translateX(0); }
+        .mobile-nav ul { list-style: none; padding: 0; margin: 0; }
         .mobile-nav a {
             display: block;
             color: white;
@@ -136,13 +116,7 @@
             transition: all 0.3s ease;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-
-        .mobile-nav a:hover, .mobile-nav a.active {
-            background: rgba(255,255,255,0.2);
-            padding-left: 2.5rem; /* Slight indent on hover */
-        }
-
-        /* Overlay for mobile menu */
+        .mobile-nav a:hover { background: rgba(255,255,255,0.2); }
         .mobile-overlay {
             position: fixed;
             top: 0;
@@ -150,16 +124,12 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
-            z-index: 999; /* Below mobile-nav but above content */
+            z-index: 999;
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
         }
-
-        .mobile-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
+        .mobile-overlay.active { opacity: 1; visibility: visible; }
 
         /* Hero Section */
         .hero {
@@ -170,18 +140,6 @@
             position: relative;
             overflow: hidden;
         }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(255,255,255,0.1)" points="0,1000 1000,200 1000,1000"/></svg>');
-            background-size: cover;
-        }
-
         .hero-content {
             max-width: 1200px;
             margin: 0 auto;
@@ -189,22 +147,17 @@
             position: relative;
             z-index: 2;
         }
-
         .hero h1 {
             font-size: 3.5rem;
             margin-bottom: 1.5rem;
             font-weight: 700;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            animation: fadeInUp 1s ease-out;
         }
-
         .hero p {
             font-size: 1.3rem;
             margin-bottom: 2rem;
             opacity: 0.9;
-            animation: fadeInUp 1s ease-out 0.2s both;
         }
-
         .cta-button {
             display: inline-block;
             background: linear-gradient(45deg, #ff6b6b, #ee5a52);
@@ -216,138 +169,149 @@
             font-size: 1.1rem;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(255,107,107,0.4);
-            animation: fadeInUp 1s ease-out 0.4s both;
         }
-
         .cta-button:hover {
             transform: translateY(-3px);
             box-shadow: 0 8px 25px rgba(255,107,107,0.6);
         }
 
-        /* --- INICIO ESTILOS CARRUSEL --- */
+        /* --- ESTILOS MEJORADOS DEL CARRUSEL --- */
         .product-showcase {
             padding: 100px 0;
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         }
-
         .showcase-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 2rem;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1.5fr 1fr; /* Le damos más espacio al carrusel */
             gap: 4rem;
             align-items: center;
         }
-        
         .carousel-container {
             position: relative;
             max-width: 100%;
             margin: auto;
             overflow: hidden;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            background: white;
         }
-
         .carousel-slide {
             display: flex;
-            transition: transform 0.5s ease-in-out;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
         .carousel-slide img {
             width: 100%;
+            object-fit: cover;
             flex-shrink: 0;
             display: block;
         }
-        
         .carousel-prev, .carousel-next {
             cursor: pointer;
             position: absolute;
             top: 50%;
-            width: auto;
-            padding: 16px;
-            margin-top: -22px;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
-            font-weight: bold;
             font-size: 20px;
-            transition: 0.3s ease;
-            border-radius: 0 3px 3px 0;
+            transition: all 0.3s ease;
+            border-radius: 50%;
             user-select: none;
-            background-color: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 10;
         }
-
-        .carousel-next {
-            right: 0;
-            border-radius: 3px 0 0 3px;
-        }
-
+        .carousel-prev { left: 15px; }
+        .carousel-next { right: 15px; }
         .carousel-prev:hover, .carousel-next:hover {
-            background-color: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.8);
+            transform: translateY(-50%) scale(1.1);
         }
-
         .carousel-dots {
-            text-align: center;
-            padding: 15px;
             position: absolute;
-            bottom: 10px;
-            width: 100%;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
         }
-
         .carousel-dot {
             cursor: pointer;
-            height: 15px;
-            width: 15px;
-            margin: 0 5px;
-            background-color: #bbb;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            display: inline-block;
-            transition: background-color 0.3s ease;
+            background: rgba(255,255,255,0.5);
+            transition: all 0.3s ease;
         }
-
         .carousel-dot.active {
-            background-color: #667eea;
+            background: white;
+            transform: scale(1.2);
         }
-        
+        .slide-counter {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10;
+        }
+        .slide-title {
+            position: absolute;
+            bottom: 50px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+        }
         .showcase-content h2 {
             font-size: 2.5rem;
             margin-bottom: 1.5rem;
             color: #333;
         }
-
         .showcase-content p {
             font-size: 1.1rem;
             color: #666;
             margin-bottom: 2rem;
         }
-        /* --- FIN ESTILOS CARRUSEL --- */
-
 
         /* Benefits Section */
         .benefits {
             padding: 100px 0;
             background: white;
         }
-
         .benefits-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 2rem;
             text-align: center;
         }
-
         .benefits h2 {
             font-size: 2.5rem;
             margin-bottom: 3rem;
             color: #333;
         }
-
         .benefits-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 3rem;
             margin-top: 3rem;
         }
-
         .benefit-card {
             background: #fff;
             padding: 2.5rem;
@@ -356,13 +320,11 @@
             transition: all 0.3s ease;
             border: 2px solid transparent;
         }
-
         .benefit-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.15);
             border-color: #667eea;
         }
-
         .benefit-icon {
             width: 80px;
             height: 80px;
@@ -375,13 +337,11 @@
             font-size: 2rem;
             color: white;
         }
-
         .benefit-card h3 {
             font-size: 1.5rem;
             margin-bottom: 1rem;
             color: #333;
         }
-
         .benefit-card p {
             color: #666;
             line-height: 1.8;
@@ -392,27 +352,23 @@
             padding: 100px 0;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
-
         .products-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 2rem;
             text-align: center;
         }
-
         .products h2 {
             font-size: 2.5rem;
             margin-bottom: 3rem;
             color: #333;
         }
-
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 3rem;
             margin-top: 3rem;
         }
-
         .product-card {
             background: white;
             padding: 2.5rem;
@@ -420,36 +376,30 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
         }
-
         .product-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 25px 50px rgba(0,0,0,0.15);
         }
-
         .product-card h3 {
             font-size: 1.8rem;
             margin-bottom: 1rem;
             color: #667eea;
         }
-
         .product-card p {
             color: #666;
             line-height: 1.8;
             margin-bottom: 1.5rem;
         }
-
         .product-features {
             list-style: none;
             text-align: left;
         }
-
         .product-features li {
             padding: 0.5rem 0;
             color: #555;
             position: relative;
             padding-left: 1.5rem;
         }
-
         .product-features li::before {
             content: '✓';
             position: absolute;
@@ -464,19 +414,16 @@
             background: white;
             text-align: center;
         }
-
         .trust-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 2rem;
         }
-
         .trust h2 {
             font-size: 2rem;
             margin-bottom: 2rem;
             color: #333;
         }
-
         .trust-logos {
             display: flex;
             justify-content: center;
@@ -485,7 +432,6 @@
             flex-wrap: wrap;
             margin-top: 2rem;
         }
-
         .trust-logo {
             width: 120px;
             height: 60px;
@@ -498,13 +444,12 @@
             color: #2345e1;
             transition: all 0.3s ease;
         }
-
         .trust-logo:hover {
             transform: scale(1.05);
             background: #2345e1;
             color: white;
         }
-
+        
         /* CTA Section */
         .cta-section {
             padding: 100px 0;
@@ -512,18 +457,15 @@
             color: white;
             text-align: center;
         }
-
         .cta-container {
             max-width: 800px;
             margin: 0 auto;
             padding: 0 2rem;
         }
-
         .cta-section h2 {
             font-size: 2.5rem;
             margin-bottom: 1.5rem;
         }
-
         .cta-section p {
             font-size: 1.2rem;
             margin-bottom: 2rem;
@@ -536,7 +478,6 @@
             color: white;
             padding: 50px 0 30px;
         }
-
         .footer-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -545,29 +486,24 @@
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 3rem;
         }
-
         .footer-section h3 {
             margin-bottom: 1rem;
             color: #667eea;
         }
-
         .footer-section p, .footer-section a {
             color: #bdc3c7;
             text-decoration: none;
             margin-bottom: 0.5rem;
             display: block;
         }
-
         .footer-section a:hover {
             color: white;
         }
-
         .social-links {
             display: flex;
             gap: 1rem;
             margin-top: 1rem;
         }
-
         .social-link {
             width: 40px;
             height: 40px;
@@ -580,12 +516,10 @@
             text-decoration: none;
             transition: all 0.3s ease;
         }
-
         .social-link:hover {
             transform: translateY(-3px);
             background: #667eea;
         }
-
         .footer-bottom {
             text-align: center;
             padding-top: 2rem;
@@ -594,47 +528,15 @@
             color: #95a5a6;
         }
 
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
-            .nav-menu {
-                display: none; /* Hide desktop menu on smaller screens */
-            }
-
-            .hamburger {
-                display: flex; /* Show hamburger icon on smaller screens */
-            }
-
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
+            .nav-menu { display: none; }
+            .hamburger { display: flex; }
+            .hero h1 { font-size: 2.5rem; }
             .showcase-container {
                 grid-template-columns: 1fr;
                 text-align: center;
-            }
-
-            .benefits-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .products-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .trust-logos {
-                gap: 1.5rem;
+                gap: 2rem;
             }
         }
     </style>
@@ -643,7 +545,6 @@
     <header class="header">
         <div class="nav-container">
             <a href="#" class="logo">TrackMyVend</a>
-
             <nav class="desktop-nav">
                 <ul class="nav-menu">
                     <li><a href="#inicio">Inicio</a></li>
@@ -654,27 +555,26 @@
                     <li><a href="/login.html">¿Iniciar sesión?</a></li>
                 </ul>
             </nav>
-
             <div class="hamburger" id="hamburger">
                 <span></span>
                 <span></span>
                 <span></span>
             </div>
         </div>
-
-        <nav class="mobile-nav" id="mobileNav">
-            <ul>
-                <li><a href="#inicio">Inicio</a></li>
-                <li><a href="#productos">Productos</a></li>
-                <li><a href="#beneficios">Beneficios</a></li>
-                <li><a href="blog.html">Blog</a></li>
-                <li><a href="#contacto">Contacto</a></li>
-                <li><a href="/login.html">¿Iniciar sesión?</a></li>
-            </ul>
-        </nav>
     </header>
 
     <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <nav class="mobile-nav" id="mobileNav">
+         <ul>
+            <li><a href="#inicio">Inicio</a></li>
+            <li><a href="#productos">Productos</a></li>
+            <li><a href="#beneficios">Beneficios</a></li>
+            <li><a href="blog.html">Blog</a></li>
+            <li><a href="#contacto">Contacto</a></li>
+            <li><a href="/login.html">¿Iniciar sesión?</a></li>
+        </ul>
+    </nav>
 
     <section class="hero" id="inicio">
         <div class="hero-content">
@@ -688,374 +588,29 @@
 
     <section class="product-showcase">
         <div class="showcase-container">
-            
-            <section class="product-showcase">
-    <div class="showcase-container">
-        
-        <div class="carousel-container">
-            <div class="carousel-slide">
-                <img src="images/dashboard.png" alt="Dashboard de Monitoreo">
-                <img src="images/reportes.png" alt="Reportes de Ventas">
-                <img src="images/dashboard2.png" alt="Dashboard Analytics">
-                <img src="images/dashboard1.png" alt="Panel de Control">
+            <div class="carousel-container">
+                <div class="carousel-slide">
+                    <img src="images/dashboard.png" alt="Dashboard de Monitoreo">
+                    <img src="images/reportes.png" alt="Reportes de Ventas">
+                    <img src="images/dashboard2.png" alt="Dashboard Analytics">
+                    <img src="images/dashboard1.png" alt="Panel de Control">
+                </div>
+                <div class="slide-counter">
+                    <span id="current-slide">1</span> / <span id="total-slides">4</span>
+                </div>
+                <div class="slide-title" id="slide-title"></div>
+                <a class="carousel-prev">&#10094;</a>
+                <a class="carousel-next">&#10095;</a>
+                <div class="carousel-dots"></div>
             </div>
-            
-            <div class="slide-counter">
-                <span id="current-slide">1</span> / <span id="total-slides">4</span>
-            </div>
-            
-            <div class="slide-title" id="slide-title">
-                Dashboard de Monitoreo
-            </div>
-            
-            <a class="carousel-prev" onclick="moveSlide(-1)">&#10094;</a>
-            <a class="carousel-next" onclick="moveSlide(1)">&#10095;</a>
-            
-            <div class="carousel-dots">
-                <span class="carousel-dot active" onclick="currentSlide(0)"></span>
-                <span class="carousel-dot" onclick="currentSlide(1)"></span>
-                <span class="carousel-dot" onclick="currentSlide(2)"></span>
-                <span class="carousel-dot" onclick="currentSlide(3)"></span>
-            </div>
-        </div>
-
-        <div class="showcase-content">
-            <h2>Tecnología que transforma tu negocio</h2>
-            <p>Convierte cualquier máquina de agua en un sistema inteligente conectado.
-                Monitorea ventas en tiempo real, controla tu operación desde la nube y escala con eficiencia y transparencia.</p>
-            <a href="#productos" class="cta-button">Conoce Más</a>
-        </div>
-    </div>
-</section>
-
-<style>
-/* --- ESTILOS MEJORADOS DEL CARRUSEL --- */
-.product-showcase {
-    padding: 100px 0;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-}
-
-.showcase-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: center;
-}
-
-.carousel-container {
-    position: relative;
-    max-width: 100%;
-    margin: auto;
-    overflow: hidden;
-    border-radius: 20px;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-    background: white;
-}
-
-.carousel-slide {
-    display: flex;
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 400%;
-}
-
-.carousel-slide img {
-    width: 25%;
-    height: 400px;
-    object-fit: cover;
-    flex-shrink: 0;
-    display: block;
-    filter: brightness(0.95) contrast(1.05);
-    transition: filter 0.3s ease;
-}
-
-.carousel-slide img:hover {
-    filter: brightness(1) contrast(1.1);
-}
-
-.carousel-prev, .carousel-next {
-    cursor: pointer;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 20px;
-    transition: all 0.3s ease;
-    border-radius: 50%;
-    user-select: none;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(5px);
-    z-index: 10;
-}
-
-.carousel-prev {
-    left: 15px;
-}
-
-.carousel-next {
-    right: 15px;
-}
-
-.carousel-prev:hover, .carousel-next:hover {
-    background: rgba(0,0,0,0.8);
-    transform: translateY(-50%) scale(1.1);
-}
-
-.carousel-dots {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
-    z-index: 10;
-}
-
-.carousel-dot {
-    cursor: pointer;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.5);
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.carousel-dot.active {
-    background: white;
-    transform: scale(1.2);
-}
-
-.carousel-dot:hover {
-    background: rgba(255,255,255,0.8);
-    transform: scale(1.1);
-}
-
-.slide-counter {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 10;
-}
-
-.slide-title {
-    position: absolute;
-    bottom: 60px;
-    left: 20px;
-    background: rgba(0,0,0,0.8);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 600;
-    backdrop-filter: blur(5px);
-    z-index: 10;
-}
-
-.showcase-content h2 {
-    font-size: 2.5rem;
-    margin-bottom: 1.5rem;
-    color: #333;
-    background: linear-gradient(135deg, #2345e1, #667eea);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.showcase-content p {
-    font-size: 1.1rem;
-    color: #666;
-    margin-bottom: 2rem;
-    line-height: 1.6;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .showcase-container {
-        grid-template-columns: 1fr;
-        text-align: center;
-        gap: 2rem;
-    }
-    
-    .carousel-slide img {
-        height: 250px;
-    }
-    
-    .carousel-prev, .carousel-next {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
-    
-    .carousel-prev {
-        left: 10px;
-    }
-    
-    .carousel-next {
-        right: 10px;
-    }
-    
-    .slide-title {
-        font-size: 14px;
-        padding: 8px 15px;
-    }
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.carousel-container {
-    animation: slideIn 0.8s ease-out;
-}
-</style>
-
-<script>
-// --- SCRIPT MEJORADO DEL CARRUSEL ---
-let currentSlideIndex = 0;
-const totalSlides = 4;
-
-const slideTitles = [
-    "Dashboard de Monitoreo",
-    "Reportes de Ventas", 
-    "Dashboard Analytics",
-    "Panel de Control"
-];
-
-function moveSlide(direction) {
-    const carousel = document.querySelector('.carousel-slide');
-    const dots = document.querySelectorAll('.carousel-dot');
-    
-    // Remover clase active de todos los dots
-    dots.forEach(dot => dot.classList.remove('active'));
-    
-    // Actualizar índice
-    currentSlideIndex += direction;
-    
-    // Wrap around
-    if (currentSlideIndex >= totalSlides) {
-        currentSlideIndex = 0;
-    } else if (currentSlideIndex < 0) {
-        currentSlideIndex = totalSlides - 1;
-    }
-    
-    // Aplicar transformación
-    const translateX = -currentSlideIndex * 25;
-    carousel.style.transform = `translateX(${translateX}%)`;
-    
-    // Activar dot correspondiente
-    dots[currentSlideIndex].classList.add('active');
-    
-    // Actualizar contador y título
-    updateSlideInfo();
-}
-
-function currentSlide(index) {
-    const carousel = document.querySelector('.carousel-slide');
-    const dots = document.querySelectorAll('.carousel-dot');
-    
-    // Remover clase active de todos los dots
-    dots.forEach(dot => dot.classList.remove('active'));
-    
-    // Actualizar índice
-    currentSlideIndex = index;
-    
-    // Aplicar transformación
-    const translateX = -currentSlideIndex * 25;
-    carousel.style.transform = `translateX(${translateX}%)`;
-    
-    // Activar dot correspondiente
-    dots[currentSlideIndex].classList.add('active');
-    
-    // Actualizar contador y título
-    updateSlideInfo();
-}
-
-function updateSlideInfo() {
-    const currentSlideEl = document.getElementById('current-slide');
-    const slideTitleEl = document.getElementById('slide-title');
-    
-    if (currentSlideEl) {
-        currentSlideEl.textContent = currentSlideIndex + 1;
-    }
-    if (slideTitleEl) {
-        slideTitleEl.textContent = slideTitles[currentSlideIndex];
-    }
-}
-
-// Auto-play del carousel
-setInterval(() => {
-    moveSlide(1);
-}, 5000);
-
-// Soporte para navegación con teclado
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') {
-        moveSlide(-1);
-    } else if (e.key === 'ArrowRight') {
-        moveSlide(1);
-    }
-});
-
-// Soporte para gestos táctiles
-let touchStartX = 0;
-let touchEndX = 0;
-
-document.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-});
-
-document.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleGesture();
-});
-
-function handleGesture() {
-    const threshold = 50;
-    
-    if (touchEndX < touchStartX - threshold) {
-        moveSlide(1);
-    }
-    
-    if (touchEndX > touchStartX + threshold) {
-        moveSlide(-1);
-    }
-}
-
-// Inicializar contador
-document.addEventListener('DOMContentLoaded', () => {
-    updateSlideInfo();
-});
-</script>
             <div class="showcase-content">
                 <h2>Tecnología que transforma tu negocio</h2>
-                <p>Convierte cualquier máquina de agua en un sistema inteligente conectado.
-                    Monitorea ventas en tiempo real, controla tu operación desde la nube y escala con eficiencia y transparencia.</p>
+                <p>Convierte cualquier máquina de agua en un sistema inteligente conectado. Monitorea ventas en tiempo real, controla tu operación desde la nube y escala con eficiencia y transparencia.</p>
                 <a href="#productos" class="cta-button">Conoce Más</a>
             </div>
         </div>
     </section>
+
     <section class="benefits" id="beneficios">
         <div class="benefits-container">
             <h2>Beneficios que Transforman tu Negocio</h2>
@@ -1073,8 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="benefit-card">
                     <div class="benefit-icon">☁️</div>
                     <h3>Control Total desde la Nube</h3>
-                    <p>Monitorea y administra tu máquina desde cualquier lugar.
-                        Desde tu celular o PC, puedes ajustar precios, revisar ventas, actualizar parámetros y tomar decisiones sin estar presente físicamente.</p>
+                    <p>Monitorea y administra tu máquina desde cualquier lugar. Desde tu celular o PC, puedes ajustar precios, revisar ventas, actualizar parámetros y tomar decisiones sin estar presente físicamente.</p>
                 </div>
             </div>
         </div>
@@ -1086,8 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="products-grid">
                 <div class="product-card">
                     <h3>Link-Nano</h3>
-                    <p>Dispositivo IoT ultracompacto que se instala fácilmente en cualquier vending de agua existente
-                        sin importar la marca.</p>
+                    <p>Dispositivo IoT ultracompacto que se instala fácilmente en cualquier vending de agua existente sin importar la marca.</p>
                     <ul class="product-features">
                         <li>Conectividad WiFi (sin cables, sin complicaciones)</li>
                         <li>Instalación plug-and-play en menos de 10 minutos</li>
@@ -1098,8 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="product-card">
                     <h3>AquaLink</h3>
-                    <p>La tarjeta inteligente que controla tu máquina de agua con precisión total.
-                        AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de agua inteligentes. Administra válvulas, sensores, botones, flujo y funciones avanzadas desde una interfaz local y remota. Es el núcleo de nuestras vending de nueva generación.</p>
+                    <p>La tarjeta inteligente que controla tu máquina de agua con precisión total. AquaLink es nuestra tarjeta de control propia, desarrollada para máquinas de agua inteligentes. Administra válvulas, sensores, botones, flujo y funciones avanzadas desde una interfaz local y remota. Es el núcleo de nuestras vending de nueva generación.</p>
                     <ul class="product-features">
                         <li> Control directo de válvulas, flujo y sensores</li>
                         <li>Pantalla LCD 20x4 con interfaz técnica integrada</li>
@@ -1175,102 +727,94 @@ document.addEventListener('DOMContentLoaded', () => {
     </footer>
 
     <script>
-        // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
+        // --- SCRIPTS GENERALES (MENÚ, SCROLL, ETC.) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const hamburger = document.getElementById('hamburger');
+            const mobileNav = document.getElementById('mobileNav');
+            const mobileOverlay = document.getElementById('mobileOverlay');
 
-        // Add scroll effect to header
-        window.addEventListener('scroll', function() {
-            const header = document.querySelector('.header');
-            if (window.scrollY > 100) {
-                header.style.background = 'rgba(102, 126, 234, 0.95)';
-            } else {
-                header.style.background = 'linear-gradient(135deg, #2345e1 0%, #667eea 100%)';
+            function toggleMobileMenu() {
+                hamburger.classList.toggle('active');
+                mobileNav.classList.toggle('active');
+                mobileOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
             }
-        });
 
-        // Animate elements on scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
+            hamburger.addEventListener('click', toggleMobileMenu);
+            mobileOverlay.addEventListener('click', toggleMobileMenu);
 
-        const observer = new IntersectionObserver(function(entries) {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
-
-        // Observe benefit cards and product cards
-        document.querySelectorAll('.benefit-card, .product-card').forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = 'all 0.6s ease';
-            observer.observe(card);
-        });
-
-        // --- Hamburger Menu Script ---
-        const hamburger = document.getElementById('hamburger');
-        const mobileNav = document.getElementById('mobileNav');
-        const mobileOverlay = document.getElementById('mobileOverlay');
-        const mobileNavLinks = mobileNav.querySelectorAll('a');
-
-        function toggleMobileMenu() {
-            hamburger.classList.toggle('active');
-            mobileNav.classList.toggle('active');
-            mobileOverlay.classList.toggle('active');
-            document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : ''; // Prevent scrolling when menu is open
-        }
-
-        hamburger.addEventListener('click', toggleMobileMenu);
-        mobileOverlay.addEventListener('click', toggleMobileMenu);
-
-        mobileNavLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                toggleMobileMenu();
+            document.querySelectorAll('.mobile-nav a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    if (mobileNav.classList.contains('active')) {
+                        toggleMobileMenu();
+                    }
+                });
             });
         });
 
-        // --- INICIO SCRIPT DEL CARRUSEL ---
-        let slideIndex = 0;
-        showSlide(slideIndex);
+        // --- SCRIPT MEJORADO DEL CARRUSEL ---
+        const carousel = document.querySelector('.carousel-slide');
+        if (carousel) {
+            const images = document.querySelectorAll('.carousel-slide img');
+            const dotsContainer = document.querySelector('.carousel-dots');
+            const totalSlides = images.length;
+            let currentSlideIndex = 0;
+            const slideTitles = [
+                "Dashboard de Monitoreo",
+                "Reportes de Ventas",
+                "Dashboard Analytics",
+                "Panel de Control"
+            ];
 
-        function moveSlide(n) {
-            showSlide(slideIndex += n);
-        }
-
-        function currentSlide(n) {
-            showSlide(slideIndex = n);
-        }
-
-        function showSlide(n) {
-            const slides = document.querySelectorAll('.carousel-slide img');
+            // Crear los puntos dinámicamente
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('span');
+                dot.classList.add('carousel-dot');
+                dot.addEventListener('click', () => goToSlide(i));
+                dotsContainer.appendChild(dot);
+            }
             const dots = document.querySelectorAll('.carousel-dot');
-            const slideContainer = document.querySelector('.carousel-slide');
 
-            if (n >= slides.length) { slideIndex = 0 }
-            if (n < 0) { slideIndex = slides.length - 1 }
+            function goToSlide(index) {
+                currentSlideIndex = (index + totalSlides) % totalSlides; // Maneja el ciclo para que sea infinito
+                carousel.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+                updateSlideInfo();
+            }
 
-            slideContainer.style.transform = `translateX(-${slideIndex * 100}%)`;
+            function updateSlideInfo() {
+                document.getElementById('current-slide').textContent = currentSlideIndex + 1;
+                document.getElementById('total-slides').textContent = totalSlides;
+                document.getElementById('slide-title').textContent = slideTitles[currentSlideIndex];
+                dots.forEach(dot => dot.classList.remove('active'));
+                dots[currentSlideIndex].classList.add('active');
+            }
 
-            dots.forEach(dot => dot.classList.remove('active'));
-            dots[slideIndex].classList.add('active');
+            document.querySelector('.carousel-next').addEventListener('click', () => goToSlide(currentSlideIndex + 1));
+            document.querySelector('.carousel-prev').addEventListener('click', () => goToSlide(currentSlideIndex - 1));
+
+            let autoPlayInterval = setInterval(() => goToSlide(currentSlideIndex + 1), 5000);
+            
+            // Pausar al pasar el mouse
+            document.querySelector('.carousel-container').addEventListener('mouseenter', () => clearInterval(autoPlayInterval));
+            document.querySelector('.carousel-container').addEventListener('mouseleave', () => {
+                autoPlayInterval = setInterval(() => goToSlide(currentSlideIndex + 1), 5000);
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') goToSlide(currentSlideIndex - 1);
+                if (e.key === 'ArrowRight') goToSlide(currentSlideIndex + 1);
+            });
+
+            let touchStartX = 0;
+            carousel.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+            carousel.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].screenX;
+                if (touchStartX - touchEndX > 50) { goToSlide(currentSlideIndex + 1); } 
+                else if (touchEndX - touchStartX > 50) { goToSlide(currentSlideIndex - 1); }
+            });
+
+            goToSlide(0); // Inicializar
         }
-        // --- FIN SCRIPT DEL CARRUSEL ---
-
     </script>
 </body>
 </html>
