@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nanolink - TrackMyVend</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Header (Reutilizado de home.html) */
+        .header {
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Desktop Navigation */
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Hamburger Menu Button */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 4px;
+            z-index: 1001;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .hamburger.active span:nth-child(1) { transform: rotate(-45deg) translate(-5px, 6px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(45deg) translate(-5px, -6px); }
+
+        /* Mobile Navigation */
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: 280px;
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            padding-top: 80px;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        }
+        .mobile-nav.active { transform: translateX(0); }
+        .mobile-nav ul { list-style: none; padding: 0; margin: 0; }
+        .mobile-nav a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-nav a:hover { background: rgba(255,255,255,0.2); }
+        .mobile-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .mobile-overlay.active { opacity: 1; visibility: visible; }
+        
+        /* Estilos generales de sección y tarjetas (reutilizados) */
+        .page-section {
+            padding: 100px 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            color: white;
+            padding: 150px 0 100px;
+            text-align: center;
+            position: relative;
+        }
+        .hero-content h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .hero-content h1 .icon {
+            font-size: 3rem;
+            vertical-align: middle;
+            margin-right: 15px;
+        }
+        .hero-content p {
+            font-size: 1.3rem;
+            max-width: 800px;
+            margin: 0 auto 2rem auto;
+            opacity: 0.9;
+        }
+
+        /* Cómo Funciona */
+        .how-it-works {
+            background: #f8f9fa;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+            text-align: center;
+        }
+        .feature-card {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        /* Versiones Disponibles */
+        .versions {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .versions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+        .version-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .version-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+        }
+        .version-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+        .version-card .tagline {
+            display: block;
+            margin-bottom: 1.5rem;
+            color: #555;
+            font-style: italic;
+        }
+        .version-card ul {
+            list-style: none;
+            text-align: left;
+        }
+        .version-card ul li {
+            padding: 0.5rem 0;
+            color: #555;
+            position: relative;
+            padding-left: 1.7rem;
+        }
+        .version-card ul li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Detalles Técnicos */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+        }
+        .details-column h3 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #667eea;
+        }
+        .details-column ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .details-column ul li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .details-column ul li::before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 50px 0 30px;
+        }
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+        }
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+        .footer-section p, .footer-section a {
+            color: #bdc3c7;
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .footer-section a:hover { color: white; }
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #34495e;
+            margin-top: 2rem;
+            color: #95a5a6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-menu { display: none; }
+            .hamburger { display: flex; }
+            .hero-content h1 { font-size: 2.5rem; }
+            .versions-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="home.html" class="logo">TrackMyVend</a>
+            <nav class="desktop-nav">
+                <ul class="nav-menu">
+                    <li><a href="home.html#inicio">Inicio</a></li>
+                    <li><a href="home.html#productos">Productos</a></li>
+                    <li><a href="home.html#beneficios">Beneficios</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                    <li><a href="home.html#contacto">Contacto</a></li>
+                    <li><a href="/login.html">¿Iniciar sesión?</a></li>
+                </ul>
+            </nav>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <nav class="mobile-nav" id="mobileNav">
+         <ul>
+            <li><a href="home.html#inicio">Inicio</a></li>
+            <li><a href="home.html#productos">Productos</a></li>
+            <li><a href="home.html#beneficios">Beneficios</a></li>
+            <li><a href="blog.html">Blog</a></li>
+            <li><a href="home.html#contacto">Contacto</a></li>
+            <li><a href="/login.html">¿Iniciar sesión?</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <div class="container hero-content">
+            <h1><span class="icon">🧠</span>Nanolink – Inteligencia para cualquier máquina de agua</h1>
+            <p>Convierte cualquier máquina dispensadora de agua en una máquina inteligente sin modificar su circuito interno. Nanolink es un dispositivo compacto que se conecta directamente a los botones y electroválvula ya existentes de la máquina, registrando cada venta de forma automática y enviando los datos a la plataforma TrackMyVend.</p>
+        </div>
+    </section>
+
+    <section class="page-section how-it-works">
+        <div class="container">
+            <h2 class="section-title">🔌 ¿Cómo funciona?</h2>
+            <p style="text-align: center; max-width: 800px; margin: -2rem auto 2rem auto;">Nanolink detecta dos eventos clave para registrar una venta completa y sincronizarla con la nube a través de Wi-Fi. No importa la marca, modelo o antigüedad: si tiene botones físicos y electroválvula, Nanolink es compatible.</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>1. Presión de Botón</h3>
+                    <p>El cliente selecciona un volumen de agua y Nanolink registra qué botón fue presionado.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>2. Activación de Válvula</h3>
+                    <p>Cuando la máquina dispensa el agua, Nanolink detecta la activación de la electroválvula.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="page-section versions">
+        <div class="container">
+            <h2 class="section-title">⚙️ Versiones Disponibles</h2>
+            <div class="versions-grid">
+                <div class="version-card">
+                    <h3>Nanolink 12V</h3>
+                    <span class="tagline">Versión estándar para máquinas modernas.</span>
+                    <ul>
+                        <li>Compatible con máquinas cuya <strong>electroválvula es de 12V DC</strong>.</li>
+                        <li>Se conecta mediante terminales Faston a señales de botones y línea de control de la válvula.</li>
+                        <li>Sin control sobre la válvula ni necesidad de modificar el circuito.</li>
+                        <li>Alimentación autónoma por <strong>USB-C 5V</strong>.</li>
+                        <li>Ideal para máquinas modernas o sistemas que operan a bajo voltaje.</li>
+                    </ul>
+                </div>
+                <div class="version-card">
+                    <h3>Nanolink AC</h3>
+                    <span class="tagline">Para máquinas antiguas o industriales.</span>
+                    <ul>
+                        <li>Especial para máquinas más antiguas con <strong>válvula de 110V AC</strong>.</li>
+                        <li>Detecta la señal de 110V sin riesgo gracias a un <strong>optoacoplador de alto voltaje</strong>.</li>
+                        <li>Incluye aislamiento y protección interna para uso seguro.</li>
+                        <li>También se alimenta de forma independiente por <strong>USB-C 5V</strong>.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="page-section">
+        <div class="container">
+            <div class="details-grid">
+                
+                <div class="details-column">
+                    <h3>📊 ¿Qué mide y reporta?</h3>
+                    <ul>
+                        <li>Volumen vendido (según el botón presionado).</li>
+                        <li>Precio de la venta.</li>
+                        <li>Fecha y hora exacta.</li>
+                        <li>Número de serie de la máquina.</li>
+                        <li>Sincronización con tu panel web y app móvil.</li>
+                    </ul>
+                    
+                    <h3>🧰 ¿Qué incluye?</h3>
+                    <ul>
+                        <li>1x Módulo Nanolink con ESP32 integrado.</li>
+                        <li>4 entradas para botones (3.3V a 12V).</li>
+                        <li>1 entrada para válvula (12V o 110V según versión).</li>
+                        <li>Terminales Faston para instalación rápida.</li>
+                        <li>Cableado etiquetado (azul, rojo, blanco, amarillo).</li>
+                        <li>Firmware preconfigurado para TrackMyVend.</li>
+                    </ul>
+                </div>
+
+                <div class="details-column">
+                    <h3>🛠️ Instalación (Plug & Play)</h3>
+                    <ul>
+                        <li>Conecta los cables a los botones de la máquina.</li>
+                        <li>Conecta el cable amarillo al control de la válvula.</li>
+                        <li>Alimenta Nanolink por USB-C.</li>
+                        <li>Accede al portal local (192.168.4.1) para conectarlo a tu Wi-Fi.</li>
+                        <li>¡Listo! Tus ventas se registran en tu dashboard.</li>
+                    </ul>
+
+                    <h3>🌐 Requisitos</h3>
+                    <ul>
+                        <li>Red Wi-Fi disponible en el sitio de la máquina.</li>
+                        <li>Cuenta activa en TrackMyVend.</li>
+                        <li>Configuración inicial de precios y volúmenes.</li>
+                    </ul>
+
+                    <h3>🔐 Seguridad</h3>
+                    <ul>
+                        <li>Total aislamiento eléctrico mediante optoacopladores.</li>
+                        <li>No interfiere con la operación normal de la máquina.</li>
+                        <li>Sin modificación del circuito original (ideal para máquinas en garantía o arrendadas).</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>TrackMyVend</h3>
+                <p>Transformamos máquinas de agua comunes en dispositivos inteligentes conectados.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contacto</h3>
+                <a href="mailto:contacto@trackmyvend.com">contacto@trackmyvend.com</a>
+                <a href="tel:+52-81-2698-2507">+52 (81) 2698-2507</a>
+                <p>Monterrey, Nuevo León, México</p>
+            </div>
+            <div class="footer-section">
+                <h3>Productos</h3>
+                <a href="home.html#productos">Nuestras Soluciones</a>
+                <a href="#">Nanolink</a>
+                <a href="#">AquaLink</a>
+            </div>
+            <div class="footer-section">
+                <h3>Empresa</h3>
+                <a href="acerca.html">Acerca de</a>
+                <a href="blog.html">Blog</a>
+                <a href="privacidad.html">Política de Privacidad</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 TrackMyVend.com Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- SCRIPTS GENERALES (MENÚ, SCROLL, ETC.) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const hamburger = document.getElementById('hamburger');
+            const mobileNav = document.getElementById('mobileNav');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+
+            function toggleMobileMenu() {
+                hamburger.classList.toggle('active');
+                mobileNav.classList.toggle('active');
+                mobileOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
+            }
+
+            hamburger.addEventListener('click', toggleMobileMenu);
+            mobileOverlay.addEventListener('click', toggleMobileMenu);
+
+            document.querySelectorAll('.mobile-nav a').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    if (mobileNav.classList.contains('active')) {
+                        toggleMobileMenu();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
