@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manuales y Documentación - TrackMyVend</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Header (Reutilizado de home.html) */
+        .header {
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Desktop Navigation */
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Hamburger Menu Button */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 4px;
+            z-index: 1001;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .hamburger.active span:nth-child(1) { transform: rotate(-45deg) translate(-5px, 6px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(45deg) translate(-5px, -6px); }
+
+        /* Mobile Navigation */
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: 280px;
+            background: linear-gradient(135deg, #2345e1 0%, #667eea 100%);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            padding-top: 80px;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        }
+        .mobile-nav.active { transform: translateX(0); }
+        .mobile-nav ul { list-style: none; padding: 0; margin: 0; }
+        .mobile-nav a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-nav a:hover { background: rgba(255,255,255,0.2); }
+        .mobile-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .mobile-overlay.active { opacity: 1; visibility: visible; }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            padding: 150px 0 100px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        .hero p {
+            font-size: 1.3rem;
+            max-width: 800px;
+            margin: 0 auto;
+            color: #555;
+        }
+
+        /* Manuals Section */
+        .manuals-section {
+            padding: 80px 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .manuals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+        .manual-card {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        .manual-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .manual-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+        .manual-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .manual-card p {
+            color: #666;
+            margin-bottom: 1.5rem;
+            flex-grow: 1; /* Hace que el párrafo ocupe el espacio disponible */
+        }
+        .download-btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            text-align: center;
+            transition: background 0.3s ease;
+        }
+        .download-btn:hover {
+            background: #2345e1;
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 50px 0 30px;
+            margin-top: 50px;
+        }
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+        }
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+        .footer-section p, .footer-section a {
+            color: #bdc3c7;
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .footer-section a:hover { color: white; }
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #34495e;
+            margin-top: 2rem;
+            color: #95a5a6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-menu { display: none; }
+            .hamburger { display: flex; }
+            .hero h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <a href="home.html" class="logo">TrackMyVend</a>
+            <nav class="desktop-nav">
+                <ul class="nav-menu">
+                    <li><a href="home.html">Inicio</a></li>
+                    <li><a href="nanolink.html">Nanolink</a></li>
+                    <li><a href="#">AquaLink</a></li>
+                    <li><a href="manuales.html">Manuales</a></li>
+                    <li><a href="home.html#contacto">Contacto</a></li>
+                    <li><a href="/login.html">¿Iniciar sesión?</a></li>
+                </ul>
+            </nav>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <nav class="mobile-nav" id="mobileNav">
+         <ul>
+            <li><a href="home.html">Inicio</a></li>
+            <li><a href="nanolink.html">Nanolink</a></li>
+            <li><a href="#">AquaLink</a></li>
+            <li><a href="manuales.html">Manuales</a></li>
+            <li><a href="home.html#contacto">Contacto</a></li>
+            <li><a href="/login.html">¿Iniciar sesión?</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Centro de Documentación</h1>
+            <p>Encuentra todas las guías, manuales de instalación y documentos técnicos para nuestros productos.</p>
+        </div>
+    </section>
+
+    <section class="manuals-section">
+        <div class="container">
+            <div class="manuals-grid">
+
+                <div class="manual-card">
+                    <div class="manual-icon">📄</div>
+                    <h3>Nanolink v1.3</h3>
+                    <p>Guía de instalación completa para el módulo Nanolink. Cubre la conexión para 3 botones y la configuración inicial de Wi-Fi.</p>
+                    <a href="manuales/manual nanolink-v1-3-botones.pdf" class="download-btn" target="_blank">Descargar PDF</a>
+                </div>
+
+                <div class="manual-card">
+                    <div class="manual-icon">⚙️</div>
+                    <h3>AquaLink v2.1</h3>
+                    <p>Manual técnico para la tarjeta de control AquaLink. Incluye diagramas de conexión, calibración de sensores y configuración de precios.</p>
+                    <a href="manuales/manual-aqualink-v2-1.pdf" class="download-btn" target="_blank">Descargar PDF</a>
+                </div>
+
+                <div class="manual-card">
+                    <div class="manual-icon">⚡</div>
+                    <h3>Guía Rápida de Conexión</h3>
+                    <p>Un resumen visual de 5 pasos para conectar y poner en marcha cualquiera de nuestros dispositivos en menos de 10 minutos.</p>
+                    <a href="manuales/guia-rapida.pdf" class="download-btn" target="_blank">Descargar PDF</a>
+                </div>
+                
+                </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>TrackMyVend</h3>
+                <p>Transformamos máquinas de agua comunes en dispositivos inteligentes conectados.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contacto</h3>
+                <a href="mailto:contacto@trackmyvend.com">contacto@trackmyvend.com</a>
+                <a href="tel:+52-81-2698-2507">+52 (81) 2698-2507</a>
+                <p>Monterrey, Nuevo León, México</p>
+            </div>
+            <div class="footer-section">
+                <h3>Navegación</h3>
+                <a href="home.html">Inicio</a>
+                <a href="nanolink.html">Nanolink</a>
+                <a href="manuales.html">Manuales</a>
+            </div>
+            <div class="footer-section">
+                <h3>Empresa</h3>
+                <a href="#">Acerca de</a>
+                <a href="#">Blog</a>
+                <a href="#">Política de Privacidad</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 TrackMyVend.com Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- SCRIPTS GENERALES (MENÚ, SCROLL, ETC.) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const hamburger = document.getElementById('hamburger');
+            const mobileNav = document.getElementById('mobileNav');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+
+            function toggleMobileMenu() {
+                hamburger.classList.toggle('active');
+                mobileNav.classList.toggle('active');
+                mobileOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
+            }
+
+            hamburger.addEventListener('click', toggleMobileMenu);
+            mobileOverlay.addEventListener('click', toggleMobileMenu);
+
+            document.querySelectorAll('.mobile-nav a').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    if (mobileNav.classList.contains('active')) {
+                        toggleMobileMenu();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
