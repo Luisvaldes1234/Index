@@ -224,7 +224,7 @@
             box-shadow: 0 8px 25px rgba(255,107,107,0.6);
         }
 
-        /* Product Showcase */
+        /* --- INICIO ESTILOS CARRUSEL --- */
         .product-showcase {
             padding: 100px 0;
             background: #f8f9fa;
@@ -239,35 +239,75 @@
             gap: 4rem;
             align-items: center;
         }
-
-        .product-image {
-            background: linear-gradient(135deg, #2345e1 0%, #667eea);
+        
+        .carousel-container {
+            position: relative;
+            max-width: 100%;
+            margin: auto;
+            overflow: hidden;
             border-radius: 20px;
-            padding: 2rem;
-            text-align: center;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            transform: perspective(1000px) rotateY(-5deg);
-            transition: all 0.3s ease;
         }
 
-        .product-image:hover {
-            transform: perspective(1000px) rotateY(0deg);
-        }
-
-        .device-mockup {
-            width: 200px;
-            height: 300px;
-            background: #fff;
-            border-radius: 20px;
-            margin: 0 auto;
+        .carousel-slide {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            color: #2345e1;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.5s ease-in-out;
         }
 
+        .carousel-slide img {
+            width: 100%;
+            flex-shrink: 0;
+            display: block;
+        }
+        
+        .carousel-prev, .carousel-next {
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            width: auto;
+            padding: 16px;
+            margin-top: -22px;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            transition: 0.3s ease;
+            border-radius: 0 3px 3px 0;
+            user-select: none;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .carousel-next {
+            right: 0;
+            border-radius: 3px 0 0 3px;
+        }
+
+        .carousel-prev:hover, .carousel-next:hover {
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .carousel-dots {
+            text-align: center;
+            padding: 15px;
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+        }
+
+        .carousel-dot {
+            cursor: pointer;
+            height: 15px;
+            width: 15px;
+            margin: 0 5px;
+            background-color: #bbb;
+            border-radius: 50%;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+
+        .carousel-dot.active {
+            background-color: #667eea;
+        }
+        
         .showcase-content h2 {
             font-size: 2.5rem;
             margin-bottom: 1.5rem;
@@ -279,6 +319,8 @@
             color: #666;
             margin-bottom: 2rem;
         }
+        /* --- FIN ESTILOS CARRUSEL --- */
+
 
         /* Benefits Section */
         .benefits {
@@ -646,11 +688,22 @@
 
     <section class="product-showcase">
         <div class="showcase-container">
-            <div class="product-image">
-                <div class="device-mockup">
-                    📱
+            
+            <div class="carousel-container">
+                <div class="carousel-slide">
+                    <img src="images/dashboard.png" alt="Dashboard de Monitoreo">
+                    <img src="images/reportes.png" alt="Reportes de Ventas">
+                </div>
+                
+                <a class="carousel-prev" onclick="moveSlide(-1)">&#10094;</a>
+                <a class="carousel-next" onclick="moveSlide(1)">&#10095;</a>
+                
+                <div class="carousel-dots">
+                    <span class="carousel-dot" onclick="currentSlide(0)"></span>
+                    <span class="carousel-dot" onclick="currentSlide(1)"></span>
                 </div>
             </div>
+
             <div class="showcase-content">
                 <h2>Tecnología que transforma tu negocio</h2>
                 <p>Convierte cualquier máquina de agua en un sistema inteligente conectado.
@@ -659,7 +712,6 @@
             </div>
         </div>
     </section>
-
     <section class="benefits" id="beneficios">
         <div class="benefits-container">
             <h2>Beneficios que Transforman tu Negocio</h2>
@@ -839,21 +891,42 @@
             document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : ''; // Prevent scrolling when menu is open
         }
 
-        // Toggle menu when hamburger is clicked
         hamburger.addEventListener('click', toggleMobileMenu);
-
-        // Close menu when overlay is clicked
         mobileOverlay.addEventListener('click', toggleMobileMenu);
 
-        // Close menu when a navigation link is clicked (for smooth scrolling)
         mobileNavLinks.forEach(link => {
             link.addEventListener('click', function(e) {
-                toggleMobileMenu(); // Close the menu
-                // For smooth scrolling, ensure the default behavior is allowed after closing
-                // Or you can re-implement the smooth scroll here if needed.
+                toggleMobileMenu();
             });
         });
-        // --- End Hamburger Menu Script ---
+
+        // --- INICIO SCRIPT DEL CARRUSEL ---
+        let slideIndex = 0;
+        showSlide(slideIndex);
+
+        function moveSlide(n) {
+            showSlide(slideIndex += n);
+        }
+
+        function currentSlide(n) {
+            showSlide(slideIndex = n);
+        }
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.carousel-slide img');
+            const dots = document.querySelectorAll('.carousel-dot');
+            const slideContainer = document.querySelector('.carousel-slide');
+
+            if (n >= slides.length) { slideIndex = 0 }
+            if (n < 0) { slideIndex = slides.length - 1 }
+
+            slideContainer.style.transform = `translateX(-${slideIndex * 100}%)`;
+
+            dots.forEach(dot => dot.classList.remove('active'));
+            dots[slideIndex].classList.add('active');
+        }
+        // --- FIN SCRIPT DEL CARRUSEL ---
+
     </script>
 </body>
 </html>
