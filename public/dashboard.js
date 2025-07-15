@@ -622,6 +622,33 @@ function getFilters() {
 
     return { fromDate, toDate, serial };
 }
+function renderVolumeCards(volumeCounts) {
+    const container = document.getElementById("volumeDistribution");
+    container.innerHTML = ""; // Clear previous cards
+
+    const colors = {
+        "20L": "bg-blue-500",
+        "10L": "bg-green-500",
+        "5L": "bg-yellow-500",
+        "Galón": "bg-purple-500",
+        "Otros": "bg-gray-500"
+    };
+    
+    const totalVentas = Object.values(volumeCounts).reduce((sum, count) => sum + count, 0);
+
+    for (const [volume, count] of Object.entries(volumeCounts)) {
+        const percentage = totalVentas > 0 ? ((count / totalVentas) * 100).toFixed(1) : 0;
+        const cardHTML = `
+            <div class="bg-white p-4 rounded-lg shadow text-center">
+                <p class="text-gray-500 text-sm mb-2">${volume}</p>
+                <div class="${colors[volume]} text-white rounded-full w-16 h-16 mx-auto flex items-center justify-center text-xl font-bold mb-2">${count}</div>
+                <p class="text-sm text-gray-600">${percentage}%</p>
+            </div>
+        `;
+        container.innerHTML += cardHTML;
+    }
+}
+
 // Logout functionality
 document.getElementById("btnLogout").addEventListener("click", async () => {
   await supabase.auth.signOut();
