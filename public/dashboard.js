@@ -153,7 +153,7 @@ async function hacerCorteDeCaja(serial) {
 
 // REEMPLAZA tu función Resumen() existente con esta versión mejorada.
 
-async function Resumen() {
+async function cargarResumen() {
     // 1. Definir los rangos de fecha de manera consistente
     const ahora = new Date();
     const hoy_inicio = new Date();
