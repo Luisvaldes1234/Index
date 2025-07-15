@@ -228,6 +228,10 @@ function renderResumen(r) {
     document.getElementById("ticketPromedio").textContent = `$${r.ticketMes.toFixed(2)}`; // Ahora es mensual
     document.getElementById("maquinasActivas").textContent = `${r.activas}/${r.cantidad}`;
     document.getElementById("ultimaVenta").textContent = r.ultimaVenta ? new Date(r.ultimaVenta).toLocaleString("es-MX") : "N/A";
+    document.getElementById("ventasSemana").textContent = `$${r.totalSemana.toFixed(2)}`;
+    document.getElementById("ventasMes").textContent = `$${r.totalMes.toFixed(2)}`;
+}
+
 }
 
 
