@@ -218,7 +218,7 @@ async function cargarResumen() {
         renderResumenPorMaquina(resumenMaquina, contenedorMaquinas);
 
     });
-        renderMachineMap(maquinas, allSales || []);
+        renderMachineMap(maquinas, ventasDelMesCompleto || []);
 
 
 }
