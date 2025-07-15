@@ -1,7 +1,7 @@
 {
-    "favicon": "/images/favicon.svg",
+    "favicon": "public/images/favicon.svg",
     "footer": "content/data/footer.json",
-    "titleSuffix": "Theme Demo",
+    "titleSuffix": "TrackMyVend",
     "defaultSocialImage": "/images/main-hero.jpg",
     "type": "Config",
     "header": "content/data/header.json"
