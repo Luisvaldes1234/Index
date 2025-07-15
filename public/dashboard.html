@@ -454,10 +454,12 @@
                     </div>
                 </section>
                 <section class="section-card">
-                     <h2 class="section-title">Horas de Mayor Actividad</h2>
-                     <div class="chart-container" style="height: 350px;">
-                        <canvas id="graficaHeatmap" role="img" aria-label="grafica de ventas por día y hora"></canvas>
+                    <h2 class="section-title">Horas de Mayor Actividad (Últimos 30 días)</h2>
+                    <div class="chart-container" style="height: 400px; position: relative;">
+                    <canvas id="graficaHeatmap" role="img" aria-label="Heatmap de ventas por día y hora"></canvas>
                     </div>
+    <!-- This is the new legend container -->
+                    <div id="heatmap-legend" class="flex justify-center items-center mt-4 space-x-2 text-sm text-gray-600"></div>
                 </section>
                 <section class="section-card">
                     <h2 class="section-title">Ubicación de Máquinas</h2>
