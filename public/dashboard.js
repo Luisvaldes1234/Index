@@ -658,7 +658,7 @@ function renderVolumeCards(volumeCounts) {
         container.innerHTML += cardHTML;
     }
 }
-function renderMachineMap(machines, allSales) {
+function renderMachineMap(machines, ventasDelMesCompleto) {
     // Initialize map and cluster group only once
     if (!window.machineMap) {
         window.machineMap = L.map('machineMap').setView([25.6866, -100.3161], 10); // Centered on Monterrey
