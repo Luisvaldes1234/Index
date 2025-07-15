@@ -216,11 +216,14 @@ async function cargarResumen() {
             totalMes: ventasMaquina.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0),
         };
         renderResumenPorMaquina(resumenMaquina, contenedorMaquinas);
+
+    });
         renderMachineMap(maquinas, allSales || []);
 
 
-    });
 }
+
+
 
 
 // REEMPLAZA tu función renderResumen actual por esta:
