@@ -145,15 +145,15 @@ async function hacerCorteDeCaja(serial) {
   alert(`Corte realizado: $${total.toFixed(2)} en ventas.`);
   
   // 5) Refrescar vista
-  cargarResumen();
-  cargarGraficas();
-  cargarDistribucionVolumen();
-  cargarMaquinasParaCSV();
+  Resumen();
+  Graficas();
+  DistribucionVolumen();
+  MaquinasParaCSV();
 }
 
-// REEMPLAZA tu función cargarResumen() existente con esta versión mejorada.
+// REEMPLAZA tu función Resumen() existente con esta versión mejorada.
 
-async function cargarResumen() {
+async function Resumen() {
     // 1. Definir los rangos de fecha de manera consistente
     const ahora = new Date();
     const hoy_inicio = new Date();
@@ -178,7 +178,7 @@ async function cargarResumen() {
         supabase.from("ventas").select("precio_total").eq("user_id", user.id).gte("created_at", semana_inicio.toISOString()),
         supabase.from("ventas").select("precio_total").eq("user_id", user.id).gte("created_at", mes_inicio.toISOString()),
         supabase.from("ventas").select("created_at").eq("user_id", user.id).order('created_at', { ascending: false }).limit(1).single(),
-        supabase.from("maquinas").select("serial, nombre, last_seen").eq("user_id", user.id)
+        supabase.from("maquinas").select("serial, nombre, last_seen, latitude, longitude").eq("user_id", user.id)
     ]);
 
     // 3. Procesar los resultados de las consultas
