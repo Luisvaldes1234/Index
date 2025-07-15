@@ -216,6 +216,9 @@ async function cargarResumen() {
             totalMes: ventasMaquina.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0),
         };
         renderResumenPorMaquina(resumenMaquina, contenedorMaquinas);
+        renderMachineMap(maquinas, allSales || []);
+
+
     });
 }
 
@@ -650,6 +653,59 @@ function renderVolumeCards(volumeCounts) {
         container.innerHTML += cardHTML;
     }
 }
+function renderMachineMap(machines, allSales) {
+    // Initialize map and cluster group only once
+    if (!window.machineMap) {
+        window.machineMap = L.map('machineMap').setView([25.6866, -100.3161], 10); // Centered on Monterrey
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(window.machineMap);
+        window.markerClusterGroup = L.markerClusterGroup().addTo(window.machineMap);
+    }
+
+    // Clear existing markers from the cluster group
+    window.markerClusterGroup.clearLayers();
+
+    // Define custom icons with different colors
+    const greenIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
+    const yellowIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
+    const redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
+    
+    // Get sales data for today to determine marker color
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    machines.forEach(machine => {
+        if (machine.latitude && machine.longitude) {
+            // Calculate today's sales for this machine
+            const salesToday = allSales
+                .filter(s => s.serial === machine.serial && new Date(s.created_at) >= todayStart)
+                .reduce((sum, s) => sum + parseFloat(s.precio_total || 0), 0);
+
+            // Determine marker color based on sales
+            let icon = redIcon; // Default to red
+            if (salesToday > 50) icon = yellowIcon; // Over $50 is yellow
+            if (salesToday > 200) icon = greenIcon;  // Over $200 is green
+            
+            // Check machine status
+            const isActive = (new Date() - new Date(machine.last_seen)) / 60000 < 10;
+            const statusText = isActive ? 'Online 🟢' : 'Offline 🔴';
+
+            // Create marker and pop-up content
+            const marker = L.marker([machine.latitude, machine.longitude], { icon: icon });
+            const popupContent = `
+                <b>${machine.nombre || machine.serial}</b><br>
+                <b>Status:</b> ${statusText}<br>
+                <b>Today's Sales:</b> $${salesToday.toFixed(2)}
+            `;
+            marker.bindPopup(popupContent);
+            
+            // Add the marker to the cluster group
+            window.markerClusterGroup.addLayer(marker);
+        }
+    });
+}
+
 function renderHeatmap(ventas) {
     const ctx = document.getElementById('graficaHeatmap').getContext('2d');
     
