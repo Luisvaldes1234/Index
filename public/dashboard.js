@@ -659,7 +659,13 @@ function renderVolumeCards(volumeCounts) {
     }
 }
 function renderMachineMap(machines, ventasDelMesCompleto) {
-   const mapElement = document.getElementById('machineMap');
+   if (typeof L === 'undefined') {
+        console.warn('Leaflet library not loaded');
+        return;
+    }
+
+    // Check if we have the required DOM element
+    const mapElement = document.getElementById('machineMap');
     if (!mapElement) {
         console.warn('Map element not found');
         return;
@@ -669,6 +675,13 @@ function renderMachineMap(machines, ventasDelMesCompleto) {
     if (!window.machineMap) {
         try {
             window.machineMap = L.map('machineMap').setView([25.6866, -100.3161], 10); // Centered on Monterrey
+            
+            // Verify the map was created successfully
+            if (!window.machineMap || typeof window.machineMap.addLayer !== 'function') {
+                console.error('Failed to create map properly');
+                return;
+            }
+            
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(window.machineMap);
@@ -683,11 +696,20 @@ function renderMachineMap(machines, ventasDelMesCompleto) {
         try {
             // Check if L.markerClusterGroup is available
             if (typeof L.markerClusterGroup === 'undefined') {
-                console.error('Leaflet.markercluster plugin not loaded');
+                console.warn('Leaflet.markercluster plugin not loaded, using regular markers');
+                // Fallback: create a simple layer group instead of cluster group
+                window.markerClusterGroup = L.layerGroup();
+            } else {
+                window.markerClusterGroup = L.markerClusterGroup();
+            }
+            
+            // Verify the map has the addLayer method before calling it
+            if (window.machineMap && typeof window.machineMap.addLayer === 'function') {
+                window.machineMap.addLayer(window.markerClusterGroup);
+            } else {
+                console.error('Map object is invalid or missing addLayer method');
                 return;
             }
-            window.markerClusterGroup = L.markerClusterGroup();
-            window.machineMap.addLayer(window.markerClusterGroup);
         } catch (error) {
             console.error('Error initializing marker cluster group:', error);
             return;
@@ -698,13 +720,25 @@ function renderMachineMap(machines, ventasDelMesCompleto) {
     try {
         if (window.markerClusterGroup && typeof window.markerClusterGroup.clearLayers === 'function') {
             window.markerClusterGroup.clearLayers();
+        } else if (window.markerClusterGroup && typeof window.markerClusterGroup.eachLayer === 'function') {
+            // Fallback for regular layer groups
+            window.markerClusterGroup.eachLayer(layer => {
+                window.markerClusterGroup.removeLayer(layer);
+            });
         }
     } catch (error) {
         console.error('Error clearing layers:', error);
         // Recreate the cluster group if clearing fails
         try {
-            window.markerClusterGroup = L.markerClusterGroup();
-            window.machineMap.addLayer(window.markerClusterGroup);
+            if (typeof L.markerClusterGroup !== 'undefined') {
+                window.markerClusterGroup = L.markerClusterGroup();
+            } else {
+                window.markerClusterGroup = L.layerGroup();
+            }
+            
+            if (window.machineMap && typeof window.machineMap.addLayer === 'function') {
+                window.machineMap.addLayer(window.markerClusterGroup);
+            }
         } catch (recreateError) {
             console.error('Error recreating cluster group:', recreateError);
             return;
