@@ -216,12 +216,12 @@ async function cargarResumen() {
             totalMes: ventasMaquina.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0),
         };
         renderResumenPorMaquina(resumenMaquina, contenedorMaquinas);
-        renderMachineMap(maquinas, ventasDelMesCompleto || []);
 
 
 
     });
 
+        renderMachineMap(maquinas, ventasDelMesCompleto || []);
 
 }
 
@@ -787,7 +787,7 @@ function renderMachineMap(machines, ventasDelMesCompleto) {
         if (machine.latitude && machine.longitude) {
             try {
                 // Calculate today's sales for this machine
-                const salesToday = allSales
+                const salesToday = ventasDelMesCompleto
                     .filter(s => s.serial === machine.serial && new Date(s.created_at) >= todayStart)
                     .reduce((sum, s) => sum + parseFloat(s.precio_total || 0), 0);
 
