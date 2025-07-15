@@ -326,6 +326,8 @@ async function cargarGraficas() {
   renderGraficaDias(filtradas);
   renderGraficaVolumen(filtradas);
   renderGraficaMaquinas(filtradas);
+  renderHeatmap(filtradas);
+
 }
 
 function renderGraficaHoras(ventas) {
@@ -648,6 +650,84 @@ function renderVolumeCards(volumeCounts) {
         container.innerHTML += cardHTML;
     }
 }
+function renderHeatmap(ventas) {
+    const ctx = document.getElementById('graficaHeatmap').getContext('2d');
+    
+    if (window.chartHeatmap) {
+        window.chartHeatmap.destroy();
+    }
+
+    // Process data for the heatmap
+    const dataByDayHour = {}; // { '0-23': 0, '1-0': 12, ... } (day-hour: totalSales)
+    for (let i = 0; i < 7; i++) { // 0=Sunday, 6=Saturday
+        for (let j = 0; j < 24; j++) {
+            const key = `${i}-${j}`;
+            dataByDayHour[key] = 0;
+        }
+    }
+
+    ventas.forEach(v => {
+        const date = new Date(v.created_at);
+        const day = date.getDay();
+        const hour = date.getHours();
+        const key = `${day}-${hour}`;
+        dataByDayHour[key] += parseFloat(v.precio_total || 0);
+    });
+
+    const chartData = Object.entries(dataByDayHour).map(([key, value]) => {
+        const [day, hour] = key.split('-');
+        return { x: parseInt(hour), y: parseInt(day), v: value };
+    });
+
+    window.chartHeatmap = new Chart(ctx, {
+        type: 'matrix',
+        data: {
+            datasets: [{
+                label: 'Ventas ($)',
+                data: chartData,
+                backgroundColor: function(context) {
+                    const value = context.dataset.data[context.dataIndex].v;
+                    if (value === 0) return 'rgba(230, 230, 230, 0.5)';
+                    const alpha = Math.min(0.2 + (value / 50), 1); // Normalize color intensity based on sales value
+                    return `rgba(75, 192, 192, ${alpha})`;
+                },
+                borderColor: 'rgba(200, 200, 200, 0.6)',
+                borderWidth: 1,
+                width: ({chart}) => (chart.chartArea || {}).width / 24 - 1,
+                height: ({chart}) => (chart.chartArea || {}).height / 7 - 1,
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function() { return ''; },
+                        label: function(context) {
+                            const item = context.dataset.data[context.dataIndex];
+                            const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                            return `${days[item.y]} a las ${item.x}:00 - $${item.v.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'category',
+                    labels: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+                    offset: true
+                },
+                x: {
+                    type: 'category',
+                    labels: [...Array(24).keys()].map(h => `${h}`),
+                    offset: true
+                }
+            }
+        }
+    });
+}
+
 
 // Logout functionality
 document.getElementById("btnLogout").addEventListener("click", async () => {
