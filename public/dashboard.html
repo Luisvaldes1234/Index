@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
+   <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard - TrackMyVend</title>
     <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.8.0/dist/umd/supabase.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix/dist/chartjs-chart-matrix.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
 
 
     <style>
@@ -453,6 +459,11 @@
                         <canvas id="graficaHeatmap" role="img" aria-label="Heatmap de ventas por día y hora"></canvas>
                     </div>
                 </section>
+                <section class="section-card">
+                    <h2 class="section-title">Ubicación de Máquinas</h2>
+                    <div id="machineMap" style="height: 500px; border-radius: 16px;"></div>
+                </section>
+
 
             </div>
         </div>
