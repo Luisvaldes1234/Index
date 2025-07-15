@@ -609,7 +609,19 @@ document.getElementById("btnDescargarCSV").addEventListener("click", async () =>
   link.click();
   document.body.removeChild(link);
 });
+function getFilters() {
+    const fromDateStr = document.getElementById("fechaDesde").value;
+    const toDateStr = document.getElementById("fechaHasta").value;
+    const serial = document.getElementById("filtroMaquinaCSV").value;
 
+    const fromDate = new Date(fromDateStr);
+    fromDate.setHours(0, 0, 0, 0);
+
+    const toDate = new Date(toDateStr);
+    toDate.setHours(23, 59, 59, 999);
+
+    return { fromDate, toDate, serial };
+}
 // Logout functionality
 document.getElementById("btnLogout").addEventListener("click", async () => {
   await supabase.auth.signOut();
