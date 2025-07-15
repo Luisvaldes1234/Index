@@ -61,9 +61,9 @@ async function cargarMaquinasParaCSV() {
         .gte("created_at", m.ultimo_corte || "2000-01-01T00:00:00Z");
 
     const total = ventas?.reduce((s, v) => s + parseFloat(v.precio_total || 0), 0) || 0;
-    let color = "bg-yellow-400 text-black";
-    if (total >= 500) color = "bg-green-500 text-white";
-    if (total >= 2000) color = "bg-red-600 text-white";
+    let color = "bg-green-500 text-black";
+    if (total >= 3000) color = "bg-yellow-400 text-white";
+    if (total >= 6000) color = "bg-red-600 text-white";
 
     const div = document.createElement("div");
     div.className = "bg-white dark:bg-gray-800 p-3 rounded shadow";
