@@ -66,7 +66,7 @@ async function cargarMaquinasParaCSV() {
     if (total >= 6000) color = "bg-red-600 text-white";
 
     const div = document.createElement("div");
-    div.className = "bg-white dark:bg-gray-800 p-3 rounded shadow";
+    div.className = "bg-white";
 
     div.innerHTML = `
       <div class="flex justify-between items-center mb-2">
@@ -247,43 +247,57 @@ function renderResumenPorMaquina(r, contenedor) {
 }
 
 async function cargarDistribucionVolumen() {
-    const { desdeISO, hastaISO, serial } = obtenerFiltros();
-    if (!desdeISO || !hastaISO) return;
+    // Para consistencia con el resto del código, usamos getFilters() que devuelve objetos Date
+    const { fromDate, toDate, serial } = getFilters();
 
-    let query = supabase.from("ventas").select("litros").eq("user_id", user.id).gte("created_at", desdeISO).lte("created_at", hastaISO);
-    if (serial) query = query.eq("serial", serial);
-    
-    const { data: ventas } = await query;
-    if (!ventas) return;
+    // Verificación de que las fechas son válidas
+    if (!fromDate || !toDate) {
+        console.error("Fechas de filtro inválidas.");
+        return;
+    }
 
-    const volumeCounts = { "20L": 0, "10L": 0, "5L": 0, "Galón": 0, "Otros": 0 };
-    ventas.forEach(v => {
-        const litros = parseFloat(v.litros);
-        if (litros === 20) volumeCounts["20L"]++;
-        else if (litros === 10) volumeCounts["10L"]++;
-        else if (litros === 5) volumeCounts["5L"]++;
-        else if (litros === 3.7) volumeCounts["Galón"]++; // Valor más preciso para galón
-        else volumeCounts["Otros"]++;
-    });
-    renderVolumeCards(volumeCounts);
-}
+    try {
+        let query = supabase.from("ventas")
+            .select("litros")
+            .eq("user_id", user.id)
+            .gte("created_at", fromDate.toISOString())
+            .lte("created_at", toDate.toISOString());
 
-function renderVolumeCards(volumeCounts) {
-    const container = document.getElementById("volumeDistribution");
-    container.innerHTML = ""; // Limpiar antes de renderizar
-    const colors = { "20L": "bg-blue-500", "10L": "bg-green-500", "5L": "bg-yellow-500", "Galón": "bg-purple-500", "Otros": "bg-gray-500" };
-    const totalVentas = Object.values(volumeCounts).reduce((s, c) => s + c, 0);
+        if (serial) {
+            query = query.eq("serial", serial);
+        }
 
-    for (const [volume, count] of Object.entries(volumeCounts)) {
-        const percentage = totalVentas > 0 ? ((count / totalVentas) * 100).toFixed(1) : 0;
-        container.innerHTML += `
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow text-center">
-                <p class="text-gray-500 dark:text-gray-400 text-sm mb-2">${volume}</p>
-                <div class="${colors[volume]} text-white rounded-full w-16 h-16 mx-auto flex items-center justify-center text-xl font-bold mb-2">${count}</div>
-                <p class="text-sm text-gray-600 dark:text-gray-300">${percentage}%</p>
-            </div>
-        `;
-    }
+        // CORRECCIÓN 1: Manejo de errores
+        const { data: ventas, error } = await query;
+
+        if (error) {
+            // Si Supabase devuelve un error, lo lanzamos para que el bloque catch lo maneje
+            throw error;
+        }
+
+        if (!ventas) {
+            // Si no hay ventas, no hay nada que hacer
+            return;
+        }
+
+        const volumeCounts = { "20L": 0, "10L": 0, "5L": 0, "Galón": 0, "Otros": 0 };
+
+        ventas.forEach(v => {
+            const litros = parseFloat(v.litros);
+            if (litros === 20) volumeCounts["20L"]++;
+            else if (litros === 10) volumeCounts["10L"]++;
+            else if (litros === 5) volumeCounts["5L"]++;
+            // CORRECCIÓN 2: Valor más preciso para el galón
+            else if (litros === 3.785) volumeCounts["Galón"]++; 
+            else volumeCounts["Otros"]++;
+        });
+
+        renderVolumeCards(volumeCounts);
+
+    } catch (error) {
+        console.error("Error al cargar la distribución de volumen:", error);
+        alert("No se pudieron cargar los datos de volumen: " + error.message);
+    }
 }
 async function cargarGraficas() {
   const desde = document.getElementById("fechaDesde").value;
