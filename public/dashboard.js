@@ -4,7 +4,8 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let user = null;
-let mapaNombreMaquina = {};
+let mapInstance = null;
+let markerClusters = null;
 
 document.addEventListener("DOMContentLoaded", getUser);
 
@@ -658,166 +659,109 @@ function renderVolumeCards(volumeCounts) {
         container.innerHTML += cardHTML;
     }
 }
+// at top of dashboard.js
+let mapInstance = null;
+let markerClusters = null;
+
 function renderMachineMap(machines, ventasDelMesCompleto) {
-   if (typeof L === 'undefined') {
-        console.warn('Leaflet library not loaded');
-        return;
-    }
+  // 0) Ensure Leaflet and the container exist
+  if (typeof L === 'undefined') {
+    console.warn('Leaflet library not loaded');
+    return;
+  }
+  const mapEl = document.getElementById('machineMap');
+  if (!mapEl) {
+    console.warn('Map element not found');
+    return;
+  }
 
-    // Check if we have the required DOM element
-    const mapElement = document.getElementById('machineMap');
-    if (!mapElement) {
-        console.warn('Map element not found');
-        return;
-    }
+  // 1) Initialize the map only once
+  if (!mapInstance) {
+    mapInstance = L.map('machineMap').setView([25.6866, -100.3161], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(mapInstance);
+  }
 
-    // Initialize map and cluster group only once, with proper error handling
-    if (!window.machineMap) {
-        try {
-            window.machineMap = L.map('machineMap').setView([25.6866, -100.3161], 10); // Centered on Monterrey
-            
-            // Verify the map was created successfully
-            if (!window.machineMap || typeof window.machineMap.addLayer !== 'function') {
-                console.error('Failed to create map properly');
-                return;
-            }
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(window.machineMap);
-        } catch (error) {
-            console.error('Error initializing map:', error);
-            return;
-        }
-    }
+  // 2) Initialize the cluster layer only once
+  if (!markerClusters) {
+    markerClusters = (typeof L.markerClusterGroup !== 'undefined')
+      ? L.markerClusterGroup()
+      : L.layerGroup();
+    mapInstance.addLayer(markerClusters);
+  }
 
-    // Initialize cluster group if it doesn't exist
-    if (!window.markerClusterGroup) {
-        try {
-            // Check if L.markerClusterGroup is available
-            if (typeof L.markerClusterGroup === 'undefined') {
-                console.warn('Leaflet.markercluster plugin not loaded, using regular markers');
-                // Fallback: create a simple layer group instead of cluster group
-                window.markerClusterGroup = L.layerGroup();
-            } else {
-                window.markerClusterGroup = L.markerClusterGroup();
-            }
-            
-            // Verify the map has the addLayer method before calling it
-            if (window.machineMap && typeof window.machineMap.addLayer === 'function') {
-                window.machineMap.addLayer(window.markerClusterGroup);
-            } else {
-                console.error('Map object is invalid or missing addLayer method');
-                return;
-            }
-        } catch (error) {
-            console.error('Error initializing marker cluster group:', error);
-            return;
-        }
-    }
+  // 3) Clear previous markers
+  markerClusters.clearLayers();
 
-    // Clear existing markers from the cluster group - with safety check
-    try {
-        if (window.markerClusterGroup && typeof window.markerClusterGroup.clearLayers === 'function') {
-            window.markerClusterGroup.clearLayers();
-        } else if (window.markerClusterGroup && typeof window.markerClusterGroup.eachLayer === 'function') {
-            // Fallback for regular layer groups
-            window.markerClusterGroup.eachLayer(layer => {
-                window.markerClusterGroup.removeLayer(layer);
-            });
-        }
-    } catch (error) {
-        console.error('Error clearing layers:', error);
-        // Recreate the cluster group if clearing fails
-        try {
-            if (typeof L.markerClusterGroup !== 'undefined') {
-                window.markerClusterGroup = L.markerClusterGroup();
-            } else {
-                window.markerClusterGroup = L.layerGroup();
-            }
-            
-            if (window.machineMap && typeof window.machineMap.addLayer === 'function') {
-                window.machineMap.addLayer(window.markerClusterGroup);
-            }
-        } catch (recreateError) {
-            console.error('Error recreating cluster group:', recreateError);
-            return;
-        }
-    }
+  // 4) Define your colored icons
+  const greenIcon = new L.Icon({
+    iconUrl:  'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+  const yellowIcon = new L.Icon({
+    iconUrl:  'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+    shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+  const redIcon = new L.Icon({
+    iconUrl:  'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
 
-    // Define custom icons with different colors
-    const greenIcon = new L.Icon({ 
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', 
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', 
-        iconSize: [25, 41], 
-        iconAnchor: [12, 41], 
-        popupAnchor: [1, -34], 
-        shadowSize: [41, 41] 
-    });
-    
-    const yellowIcon = new L.Icon({ 
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png', 
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', 
-        iconSize: [25, 41], 
-        iconAnchor: [12, 41], 
-        popupAnchor: [1, -34], 
-        shadowSize: [41, 41] 
-    });
-    
-    const redIcon = new L.Icon({ 
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', 
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', 
-        iconSize: [25, 41], 
-        iconAnchor: [12, 41], 
-        popupAnchor: [1, -34], 
-        shadowSize: [41, 41] 
-    });
-    
-    // Get sales data for today to determine marker color
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+  // 5) Compute start of today
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
 
-    // Safety check for machines array
-    if (!machines || !Array.isArray(machines)) {
-        console.warn('Invalid machines data');
-        return;
-    }
+  // 6) Validate machines array
+  if (!Array.isArray(machines)) {
+    console.warn('Invalid machines data');
+    return;
+  }
 
-    machines.forEach(machine => {
-        if (machine.latitude && machine.longitude) {
-            try {
-                // Calculate today's sales for this machine
-                const salesToday = ventasDelMesCompleto
-                    .filter(s => s.serial === machine.serial && new Date(s.created_at) >= todayStart)
-                    .reduce((sum, s) => sum + parseFloat(s.precio_total || 0), 0);
+  // 7) Add a marker per machine
+  machines.forEach(machine => {
+    if (!machine.latitude || !machine.longitude) return;
 
-                // Determine marker color based on sales
-                let icon = redIcon; // Default to red
-                if (salesToday > 50) icon = yellowIcon; // Over $50 is yellow
-                if (salesToday > 200) icon = greenIcon;  // Over $200 is green
-                
-                // Check machine status
-                const isActive = (new Date() - new Date(machine.last_seen)) / 60000 < 10;
-                const statusText = isActive ? 'Online 🟢' : 'Offline 🔴';
+    // a) compute today's sales
+    const salesToday = ventasDelMesCompleto
+      .filter(v => v.serial === machine.serial && new Date(v.created_at) >= todayStart)
+      .reduce((sum, v) => sum + parseFloat(v.precio_total || 0), 0);
 
-                // Create marker and pop-up content
-                const marker = L.marker([parseFloat(machine.latitude), parseFloat(machine.longitude)], { icon: icon });
-                const popupContent = `
-                    <b>${machine.nombre || machine.serial}</b><br>
-                    <b>Status:</b> ${statusText}<br>
-                    <b>Today's Sales:</b> $${salesToday.toFixed(2)}
-                `;
-                marker.bindPopup(popupContent);
-                
-                // Add the marker to the cluster group - with safety check
-                if (window.markerClusterGroup && typeof window.markerClusterGroup.addLayer === 'function') {
-                    window.markerClusterGroup.addLayer(marker);
-                }
-            } catch (error) {
-                console.error('Error creating marker for machine:', machine.serial, error);
-            }
-        }
-    });
+    // b) pick icon by threshold
+    let icon = redIcon;
+    if (salesToday > 50)  icon = yellowIcon;
+    if (salesToday > 200) icon = greenIcon;
+
+    // c) determine online/offline
+    const isActive = (Date.now() - new Date(machine.last_seen)) / 60000 < 10;
+    const statusText = isActive ? 'Online 🟢' : 'Offline 🔴';
+
+    // d) create marker
+    const marker = L.marker(
+      [ parseFloat(machine.latitude), parseFloat(machine.longitude) ],
+      { icon }
+    );
+    marker.bindPopup(`
+      <b>${machine.nombre || machine.serial}</b><br>
+      <b>Status:</b> ${statusText}<br>
+      <b>Today's Sales:</b> $${salesToday.toFixed(2)}
+    `);
+
+    // e) add to cluster
+    markerClusters.addLayer(marker);
+  });
 }
 
 function renderHeatmap(ventas) {
