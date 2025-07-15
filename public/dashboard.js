@@ -659,9 +659,6 @@ function renderVolumeCards(volumeCounts) {
         container.innerHTML += cardHTML;
     }
 }
-// at top of dashboard.js
-let mapInstance = null;
-let markerClusters = null;
 
 function renderMachineMap(machines, ventasDelMesCompleto) {
   // 0) Ensure Leaflet and the container exist
