@@ -26,6 +26,9 @@ async function getUser() {
   cargarResumen();
   cargarGraficas();
   cargarDistribucionVolumen();
+  renderHeatmapLast30Days(); 
+
+
 }
 
 async function cargarMaquinasParaCSV() {
@@ -149,6 +152,8 @@ async function hacerCorteDeCaja(serial) {
   Graficas();
   DistribucionVolumen();
   MaquinasParaCSV();
+
+
 }
 
 // REEMPLAZA tu función Resumen() existente con esta versión mejorada.
@@ -258,7 +263,54 @@ function renderResumenPorMaquina(r, contenedor) {
     `;
     contenedor.appendChild(div);
 }
+async function renderHeatmapLast30Days() {
+    try {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+        const { data: ventas, error } = await supabase
+            .from("ventas")
+            .select("created_at, precio_total")
+            .eq("user_id", user.id)
+            .gte("created_at", thirtyDaysAgo.toISOString());
+
+        if (error) throw error;
+        if (!ventas) return;
+
+        // Process data for the heatmap
+        const dataByDayHour = {};
+        for (let i = 0; i < 7; i++) {
+            for (let j = 0; j < 24; j++) {
+                dataByDayHour[`${i}-${j}`] = 0;
+            }
+        }
+
+        let maxSale = 0;
+        ventas.forEach(v => {
+            const date = new Date(v.created_at);
+            const day = date.getDay();
+            const hour = date.getHours();
+            const key = `${day}-${hour}`;
+            const saleAmount = parseFloat(v.precio_total || 0);
+            dataByDayHour[key] += saleAmount;
+            if (dataByDayHour[key] > maxSale) {
+                maxSale = dataByDayHour[key];
+            }
+        });
+
+        const chartData = Object.entries(dataByDayHour).map(([key, value]) => {
+            const [day, hour] = key.split('-');
+            return { x: parseInt(hour), y: parseInt(day), v: value };
+        });
+
+        // Call the functions to draw the chart and its legend
+        renderHeatmapChart(chartData, maxSale);
+        renderHeatmapLegend();
+
+    } catch (error) {
+        console.error("Error loading heatmap data:", error);
+    }
+}
 async function cargarDistribucionVolumen() {
     // Para consistencia con el resto del código, usamos getFilters() que devuelve objetos Date
     const { fromDate, toDate, serial } = getFilters();
@@ -761,34 +813,11 @@ function renderMachineMap(machines, ventasDelMesCompleto) {
   });
 }
 
-function renderHeatmap(ventas) {
+function renderHeatmapChart(chartData, maxSale) {
     const ctx = document.getElementById('graficaHeatmap').getContext('2d');
-    
     if (window.chartHeatmap) {
         window.chartHeatmap.destroy();
     }
-
-    // Process data for the heatmap
-    const dataByDayHour = {}; // { '0-23': 0, '1-0': 12, ... } (day-hour: totalSales)
-    for (let i = 0; i < 7; i++) { // 0=Sunday, 6=Saturday
-        for (let j = 0; j < 24; j++) {
-            const key = `${i}-${j}`;
-            dataByDayHour[key] = 0;
-        }
-    }
-
-    ventas.forEach(v => {
-        const date = new Date(v.created_at);
-        const day = date.getDay();
-        const hour = date.getHours();
-        const key = `${day}-${hour}`;
-        dataByDayHour[key] += parseFloat(v.precio_total || 0);
-    });
-
-    const chartData = Object.entries(dataByDayHour).map(([key, value]) => {
-        const [day, hour] = key.split('-');
-        return { x: parseInt(hour), y: parseInt(day), v: value };
-    });
 
     window.chartHeatmap = new Chart(ctx, {
         type: 'matrix',
@@ -798,11 +827,12 @@ function renderHeatmap(ventas) {
                 data: chartData,
                 backgroundColor: function(context) {
                     const value = context.dataset.data[context.dataIndex].v;
-                    if (value === 0) return 'rgba(230, 230, 230, 0.5)';
-                    const alpha = Math.min(0.2 + (value / 50), 1); // Normalize color intensity based on sales value
-                    return `rgba(75, 192, 192, ${alpha})`;
+                    if (value === 0) return 'rgba(237, 242, 247, 0.75)'; // Lighter gray for empty slots
+                    // Normalize color intensity based on the max sales value for better visual range
+                    const alpha = 0.1 + 0.9 * (value / maxSale); 
+                    return `rgba(66, 153, 225, ${alpha})`; // Blue color scale
                 },
-                borderColor: 'rgba(200, 200, 200, 0.6)',
+                borderColor: 'rgba(255, 255, 255, 0.5)',
                 borderWidth: 1,
                 width: ({chart}) => (chart.chartArea || {}).width / 24 - 1,
                 height: ({chart}) => (chart.chartArea || {}).height / 7 - 1,
@@ -811,14 +841,17 @@ function renderHeatmap(ventas) {
         options: {
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false },
+                legend: { display: false }, // The custom legend is used instead
                 tooltip: {
                     callbacks: {
                         title: function() { return ''; },
                         label: function(context) {
-                            const item = context.dataset.data[context.dataIndex];
+                            // FIX: Use context.parsed to get the correct index
+                            const dayIndex = context.parsed.y;
+                            const hour = context.parsed.x;
+                            const value = context.dataset.data[context.dataIndex].v;
                             const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                            return `${days[item.y]} a las ${item.x}:00 - $${item.v.toFixed(2)}`;
+                            return `${days[dayIndex]} a las ${hour}:00 - $${value.toFixed(2)}`;
                         }
                     }
                 }
@@ -827,16 +860,32 @@ function renderHeatmap(ventas) {
                 y: {
                     type: 'category',
                     labels: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
-                    offset: true
+                    offset: true,
+                    reverse: true, // FIX: Reverses the y-axis to show Sunday at the top
+                    grid: { display: false }
                 },
                 x: {
                     type: 'category',
                     labels: [...Array(24).keys()].map(h => `${h}`),
-                    offset: true
+                    offset: true,
+                    grid: { display: false }
                 }
             }
         }
     });
+}
+
+// This function draws the simple legend below the chart
+function renderHeatmapLegend() {
+    const legendContainer = document.getElementById('heatmap-legend');
+    legendContainer.innerHTML = `
+        <span>Menos Actividad</span>
+        <div class="w-6 h-4" style="background-color: rgba(66, 153, 225, 0.1);"></div>
+        <div class="w-6 h-4" style="background-color: rgba(66, 153, 225, 0.4);"></div>
+        <div class="w-6 h-4" style="background-color: rgba(66, 153, 225, 0.7);"></div>
+        <div class="w-6 h-4" style="background-color: rgba(66, 153, 225, 1.0);"></div>
+        <span>Más Actividad</span>
+    `;
 }
 
 
