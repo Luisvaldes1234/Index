@@ -232,7 +232,7 @@ function renderResumen(r) {
     document.getElementById("ventasMes").textContent = `$${r.totalMes.toFixed(2)}`;
 }
 
-}
+
 
 
 // AÑADE esta función nueva a tu archivo .js
