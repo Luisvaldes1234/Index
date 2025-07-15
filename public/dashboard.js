@@ -353,7 +353,7 @@ async function cargarDistribucionVolumen() {
             else if (litros === 10) volumeCounts["10L"]++;
             else if (litros === 5) volumeCounts["5L"]++;
             // CORRECCIÓN 2: Valor más preciso para el galón
-            else if (litros === 3.7) volumeCounts["Galón"]++; 
+            else if (litros === 3.75) volumeCounts["Galón"]++; 
             else volumeCounts["Otros"]++;
         });
 
